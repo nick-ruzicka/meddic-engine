@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import os
 import sys
 import time
@@ -123,11 +124,17 @@ def build_user_message(row, brief: dict) -> str:
         f"Why now: {why_now[:280]}\n"
         f"Pitch angle: {angle[:280]}\n"
         f"{li_block}\n"
-        "Write ONE personalized first line for a cold outreach email. "
-        "Reference the LinkedIn post specifically if provided; otherwise "
-        "reference the signal. "
-        f"{'Lead with compliance assurance. ' if row['has_objections'] else ''}"
-        "Max 2 sentences. No em dashes. Return only the first line text, nothing else."
+        "Generate a complete cold email. Return ONLY JSON, no markdown:\n"
+        "{\n"
+        '  "subject": "max 8 words, specific not generic, no clickbait, lowercase preferred",\n'
+        '  "body": "complete email under 100 words total. Opener references their specific situation. '
+        "1-2 sentences explaining the relevant  workflow for their firm type. "
+        "1 sentence CTA - specific ask, not generic (e.g. open to a 15-min call this week? / "
+        'happy to share the Oak Hill case study?)"\n'
+        "}\n"
+        "No em dashes. No 'I wanted to reach out'. No 'revolutionary' or 'game-changing'. "
+        "Sound like a practitioner, not a vendor. "
+        f"{'Lead with compliance/data-sovereignty assurance. ' if row['has_objections'] else ''}"
     )
 
 
@@ -167,13 +174,32 @@ def main() -> int:
         try:
             resp = client.messages.create(
                 model=HAIKU_MODEL,
-                max_tokens=220,
+                max_tokens=500,
                 temperature=0.6,
                 system=voice_skill,
                 messages=[{"role": "user", "content": user_message}],
             )
-            text = "".join(getattr(b, "text", "") for b in resp.content).strip()
-            text = text.strip('"').strip("'").replace("—", "-").strip()
+            raw = "".join(getattr(b, "text", "") for b in resp.content).strip()
+            # Strip any code fences Claude snuck in; isolate the JSON object
+            raw = re.sub(r"^```(?:json)?\s*|```\s*$", "", raw, flags=re.M).strip()
+            m = re.search(r"\{[\s\S]*\}", raw)
+            if not m:
+                failed += 1
+                log.warning(f"[{i}/{len(rows)}] no JSON in response qid={row['queue_id']}")
+                continue
+            try:
+                parsed = json.loads(m.group(0))
+            except json.JSONDecodeError as e:
+                failed += 1
+                log.warning(f"[{i}/{len(rows)}] bad JSON qid={row['queue_id']}: {e}")
+                continue
+            subject = (parsed.get("subject") or "").replace("—", "-").strip()
+            body    = (parsed.get("body") or "").replace("—", "-").strip()
+            if not subject or not body:
+                failed += 1
+                log.warning(f"[{i}/{len(rows)}] missing subject/body qid={row['queue_id']}")
+                continue
+            text = json.dumps({"subject": subject, "body": body})
             if not text:
                 failed += 1
                 log.warning(f"[{i}/{len(rows)}] empty generation for qid={row['queue_id']}")

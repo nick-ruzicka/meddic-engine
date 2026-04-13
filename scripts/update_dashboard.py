@@ -325,7 +325,38 @@ def _contacts(conn) -> list[dict]:
             data["press"]        = _clean_items(data.get("press"))
         return data
 
-    return [{
+    # Landing-page detector mirrors collectors/exa_collector.py so that
+    # signals whose source_url is just a section root can be upgraded to a
+    # contact's specific LinkedIn post URL when one exists in research_json.
+    import re as _re
+    _LANDING_PATTERNS = [
+        r"/news/?$", r"/press/?$", r"/insights/?$",
+        r"/blog/?$", r"/media/?$", r"/resources/?$",
+        r"/updates/?$", r"/newsroom/?$", r"/articles/?$",
+    ]
+    _LANDING_RX = _re.compile("|".join(_LANDING_PATTERNS), _re.IGNORECASE)
+
+    def _resolve_signal_url(raw_url, research):
+        """If the firm-level signal_url is a landing page AND the contact has
+        a real LinkedIn post URL in research, swap to that. The deep link is
+        always more useful than a section index."""
+        url = raw_url or ""
+        if not url or _LANDING_RX.search(url):
+            for p in (research or {}).get("recent_posts") or []:
+                pu = (p.get("url") or "").lower()
+                if "linkedin.com/posts" in pu:
+                    return p["url"]
+        return url
+
+    def _build(r):
+        research = _parse_research(r["research_json"])
+        signal_url = _resolve_signal_url(r["signal_url"], research)
+        return research, signal_url
+
+    out = []
+    for r in rows:
+        research, signal_url = _build(r)
+        out.append({
         "queue_id":         r["queue_id"],
         "contact_id":       r["contact_id"],
         "firm_id":          r["firm_id"],
@@ -351,7 +382,7 @@ def _contacts(conn) -> list[dict]:
         "meddic_role":      r["meddic_role"] or "",
         "meddic_confidence": float(r["meddic_confidence"]) if r["meddic_confidence"] is not None else None,
         "meddic_reasoning": r["meddic_reasoning"] or "",
-        "research_json":    _parse_research(r["research_json"]),
+        "research_json":    research,
         "last_activity_at": r["last_activity_at"] or "",
         "score":            float(r["score"]) if r["score"] is not None else 0.0,
         "icp_fit":          float(r["icp_fit"]) if r["icp_fit"] is not None else None,
@@ -366,11 +397,12 @@ def _contacts(conn) -> list[dict]:
         "account_brief":    (lambda v: json.loads(v) if v else None)(r["account_brief"]),
         "signal_type":      r["signal_type"] or "",
         "signal_content":   r["signal_content"] or "",
-        "signal_url":       r["signal_url"] or "",
+        "signal_url":       signal_url or "",
         "signal_date":      r["signal_date"] or "",
         "first_line":       r["first_line"] or "",
         "status":           r["status"],
-    } for r in rows]
+        })
+    return out
 
 
 def _tier2_virtual(conn) -> list[dict]:

@@ -2146,12 +2146,35 @@
           `<em>No brief generated yet. Click <b>Generate ✦</b> to produce a one-page intelligence brief for ${esc(c.contact_name)}.</em>`}</div>
         ${c.reasoning ? `<details style="margin-top:10px;font-size:11.5px;color:var(--text-3)"><summary style="cursor:pointer">Show scoring reasoning</summary><div style="margin-top:8px;color:var(--text-2);line-height:1.6;max-width:68ch">${esc(c.reasoning)}</div></details>` : ''}
       </div>
-      <div class="side-panel__section">
-        <h4>Suggested first line
-          <button class="btn btn--ghost btn-gen" data-act="generate" ${disabled}>${c.first_line ? 'Regenerate ✦' : 'Generate ✦'}</button>
-        </h4>
-        <textarea class="sp-fl-textarea first-line" placeholder="Personalized opener for ${esc(c.contact_name)}…" ${disabled}>${esc(c.first_line || '')}</textarea>
-      </div>
+      ${(() => {
+        let subj = '', body = '', isJson = false;
+        try {
+          const p = JSON.parse(c.first_line || '');
+          if (p && typeof p === 'object' && p.subject && p.body){
+            subj = p.subject; body = p.body; isJson = true;
+          }
+        } catch (_) {}
+        if (isJson) {
+          return `
+            <div class="side-panel__section sp-email-block">
+              <h4>Cold email
+                <button class="btn btn--ghost btn-gen" data-act="generate" ${disabled}>Regenerate ✦</button>
+              </h4>
+              <span class="sp-subject-lbl">Subject</span>
+              <div class="sp-subject" data-sp-subject>${esc(subj)}</div>
+              <span class="sp-body-lbl">Body</span>
+              <textarea class="sp-fl-textarea first-line" ${disabled}>${esc(body)}</textarea>
+              <button class="sp-email-copy" data-act="copy_email">Copy email ⎘</button>
+            </div>`;
+        }
+        return `
+          <div class="side-panel__section">
+            <h4>Suggested first line
+              <button class="btn btn--ghost btn-gen" data-act="generate" ${disabled}>${c.first_line ? 'Regenerate ✦' : 'Generate ✦'}</button>
+            </h4>
+            <textarea class="sp-fl-textarea first-line" placeholder="Personalized opener for ${esc(c.contact_name)}…" ${disabled}>${esc(c.first_line || '')}</textarea>
+          </div>`;
+      })()}
       <div class="side-panel__section">
         <h4>Confidence · ${score}</h4>
         ${dims.map(d => `

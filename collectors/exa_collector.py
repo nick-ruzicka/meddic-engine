@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from typing import Optional
 
 from collectors.twitter_collector import classify, infer_buying_stage
@@ -95,9 +96,27 @@ def _extract_text(result) -> str:
     return getattr(result, "title", "") or ""
 
 
+_LANDING_PAGE_PATTERNS = [
+    r"/news/?$", r"/press/?$", r"/insights/?$",
+    r"/blog/?$", r"/media/?$", r"/resources/?$",
+    r"/updates/?$", r"/newsroom/?$", r"/articles/?$",
+    r"/people/?$", r"/team/?$", r"/about/?$",
+]
+_LANDING_RX = re.compile("|".join(_LANDING_PAGE_PATTERNS), re.IGNORECASE)
+
+
+def is_landing_page(url: str) -> bool:
+    """A URL whose path stops at a section root (no deep article slug)."""
+    if not url:
+        return False
+    return bool(_LANDING_RX.search(url))
+
+
 def _to_signal(result, firms: list[dict]) -> Optional[dict]:
     url = getattr(result, "url", None)
     if not url:
+        return None
+    if is_landing_page(url):
         return None
     title = getattr(result, "title", "") or ""
     body  = _extract_text(result)

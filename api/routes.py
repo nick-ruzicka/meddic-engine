@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 import time
@@ -455,25 +456,44 @@ def generate_first_line():
         f"Contact: {row['contact_name']}, {row['title'] or 'unknown title'}\n"
         f"Competitor context: {row['competitor'] or 'none'}\n"
         f"Top signal: {signal_line}\n"
-        f"Score: {row['score'] or 0} — {row['label'] or ''}\n"
+        f"Score: {row['score'] or 0} - {row['label'] or ''}\n"
         f"Reasoning: {(row['reasoning'] or '').strip()[:500]}\n\n"
-        "Write ONE personalized first line for a cold outreach email. "
-        "Reference the specific signal if present. "
-        f"{'Lead with compliance assurance. ' if row['has_objections'] else ''}"
-        "Max 2 sentences. No em dashes. Return only the first line text, nothing else."
+        "Generate a complete cold email. Return ONLY JSON, no markdown:\n"
+        "{\n"
+        '  "subject": "max 8 words, specific not generic, no clickbait, lowercase preferred",\n'
+        '  "body": "complete email under 100 words total. Opener references their specific situation. '
+        "1-2 sentences explaining the relevant  workflow for their firm type. "
+        "1 sentence CTA - specific ask, not generic (e.g. open to a 15-min call this week? / "
+        'happy to share the Oak Hill case study?)"\n'
+        "}\n"
+        "No em dashes. No 'I wanted to reach out'. No 'revolutionary' or 'game-changing'. "
+        "Sound like a practitioner, not a vendor. "
+        f"{'Lead with compliance/data-sovereignty assurance. ' if row['has_objections'] else ''}"
     )
 
     try:
         client = anthropic.Anthropic(api_key=api_key)
         resp = client.messages.create(
             model=HAIKU_MODEL,
-            max_tokens=220,
+            max_tokens=500,
             temperature=0.6,
             system=_load_voice_skill(),
             messages=[{"role": "user", "content": user_message}],
         )
-        first_line = "".join(getattr(b, "text", "") for b in resp.content).strip()
-        first_line = first_line.strip('"').strip("'").replace("—", "-").strip()
+        raw = "".join(getattr(b, "text", "") for b in resp.content).strip()
+        raw = re.sub(r"^```(?:json)?\s*|```\s*$", "", raw, flags=re.M).strip()
+        m = re.search(r"\{[\s\S]*\}", raw)
+        if not m:
+            return jsonify({"error": "no JSON in Claude response", "raw": raw[:300]}), 502
+        try:
+            parsed = json.loads(m.group(0))
+        except Exception as e:
+            return jsonify({"error": f"bad JSON from Claude: {e}", "raw": raw[:300]}), 502
+        subject = (parsed.get("subject") or "").replace("—", "-").strip()
+        body    = (parsed.get("body") or "").replace("—", "-").strip()
+        if not subject or not body:
+            return jsonify({"error": "missing subject or body", "raw": raw[:300]}), 502
+        first_line = json.dumps({"subject": subject, "body": body})
     except Exception as e:
         logger.exception("generate_first_line failed")
         return jsonify({"error": f"claude error: {e}"}), 502
@@ -491,7 +511,7 @@ def generate_first_line():
     finally:
         conn.close()
 
-    return jsonify({"ok": True, "first_line": first_line, "model": HAIKU_MODEL})
+    return jsonify({"ok": True, "first_line": first_line, "subject": subject, "body": body, "model": HAIKU_MODEL})
 
 
 @api_bp.route("/generate_brief", methods=["POST"])

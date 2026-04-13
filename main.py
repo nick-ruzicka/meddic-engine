@@ -177,6 +177,16 @@ def _insert_signal(conn, sig: dict) -> bool:
         logger.debug(f"skip signal — no firm match: {sig.get('firm_name') or sig.get('domain')}")
         return False
 
+    # Landing-page guard at insert time so any collector (not just Exa) drops
+    # generic /news /press /insights index URLs that aren't real articles.
+    try:
+        from collectors.exa_collector import is_landing_page
+        if is_landing_page(sig.get("source_url") or ""):
+            logger.debug(f"skip signal — landing-page URL: {sig.get('source_url')}")
+            return False
+    except Exception:
+        pass
+
     sig_date = sig.get("signal_date")
     if sig_date:
         try:
