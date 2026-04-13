@@ -1886,11 +1886,17 @@
     const label = document.getElementById('alerts-label');
     if (!wrap || !list) return;
     const triggers = (state.data?.stats?.recent_triggers) || [];
+    wrap.style.display = '';
     if (!triggers.length){
-      wrap.style.display = 'none';
+      badge.style.display = 'none';
+      label.textContent = 'Alerts';
+      list.innerHTML = `
+        <div style="padding:24px 16px;text-align:center;color:var(--text-3);font-size:13px;line-height:1.6">
+          No active signals in last 48h<br>
+          <span style="font-size:11px;color:var(--text-3);opacity:0.7">Run pipeline to refresh</span>
+        </div>`;
       return;
     }
-    wrap.style.display = '';
     badge.style.display = '';
     badge.textContent = triggers.length;
     label.textContent = `${triggers.length} New`;
@@ -2222,7 +2228,7 @@
     const dims = dimensions(c);
     panel.innerHTML = `
       <div class="side-panel__head">
-        <button class="side-panel__close" data-panel-close>×</button>
+        <button class="side-panel__close" data-panel-close aria-label="Close panel" title="Close panel">×</button>
         <div class="sp-firm">${esc(c.firm_name)}</div>
         <div class="sp-contact">${esc(c.contact_name)} · ${esc(c.title || '—')}${meddicPillFor(c)}</div>
         <div class="sp-email">${esc(c.email || '—')}<span class="sp-dot ${dotCls}"></span>· ${score}</div>

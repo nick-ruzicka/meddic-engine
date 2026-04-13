@@ -326,16 +326,20 @@ def step_score(config: dict, limit: int | None = None, sample: bool = False) -> 
 
     conn = get_db()
     try:
-        rows = conn.execute(
-            """SELECT c.id AS contact_id, f.id AS firm_id
-               FROM contacts c
-               JOIN firms f ON c.firm_id = f.id
-               LEFT JOIN scores s ON s.contact_id = c.id
-               WHERE s.id IS NULL
-                 AND (f._status IS NULL OR f._status != 'customer')
-               ORDER BY f.tier ASC, c.id ASC""" +
-            (f" LIMIT {int(limit)}" if limit else "")
-        ).fetchall()
+        sql = (
+            "SELECT c.id AS contact_id, f.id AS firm_id "
+            "FROM contacts c "
+            "JOIN firms f ON c.firm_id = f.id "
+            "LEFT JOIN scores s ON s.contact_id = c.id "
+            "WHERE s.id IS NULL "
+            "  AND (f._status IS NULL OR f._status != 'customer') "
+            "ORDER BY f.tier ASC, c.id ASC"
+        )
+        if limit:
+            sql += " LIMIT ?"
+            rows = conn.execute(sql, (int(limit),)).fetchall()
+        else:
+            rows = conn.execute(sql).fetchall()
     finally:
         conn.close()
 
@@ -387,8 +391,10 @@ def step_queue(config: dict, threshold: float = 55.0, limit: int | None = None) 
             ORDER BY s.score DESC
         """
         if limit:
-            query += f" LIMIT {int(limit)}"
-        rows = conn.execute(query, (threshold,)).fetchall()
+            query += " LIMIT ?"
+            rows = conn.execute(query, (threshold, int(limit))).fetchall()
+        else:
+            rows = conn.execute(query, (threshold,)).fetchall()
 
         enqueued = 0
         for row in rows:
