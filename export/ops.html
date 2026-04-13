@@ -343,7 +343,7 @@
 
     <div class="tile t-span-2 fade-in d2">
       <div class="tile-hd">
-        <span class="lbl">Database health</span>
+        <span class="lbl">Data store — what's in the pipeline DB</span>
         <span class="hint" id="db-size">—</span>
       </div>
       <div class="kv" id="db-rows"><div class="state">Loading…</div></div>
@@ -436,18 +436,18 @@
     </div>
   </div>
 
-  <!-- ROW 5: Enrichment timing -->
+  <!-- ROW 5: Signal-to-reach cadence -->
   <div class="sec-head">
-    <h2 class="sec-title">Enrichment timing</h2>
-    <span class="sec-sub">How long it takes a contact row to acquire a verified email</span>
+    <h2 class="sec-title">Conversion cadence</h2>
+    <span class="sec-sub">How fast the pipeline turns raw signal into a reachable human</span>
   </div>
   <div class="bento">
     <div class="tile t-span-6 fade-in">
       <div class="tile-hd">
-        <span class="lbl">Time to verified email</span>
-        <span class="hint">Tier-1 contacts · per source</span>
+        <span class="lbl">Signal → reachable contact</span>
+        <span class="hint">Tier-1 firms · median days, first signal → first verified contact</span>
       </div>
-      <div id="enrichment-timing"><div class="state">Loading…</div></div>
+      <div id="signal-to-reach"><div class="state">Loading…</div></div>
     </div>
   </div>
 
@@ -638,11 +638,21 @@
     if (dbsize) dbsize.textContent = `${(h.db_size_kb || 0).toFixed(1)} KB`;
     const el = document.getElementById('db-rows');
     if (!el) return;
-    const tables = ['firms','contacts','signals','scores','outreach_queue','review_decisions'];
+    const tables = [
+      {k:'firms',            desc:'Target institutions (tier-1 active + tier-2 watchlist)'},
+      {k:'contacts',         desc:'People at target firms with verified emails'},
+      {k:'signals',          desc:'AI/hiring/press mentions scraped from LinkedIn, X, press'},
+      {k:'scores',           desc:'Claude ICP-fit decisions per contact'},
+      {k:'outreach_queue',   desc:'Contacts ready for rep review and send'},
+      {k:'review_decisions', desc:'Approve/skip/flag actions taken by reps'},
+    ];
     el.innerHTML = tables.map(t => `
       <div class="kv-row">
-        <span class="k">${esc(t)}</span>
-        <span class="v">${fmt(rc[t] ?? 0)}</span>
+        <span class="k">
+          <span style="display:block">${esc(t.k)}</span>
+          <span style="display:block;font-size:10px;color:var(--ink-3);letter-spacing:0;text-transform:none;margin-top:2px;font-weight:400">${esc(t.desc)}</span>
+        </span>
+        <span class="v">${fmt(rc[t.k] ?? 0)}</span>
       </div>`).join('');
   }
 
@@ -777,62 +787,34 @@
     }).join('');
   }
 
-  // ── Enrichment timing ───────────────────────────────
-  function humanSeconds(s){
-    if (!s || s < 1) return 'instant';
-    if (s < 60) return `${Math.round(s)}s`;
-    if (s < 3600) return `${Math.round(s/60)}m`;
-    if (s < 86400) return `${(s/3600).toFixed(1)}h`;
-    return `${(s/86400).toFixed(1)}d`;
-  }
+  // ── Signal → reach cadence ──────────────────────────
   function prettySource(s){
     return ({exa_team_page:'Exa Team', team_page_direct:'Direct Scrape', hunter:'Hunter', pattern:'Pattern', linkedin:'LinkedIn', manual:'Manual'}[s] || s.replace(/_/g,' '));
   }
-  function renderEnrichmentTiming(od){
-    const el = document.getElementById('enrichment-timing');
+  function renderSignalToReach(od){
+    const el = document.getElementById('signal-to-reach');
     if (!el) return;
-    const t = od.enrichment_timing || {};
-    const sources = (t.sources || []).filter(s => (s.measured + s.same_write) > 0);
-    if (!sources.length){ el.innerHTML = `<div class="state">No verified tier-1 contacts yet</div>`; return; }
-
-    // Fastest measured source for the hero stat
-    const measured = sources.filter(s => s.measured > 0).sort((a,b) => a.median_s - b.median_s);
-    const fastest = measured[0];
-    const slowest = measured[measured.length - 1];
-
-    const maxMedian = Math.max(1, ...sources.map(s => s.median_s));
-    const hero = `
+    const c = od.signal_to_reach || {};
+    if (!c.firms_measured){
+      el.innerHTML = `<div class="state">No tier-1 firms yet with both a signal and a verified contact</div>`;
+      return;
+    }
+    el.innerHTML = `
       <div class="et-hero">
         <div class="stat">
-          <div class="k">Fastest source median</div>
-          <div class="v">${fastest ? humanSeconds(fastest.median_s) : '—'}<small>${fastest ? esc(prettySource(fastest.source)) : ''}</small></div>
-          <div class="sub">p90 ${fastest ? humanSeconds(fastest.p90_s) : '—'} · n=${fastest ? fastest.measured : 0}</div>
+          <div class="k">Median days · signal → reach</div>
+          <div class="v">${c.median_days != null ? c.median_days.toFixed(1) : '—'}<small>days</small></div>
+          <div class="sub">p90 ${c.p90_days != null ? c.p90_days.toFixed(1) : '—'}d · n=${c.firms_measured} firms</div>
         </div>
         <div class="stat">
-          <div class="k">Verified contacts</div>
-          <div class="v">${fmt(t.total_verified || 0)}</div>
-          <div class="sub">${fmt(t.same_write || 0)} same-write · ${fmt(t.measured || 0)} measured</div>
+          <div class="k">Coverage</div>
+          <div class="v">${fmt(c.firms_measured)}<small>/ ${fmt(c.tier1_firms)} tier-1</small></div>
+          <div class="sub">${c.coverage_pct != null ? c.coverage_pct.toFixed(0) : 0}% have both a signal and a verified contact</div>
         </div>
+      </div>
+      <div class="et-note">
+        <b>Methodology:</b> For each tier-1 firm with both a scraped signal and a verified contact, elapsed days between the firm's earliest <code style="font-family:var(--font-mono)">signal_date</code> and the earliest <code style="font-family:var(--font-mono)">created_at</code> on any <code style="font-family:var(--font-mono)">email_verified=1</code> contact. Reports the distribution across firms — a real, schema-defensible pipeline cadence metric.
       </div>`;
-
-    const rows = sources.map(s => {
-      const fillPct = s.median_s > 0 ? Math.max(3, (s.median_s / maxMedian) * 100) : 0;
-      const label = s.measured > 0 ? humanSeconds(s.median_s) : 'same-write';
-      const sub = s.measured > 0
-        ? `<em>p90 ${humanSeconds(s.p90_s)}</em>`
-        : `<em>${s.same_write} written instant</em>`;
-      return `<div class="et-row">
-        <div class="nm">${esc(prettySource(s.source))}</div>
-        <div class="bar">${fillPct > 0 ? `<div class="fill" style="width:${fillPct}%"></div>` : ''}</div>
-        <div class="v">${label}${sub}</div>
-        <div class="v">${s.measured + s.same_write}<em>contacts</em></div>
-      </div>`;
-    }).join('');
-
-    const note = `<div class="et-note">
-      <b>Methodology:</b> Elapsed wall-clock between <code style="font-family:var(--font-mono)">created_at</code> and the update that set <code style="font-family:var(--font-mono)">email_verified=1</code>. Rows enriched in the same DB write (e.g. the Exa collector resolves email during firm scrape) show as <em>same-write</em> — latency is real but not measurable from timestamps. Medians reflect the enrichment workflow cadence, not per-call API latency.
-    </div>`;
-    el.innerHTML = hero + rows + note;
   }
 
   // ── Parse errors ────────────────────────────────────
@@ -867,7 +849,7 @@
       renderRecentSignals(od);
       renderSourceHealth(od);
       renderFirmVelocity(od);
-      renderEnrichmentTiming(od);
+      renderSignalToReach(od);
       renderParseErrors(od);
       const ts = od.generated_at ? formatUpdated(od.generated_at) : '—';
       ['upd-waterfall','upd-fallthrough','upd-cadence','upd-errors'].forEach(id => {

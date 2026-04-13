@@ -89,7 +89,8 @@ def build_recent_signals(conn) -> list[dict]:
                f.name AS firm
           FROM signals s
           LEFT JOIN firms f ON f.id = s.firm_id
-         ORDER BY s.id DESC LIMIT 15
+         ORDER BY COALESCE(s.signal_date, s.created_at) DESC, s.id DESC
+         LIMIT 15
     """)
     for r in rows:
         r["content"] = (r["content"] or "")[:160]
@@ -186,62 +187,45 @@ def build_fallthrough(conn) -> dict:
     }
 
 
-def build_enrichment_timing(conn) -> dict:
-    """Time between contact row creation and the update that set a
-    verified email — a wall-clock proxy for enrichment latency. Tier-1
-    non-placeholder contacts only. Rows where updated_at == created_at
-    (enriched in the same write) are reported separately as 'same_write'
-    since elapsed time is meaningless for them."""
+def build_signal_to_reach(conn) -> dict:
+    """Per-firm days between the earliest scraped signal and the earliest
+    verified contact. A real, schema-defensible pipeline cadence metric:
+    how fast does raw signal become a reachable human? Tier-1 only."""
     rows = conn.execute("""
-        SELECT COALESCE(NULLIF(c.email_source,''), 'unknown') AS source,
-               (julianday(c.updated_at) - julianday(c.created_at)) * 86400.0 AS gap_s
-          FROM contacts c
-          JOIN firms f ON f.id = c.firm_id
+        SELECT f.id AS firm_id,
+               (julianday(c.first_verified_at) - julianday(s.first_signal_at)) AS gap_d
+          FROM firms f
+          JOIN (
+            SELECT firm_id, MIN(COALESCE(signal_date, created_at)) AS first_signal_at
+              FROM signals
+             WHERE firm_id IS NOT NULL
+             GROUP BY firm_id
+          ) s ON s.firm_id = f.id
+          JOIN (
+            SELECT firm_id, MIN(created_at) AS first_verified_at
+              FROM contacts
+             WHERE email_verified = 1
+               AND COALESCE(is_placeholder, 0) = 0
+             GROUP BY firm_id
+          ) c ON c.firm_id = f.id
          WHERE f.tier = 1
-           AND COALESCE(c.is_placeholder, 0) = 0
-           AND c.email_verified = 1
-           AND c.email IS NOT NULL AND c.email <> ''
     """).fetchall()
 
-    by_source: dict[str, list[float]] = {}
-    same_write: dict[str, int] = {}
-    for r in rows:
-        src = r["source"]
-        gap = r["gap_s"] or 0.0
-        if gap < 1.0:
-            same_write[src] = same_write.get(src, 0) + 1
-        else:
-            by_source.setdefault(src, []).append(gap)
+    gaps = [max(0.0, float(r["gap_d"])) for r in rows if r["gap_d"] is not None]
 
-    def _quantile(xs: list[float], q: float) -> float:
-        if not xs: return 0.0
+    def _quantile(xs, q):
+        if not xs: return None
         s = sorted(xs)
-        i = min(len(s) - 1, int(len(s) * q))
-        return float(s[i])
+        return float(s[min(len(s) - 1, int(len(s) * q))])
 
-    sources = []
-    for src in set(list(by_source.keys()) + list(same_write.keys())):
-        vals = by_source.get(src, [])
-        sources.append({
-            "source":     src,
-            "measured":   len(vals),
-            "same_write": same_write.get(src, 0),
-            "median_s":   round(_quantile(vals, 0.50), 1),
-            "p90_s":      round(_quantile(vals, 0.90), 1),
-            "avg_s":      round(sum(vals) / len(vals), 1) if vals else 0.0,
-        })
-    sources.sort(key=lambda x: -(x["measured"] + x["same_write"]))
-
-    all_vals: list[float] = [v for xs in by_source.values() for v in xs]
-    total_same = sum(same_write.values())
+    tier1_total = conn.execute("SELECT COUNT(*) FROM firms WHERE tier = 1").fetchone()[0]
     return {
-        "total_verified":      sum(len(v) for v in by_source.values()) + total_same,
-        "measured":            len(all_vals),
-        "same_write":          total_same,
-        "median_s":             round(_quantile(all_vals, 0.50), 1),
-        "p90_s":                round(_quantile(all_vals, 0.90), 1),
-        "avg_s":                round(sum(all_vals)/len(all_vals), 1) if all_vals else 0.0,
-        "sources":              sources,
+        "firms_measured": len(gaps),
+        "tier1_firms":    tier1_total,
+        "coverage_pct":   (100.0 * len(gaps) / tier1_total) if tier1_total else 0.0,
+        "median_days":    _quantile(gaps, 0.50),
+        "p90_days":       _quantile(gaps, 0.90),
+        "avg_days":       (sum(gaps) / len(gaps)) if gaps else None,
     }
 
 
@@ -394,7 +378,7 @@ def main() -> int:
             "fallthrough":       build_fallthrough(conn),
             "source_health":     build_source_health(conn),
             "firm_velocity":     build_firm_velocity(conn),
-            "enrichment_timing": build_enrichment_timing(conn),
+            "signal_to_reach":   build_signal_to_reach(conn),
         }
     finally:
         conn.close()
