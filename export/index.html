@@ -1998,6 +1998,10 @@
     const safe = esc(brief)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      // collapse line-wraps inside a bullet so "•\n**Firm**\n→ text" stays on one line
+      .replace(/([•\-])[ \t]*\n+[ \t]*/g, '$1 ')
+      .replace(/[ \t]*\n[ \t]*(→)/g, ' $1')
+      .replace(/\n{2,}/g, '\n\n')
       .replace(/\n/g, '<br>');
     el.innerHTML = `
       <div class="brief-header">
