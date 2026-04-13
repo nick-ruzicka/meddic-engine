@@ -19,3 +19,6 @@ chariot-reference/
 
 # Claude Code internal state
 .claude/
+data/*.db
+data/signals.db
+data/.db
