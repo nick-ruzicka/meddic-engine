@@ -72,11 +72,18 @@
   .hbar .lbl{font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-2)}
   .hbar .track{height:8px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden}
   .hbar .track > div{height:100%;border-radius:2px;transition:width 500ms}
-  .hbar .meta{font-family:var(--font-mono);font-size:12px;color:var(--text-2);
-    display:grid;grid-template-columns:auto auto 1fr;gap:10px;align-items:baseline;justify-content:end;text-align:right}
-  .hbar .meta .n{color:var(--text);font-weight:500;font-variant-numeric:tabular-nums}
-  .hbar .meta .pct{color:var(--text-3);font-variant-numeric:tabular-nums;min-width:36px}
-  .hbar .meta .vf{color:var(--green);font-size:11px;text-align:right;white-space:nowrap}
+  .hbar .meta{font-family:var(--font-mono);font-size:13px;color:var(--text-2);
+    display:grid;grid-template-columns:50px 50px 70px;gap:14px;align-items:end;justify-content:end;text-align:right}
+  .hbar .meta .cell{display:flex;flex-direction:column;gap:2px;align-items:flex-end;line-height:1.1}
+  .hbar .meta .cell .v{color:var(--text);font-weight:500;font-variant-numeric:tabular-nums}
+  .hbar .meta .cell.pct .v{color:var(--text-3)}
+  .hbar .meta .cell.vf  .v{color:var(--green)}
+  .hbar .meta .cell .k{font-size:8.5px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);font-family:var(--font-ui);font-weight:500}
+  .waterfall-hd{display:grid;grid-template-columns:180px 1fr 200px;gap:16px;align-items:center;
+    margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  .waterfall-hd .spacer{grid-column:1 / span 2}
+  .waterfall-hd .cols{display:grid;grid-template-columns:50px 50px 70px;gap:14px;text-align:right;
+    font-size:8.5px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);font-weight:500}
 
   .summary{display:flex;gap:24px;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);
     font-size:12px;color:var(--text-2);letter-spacing:0.04em}
@@ -244,12 +251,17 @@
     if (subEl) subEl.textContent = `Where ${total} contacts come from`;
     wfEl.innerHTML = rows.map(b => {
       const pct = (b.n / total) * 100;
-      const vTag = (b.verified && b.k !== 'none')
-        ? `<span class="vf">${b.verified} verified</span>` : `<span class="vf"></span>`;
+      const vCell = (b.verified && b.k !== 'none')
+        ? `<div class="cell vf"><div class="v">${b.verified}</div><div class="k">verified</div></div>`
+        : `<div class="cell vf"><div class="v">—</div><div class="k">verified</div></div>`;
       return `<div class="hbar">
         <div class="lbl">${b.lbl}</div>
         <div class="track"><div style="width:${Math.max(1.5,pct)}%;background:${b.color}"></div></div>
-        <div class="meta"><span class="n">${b.n}</span><span class="pct">${pct.toFixed(0)}%</span>${vTag}</div>
+        <div class="meta">
+          <div class="cell"><div class="v">${b.n}</div><div class="k">count</div></div>
+          <div class="cell pct"><div class="v">${pct.toFixed(0)}%</div><div class="k">share</div></div>
+          ${vCell}
+        </div>
       </div>`;
     }).join('');
 
@@ -265,22 +277,6 @@
   function renderFallthrough(opsData){
     const el = document.getElementById('fallthrough');
     if (!el){ console.error('fallthrough element not found'); return; }
-    // Dominant reason lede — framed for reps, not engineers
-    const ft = (opsData && opsData.fallthrough) || null;
-    let ledeHTML = '';
-    if (ft && Array.isArray(ft.reasons) && ft.reasons.length){
-      const top = [...ft.reasons].sort((a,b) => (b.count||0) - (a.count||0))[0];
-      if (top && top.count){
-        const suggestions = {
-          'below_threshold': 'Collect more signals or run --enrich to improve ICP fit on new firms.',
-          'no_email':        'Run --enrich to resolve email addresses via Hunter + Exa team pages.',
-          'no_signal':       'Run --collect to pull fresh Twitter / LinkedIn / press signals.',
-          'flagged':         'Review these contacts manually — the scorer explicitly flagged them.',
-        };
-        const sugg = suggestions[top.reason] || top.suggestion || 'Investigate this step for drop-off.';
-        ledeHTML = `<div class="ft-lede"><b>${top.count}</b> contacts stalled at <b>${esc((top.reason||'').replace(/_/g,' '))}</b>. ${esc(sugg)}</div>`;
-      }
-    }
     const ft = (opsData && opsData.fallthrough) || null;
     const rows = ft ? [
       {reason:`Score below threshold (50) — tier 1`, count:ft.below_threshold, action:'Collect more signals or expand ICP criteria'},

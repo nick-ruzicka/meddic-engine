@@ -714,6 +714,63 @@
   .sig-chip.warm {color:var(--amber);border-color:rgba(245,158,11,0.30)}
   .sig-chip.cold {color:var(--text-3)}
 
+
+  /* source badge — data provenance pill next to email dot */
+  .src-badge{
+    display:inline-block;margin:0 8px 0 2px;
+    font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:0.04em;
+    padding:2px 6px;border-radius:2px;vertical-align:middle;
+    border:1px solid transparent;line-height:1;
+  }
+  .src-badge.H{background:rgba(70,91,255,0.20);color:#8b9fff;border-color:rgba(70,91,255,0.30)}
+  .src-badge.E{background:rgba(124,58,237,0.20);color:#a78bfa;border-color:rgba(124,58,237,0.30)}
+  .src-badge.S{background:rgba(16,185,129,0.20);color:#34d399;border-color:rgba(16,185,129,0.30)}
+  .src-badge.T{background:rgba(245,158,11,0.20);color:#fbbf24;border-color:rgba(245,158,11,0.30)}
+  .src-badge.Q{background:rgba(70,91,255,0.12);color:#8b9fff;border-color:rgba(70,91,255,0.22)}
+  .src-badge.P{background:rgba(255,255,255,0.08);color:var(--text-3);border-color:rgba(255,255,255,0.08)}
+
+  /* competitor tag — amber/blue/red/violet per incumbent */
+  .comp-tag{
+    display:inline-block;margin-left:6px;vertical-align:middle;
+    font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:0.04em;
+    padding:2px 7px;border-radius:2px;border:1px solid transparent;line-height:1;
+  }
+  .comp-tag.alphasense{background:rgba(245,158,11,0.18);color:#fbbf24;border-color:rgba(245,158,11,0.32)}
+  .comp-tag.rogo     {background:rgba(70,91,255,0.18);color:#8b9fff;border-color:rgba(70,91,255,0.32)}
+  .comp-tag.bloomberg{background:rgba(239,68,68,0.16);color:#f87171;border-color:rgba(239,68,68,0.32)}
+  .comp-tag.stack_ai {background:rgba(124,58,237,0.18);color:#a78bfa;border-color:rgba(124,58,237,0.32)}
+  .comp-tag.harvey   {background:rgba(245,158,11,0.12);color:#fbbf24;border-color:rgba(245,158,11,0.25)}
+  .comp-tag.budget   {background:rgba(255,255,255,0.06);color:var(--text-3);border-color:rgba(255,255,255,0.12)}
+
+  /* MEDDIC tooltip */
+  .meddic-pill{position:relative;cursor:help}
+  .meddic-pill::after{
+    content:attr(data-tooltip);
+    position:absolute;bottom:calc(100% + 6px);left:50%;
+    transform:translateX(-50%);
+    background:#1c1c1c;border:1px solid rgba(255,255,255,0.12);
+    color:var(--text-2);font-size:11px;padding:5px 10px;
+    border-radius:2px;white-space:nowrap;opacity:0;pointer-events:none;
+    transition:opacity 150ms;z-index:50;font-weight:400;
+    letter-spacing:0.01em;
+  }
+  .meddic-pill:hover::after{opacity:1}
+
+  /* panel navigation */
+  .sp-nav{
+    display:flex;align-items:center;gap:12px;margin-top:12px;
+    font-family:var(--font-mono);font-size:11px;color:var(--text-3);
+    padding-top:12px;border-top:1px solid var(--border);
+  }
+  .sp-nav button{
+    background:transparent;border:1px solid var(--border);color:var(--text-2);
+    padding:5px 10px;border-radius:2px;font-family:var(--font-mono);
+    font-size:11px;cursor:pointer;transition:all 120ms;
+  }
+  .sp-nav button:hover:not(:disabled){border-color:var(--border-strong);color:var(--text)}
+  .sp-nav button:disabled{opacity:0.35;cursor:default}
+  .sp-nav .counter{color:var(--text-2);letter-spacing:0.06em;margin:0 4px}
+
 </style>
 </head>
 <body>
@@ -1038,11 +1095,11 @@
         </div>
       </div>
       <div class="contact-cell">
-        <div class="contact-name">${esc(c.contact_name)}${meddicPill(c.title)}${c.first_line ? '<span class="fl-ready" title="First line generated">READY</span>' : ''}</div>
+        <div class="contact-name">${esc(c.contact_name)}${meddicPill(c.title)}${competitorTag(c)}${c.first_line ? '<span class="fl-ready" title="First line generated">READY</span>' : ''}</div>
         <div class="contact-title">${esc(c.title)}</div>
       </div>
       <div class="email-cell">
-        <span class="email-dot ${dotCls}"></span>
+        <span class="email-dot ${dotCls}"></span>${sourceBadge(c)}
         <span class="em">${esc(emailTxt)}</span>
         ${(() => {
           if (!c.signal_date) return '';
@@ -1337,10 +1394,56 @@
     if (/\b(head of ai|head of data|head of research|head of technology|head of engineering|director|vp|vice president)\b/.test(t)) return 'CH';
     return 'UC';
   }
+
+  // Data provenance badge for the contact's email source
+  const SOURCE_MAP = {
+    hunter:           {k:'H', tip:'Hunter.io verified'},
+    proxycurl:        {k:'H', tip:'Hunter verified (via Proxycurl name)'},
+    exa_team_page:    {k:'E', tip:'Exa team page'},
+    team_page_direct: {k:'T', tip:'Direct team page'},
+    sec_adv:          {k:'S', tip:'SEC ADV filing'},
+    hunter_low_conf:  {k:'Q', tip:'Hunter low-confidence'},
+    pattern_guess:    {k:'P', tip:'Pattern guess + verify'},
+  };
+  function sourceBadge(c){
+    const src = c.email_source || '';
+    const m = SOURCE_MAP[src];
+    if (!m) return '';
+    return `<span class="src-badge ${m.k}" title="${esc(m.tip)}">${m.k}</span>`;
+  }
+
+  // Competitor tag for the firm (if set to a real incumbent)
+  const COMP_LABELS = {
+    alphasense: 'AlphaS',
+    rogo:       'Rogo',
+    bloomberg:  'BBG',
+    stack_ai:   'StackAI',
+    harvey:     'Harvey',
+    budget:     'Budget',
+  };
+  const COMP_FULL = {
+    alphasense: 'AlphaSense — displacement angle',
+    rogo:       'Rogo — complementary positioning',
+    bloomberg:  'Bloomberg Terminal — replacement angle',
+    stack_ai:   'Stack AI — workflow layer',
+    harvey:     'Harvey — legal-adjacent, displacement',
+    budget:     'Budget objection — procurement-led',
+  };
+  function competitorTag(c){
+    const k = (c.competitor || '').toLowerCase();
+    if (!k || k === 'none') return '';
+    const short = COMP_LABELS[k] || k;
+    const full  = COMP_FULL[k] || k;
+    return `<span class="comp-tag ${esc(k)}" title="${esc(full)}">${esc(short)}</span>`;
+  }
+
   function meddicPill(title){
     if (!title) return '';
     const r = meddicRole(title);
-    return `<span class="meddic-pill" title="${r==='EB'?'Economic Buyer':r==='CH'?'Champion':'User / Champion'}">${r}</span>`;
+    const tip = r === 'EB' ? 'Economic Buyer — final authority on vendor selection'
+              : r === 'CH' ? 'Champion — internal advocate, builds the business case'
+              : 'User / Contact — practitioner, not decision maker';
+    return `<span class="meddic-pill" data-tooltip="${esc(tip)}">${r}</span>`;
   }
 
   function renderBrief(b){
@@ -1755,6 +1858,20 @@
         <div class="sp-firm">${esc(c.firm_name)}</div>
         <div class="sp-contact">${esc(c.contact_name)} · ${esc(c.title || '—')}${meddicPill(c.title)}</div>
         <div class="sp-email">${esc(c.email || '—')}<span class="sp-dot ${dotCls}"></span>· ${score}</div>
+        ${(() => {
+          const peers = (state.data?.contacts || [])
+            .filter(x => x.firm_name === c.firm_name && (x.tier||1) === 1)
+            .sort((a,b) => (b.score||0) - (a.score||0));
+          if (peers.length <= 1) return '';
+          const idx = peers.findIndex(p => p.queue_id === c.queue_id);
+          const prevQid = idx > 0 ? peers[idx-1].queue_id : null;
+          const nextQid = idx < peers.length - 1 ? peers[idx+1].queue_id : null;
+          return `<div class="sp-nav">
+            <button data-peer-qid="${prevQid||''}" ${prevQid?'':'disabled'}>← prev</button>
+            <span class="counter">${idx+1} of ${peers.length}</span>
+            <button data-peer-qid="${nextQid||''}" ${nextQid?'':'disabled'}>next →</button>
+          </div>`;
+        })()}
       </div>
       <div class="side-panel__actions">
         <button class="btn approve" data-act="approve" ${disabled}>Approve</button>
@@ -1801,6 +1918,11 @@
       </div>` : ''}
     `;
     panel.querySelectorAll('[data-panel-close]').forEach(b => b.addEventListener('click', closePanel));
+    panel.querySelectorAll('[data-peer-qid]').forEach(b => {
+      const qid = parseInt(b.dataset.peerQid, 10);
+      if (!qid) return;
+      b.addEventListener('click', () => openPanel(qid));
+    });
     panel.querySelectorAll('[data-act]').forEach(b => {
       b.addEventListener('click', (e) => {
         e.stopPropagation();
