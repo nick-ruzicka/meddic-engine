@@ -72,7 +72,7 @@ def require_api_key(fn):
 def list_contacts():
     status    = (request.args.get("status") or "pending").lower()
     min_score = float(request.args.get("min_score", 0))
-    limit     = int(request.args.get("limit", 50))
+    limit     = max(1, min(int(request.args.get("limit", 50)), 500))
 
     if status not in VALID_STATUSES:
         return jsonify({"error": f"invalid status; use one of {sorted(VALID_STATUSES)}"}), 400
@@ -156,7 +156,7 @@ def list_contacts():
 def approve():
     body = request.get_json(silent=True) or {}
     queue_id = body.get("queue_id")
-    first_line = (body.get("first_line") or "").strip()
+    first_line = (body.get("first_line") or "").strip()[:500]
     if not queue_id:
         return jsonify({"error": "queue_id required"}), 400
 
@@ -622,12 +622,16 @@ def run_pipeline():
     else:
         cmd = [sys.executable, MAIN_PY, f"--{mode}"]
 
+    log_dir = os.path.join(ROOT, "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log_path = os.path.join(log_dir, f"run_{mode}.log")
     try:
-        # Fire-and-forget: caller polls /stats for progress
-        subprocess.Popen(cmd, cwd=ROOT,
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # Fire-and-forget: caller polls /stats for progress. Output goes to a
+        # per-mode log file so hangs and traces are visible after the fact.
+        log_f = open(log_path, "w")
+        subprocess.Popen(cmd, cwd=ROOT, stdout=log_f, stderr=log_f)
     except Exception as e:
         logger.exception("failed to launch pipeline")
         return jsonify({"error": str(e)}), 500
 
-    return jsonify({"ok": True, "mode": mode})
+    return jsonify({"ok": True, "mode": mode, "log": log_path})
