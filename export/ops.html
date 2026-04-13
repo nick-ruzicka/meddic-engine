@@ -226,8 +226,14 @@
   .src-row .status .dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
   .src-row.stale  .status .dot{background:var(--amber)}
   .src-row.silent .status .dot{background:var(--red)}
+  .src-row.quiet  .status .dot{background:var(--amber,#f59e0b)}
+  .src-row.not_wired .status .dot{background:rgba(139,111,78,0.28)}
   .src-row.stale  .status{color:var(--amber)}
   .src-row.silent .status{color:var(--red)}
+  .src-row.quiet  .status{color:var(--amber,#f59e0b)}
+  .src-row.not_wired{opacity:0.55}
+  .src-row.not_wired .status{color:var(--ink-3,rgba(0,0,0,0.45));text-transform:none;letter-spacing:0.02em}
+  .src-row.not_wired .nm{color:var(--ink-3,rgba(0,0,0,0.50))}
   .src-row .spark{height:32px;width:100%}
   .src-row .total{font-family:var(--font-mono);font-size:13px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
   .src-row .last{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-3);text-align:right}
@@ -710,15 +716,27 @@
     if (!sources.length){ el.innerHTML = `<div class="state">No signal activity</div>`; return; }
     const fmtDay = iso => iso ? new Date(iso).toLocaleDateString([], {month:'short', day:'numeric'}) : '—';
     const colors = {press:'#B07D1A', twitter:'#C25A1E', hiring:'#4F7A3B', linkedin:'#465BFF', exa:'#8B6F4E', unknown:'#B5A889'};
+    // Map status → short label shown next to the row. "not_wired" distinguishes
+    // "we never configured this collector" from "the collector ran but found nothing."
+    const shortLabels = {active: 'active', stale: 'stale', quiet: 'quiet', not_wired: 'not wired'};
     el.innerHTML = sources.map(s => {
-      const color = colors[s.signal_type] || '#8B6F4E';
-      const statusLbl = s.status === 'active' ? 'active' : s.status === 'stale' ? 'stale' : 'silent';
-      return `<div class="src-row ${s.status}">
+      const color = s.status === 'not_wired' ? 'rgba(139,111,78,0.22)' : (colors[s.signal_type] || '#8B6F4E');
+      const lbl = shortLabels[s.status] || s.status;
+      const totalCell = s.status === 'not_wired'
+        ? `<span style="color:var(--ink-3,rgba(0,0,0,0.4))">—</span>`
+        : s.total;
+      const lastCell = s.status === 'not_wired'
+        ? `<span style="color:var(--ink-3,rgba(0,0,0,0.4));font-style:italic">collector not configured</span>`
+        : esc(fmtDay(s.last_active));
+      const everNote = (s.status === 'quiet' && s.ever_total)
+        ? `<span style="color:var(--ink-3,rgba(0,0,0,0.4));font-size:10px;margin-left:6px">· ${s.ever_total} all-time</span>`
+        : '';
+      return `<div class="src-row ${s.status}" title="${esc(s.status_label || lbl)}">
         <div class="nm">${esc(s.signal_type)}</div>
-        <div class="status"><span class="dot"></span>${esc(statusLbl)}</div>
+        <div class="status"><span class="dot"></span>${esc(lbl)}${everNote}</div>
         <div>${sparkBars(s.series, 180, 32, color)}</div>
-        <div class="total">${s.total}</div>
-        <div class="last">${esc(fmtDay(s.last_active))}</div>
+        <div class="total">${totalCell}</div>
+        <div class="last">${lastCell}</div>
       </div>`;
     }).join('');
   }

@@ -150,6 +150,12 @@
 
   /* ── Funnel (ribbon) ── */
   .funnel{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+  .f-group-label{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--text-3,rgba(0,0,0,0.45));font-weight:600;margin:12px 0 4px;padding:0 2px}
+  .f-group-label:first-child{margin-top:0}
+  .f-divider{margin:14px 0 6px;padding:10px 14px;
+    background:rgba(70,91,255,0.06);border-left:3px solid rgba(70,91,255,0.55);
+    font-size:12px;letter-spacing:0.02em;color:var(--text-2,rgba(0,0,0,0.7));font-style:italic}
   .f-row{display:grid;grid-template-columns:1fr 96px;gap:18px;align-items:center}
   .f-bar{
     position:relative;height:60px;padding:0 22px;display:flex;align-items:center;
@@ -350,8 +356,12 @@
           <span class="v" id="k-total">—</span>
         </div>
         <div class="kpi-line">
-          <span class="l">Cost per lead</span>
-          <span class="v" id="k-cost">—</span>
+          <span class="l">Cost per lead (loaded)</span>
+          <span class="v" id="k-cost" title="Claude Sonnet + Haiku + Hunter, fully loaded across all ready leads">—</span>
+        </div>
+        <div class="kpi-line" id="kpi-cost-breakdown" style="display:none">
+          <span class="l" style="font-size:11px;color:var(--text-3,rgba(0,0,0,0.45))">Breakdown</span>
+          <span class="v" id="k-cost-breakdown" style="font-size:11px;color:var(--text-3,rgba(0,0,0,0.55));font-weight:400"></span>
         </div>
       </div>
     </div>
@@ -380,6 +390,10 @@
       <div class="radar-wrap">
         <svg viewBox="0 0 260 260" id="radar" aria-hidden="true"></svg>
         <div class="radar-legend" id="radar-legend"></div>
+        <div id="radar-narrative" style="margin-top:14px;padding:10px 14px;
+             background:rgba(245,158,11,0.08);border-left:3px solid rgba(245,158,11,0.55);
+             font-size:12px;line-height:1.55;color:var(--text-2,rgba(0,0,0,0.7));
+             font-style:italic"></div>
       </div>
     </div>
 
@@ -493,47 +507,58 @@
     document.getElementById('k-avg').textContent = Math.round(h.avg_score || 0);
     document.getElementById('k-total').textContent = fmt(h.contacts);
     const cost = h.cost_per_lead || 0;
-    document.getElementById('k-cost').textContent = cost > 0 ? `$${cost < 0.01 ? cost.toFixed(4) : cost.toFixed(2)}` : '$0.00';
+    document.getElementById('k-cost').textContent = cost > 0
+      ? `$${cost < 1 ? cost.toFixed(3) : cost.toFixed(2)}`
+      : '$0.00';
+    const cb = h.cost_breakdown;
+    if (cb && h.total_cost_usd){
+      document.getElementById('kpi-cost-breakdown').style.display = '';
+      document.getElementById('k-cost-breakdown').textContent =
+        `$${cb.claude_sonnet_usd} score + $${cb.claude_brief_usd} brief + $${cb.claude_fl_usd} opener + $${cb.hunter_usd} Hunter = $${cb.total_usd}`;
+    }
   }
 
   // ── Funnel ──────────────────────────────────────────
+  // Renders two sub-funnels (firms → contacts) with a divider between them,
+  // so readers don't read a firm-count → contact-count step as a funnel step.
   function renderFunnel(d){
     const stages = (d.funnel && d.funnel.stages) || [];
-    const max = Math.max(1, ...stages.map(s => s.count));
-    let worstIdx = -1, worstRate = 101;
-    for (let i = 1; i < stages.length; i++){
-      const prev = stages[i-1].count; if (!prev) continue;
-      const rate = (stages[i].count / prev) * 100;
-      if (rate < worstRate){ worstRate = rate; worstIdx = i; }
-    }
+    const firmStages    = stages.filter(s => s.unit === 'firms');
+    const contactStages = stages.filter(s => s.unit === 'contacts');
+    // Tier-1 bridge count — used to connect the two sub-funnels in the narrative
+    const tier1 = (firmStages.find(s => s.key === 'tier1_active') || {}).count || 0;
+    const contactsBase = (contactStages[0] || {}).count || 0;
+
+    const renderGroup = (group, groupLabel, offsetIdx) => {
+      const max = Math.max(1, ...group.map(s => s.count));
+      return `<div class="f-group-label">${esc(groupLabel)}</div>` +
+        group.map((s, i) => {
+          const prev = i === 0 ? null : group[i-1].count;
+          const conv = prev ? (s.count / prev) * 100 : null;
+          const pct = Math.max(10, (s.count / max) * 100);
+          const idx = offsetIdx + i;
+          return `<div class="f-row">
+            <div class="f-bar" style="width:${pct}%;background:linear-gradient(90deg, ${funnelColor(idx, stages.length)}, ${funnelColor(Math.min(idx+1, stages.length-1), stages.length)})">
+              <span class="count">${fmt(s.count)}</span><span class="name">${esc(s.label)}</span>
+            </div>
+            <div class="f-conv">
+              ${conv != null ? `<span class="v">${conv.toFixed(0)}%</span>conversion` : `<span class="v">—</span>start`}
+            </div>
+          </div>`;
+        }).join('');
+    };
+
     const el = document.getElementById('funnel');
-    el.innerHTML = stages.map((s, i) => {
-      const prev = i === 0 ? null : stages[i-1].count;
-      const conv = prev ? (s.count / prev) * 100 : null;
-      const pct = Math.max(10, (s.count / max) * 100);
-      const drop = (i === worstIdx) ? `<span class="drop">↓ biggest drop</span>` : '';
-      return `<div class="f-row">
-        <div class="f-bar" style="width:${pct}%;background:linear-gradient(90deg, ${funnelColor(i, stages.length)}, ${funnelColor(Math.min(i+1, stages.length-1), stages.length)})">
-          <span class="count">${fmt(s.count)}</span><span class="name">${esc(s.label)}</span>
-        </div>
-        <div class="f-conv">
-          ${conv != null ? `<span class="v">${conv.toFixed(0)}%</span>conversion` : `<span class="v">—</span>start`}
-          ${drop}
-        </div>
-      </div>`;
-    }).join('');
+    let html = '';
+    if (firmStages.length)    html += renderGroup(firmStages, 'FIRM FUNNEL · source → curation', 0);
+    if (contactStages.length) html += `<div class="f-divider">↓ each Tier-1 firm fans out into ~${tier1 ? Math.round(contactsBase/tier1) : '—'} scored contacts</div>` + renderGroup(contactStages, 'CONTACT FUNNEL · enrichment → outreach-ready', firmStages.length);
+    el.innerHTML = html;
 
     const bn = d.bottleneck || {};
-    let msg = bn.message || '';
-    if (!msg && worstIdx > 0){
-      const from = stages[worstIdx-1], to = stages[worstIdx];
-      const lost = from.count - to.count;
-      msg = `<b>${esc(to.label)}</b> is the binding constraint — ${fmt(lost)} records (${Math.round(100 - worstRate)}%) drop between <b>${esc(from.label)}</b> and <b>${esc(to.label)}</b>.`;
-    }
-    if (msg){
+    if (bn.message){
       const lede = document.createElement('div');
       lede.className = 'funnel-lede';
-      lede.innerHTML = msg;
+      lede.innerHTML = `<b>${esc(bn.label || 'Conversion Gap')}:</b> ${esc(bn.message)}`;
       el.appendChild(lede);
     }
   }
@@ -594,6 +619,15 @@
     document.getElementById('radar-legend').innerHTML = pts.map(p => `
       <div><div class="k">${esc(p.lbl)}</div><div class="v">${Math.round(p.v)}</div></div>
     `).join('');
+
+    // Weakest-dimension narrative so a reader immediately sees WHY composite
+    // scores look the way they do.
+    const narr = dims._narrative || {};
+    const narrEl = document.getElementById('radar-narrative');
+    if (narrEl){
+      narrEl.textContent = narr.message || '';
+      narrEl.style.display = narr.message ? '' : 'none';
+    }
   }
 
   // ── Donut helper ────────────────────────────────────
@@ -701,25 +735,31 @@
   }
 
   // ── Signal Conversion ───────────────────────────────
+  // Rates are "primary-signal attribution" — each contact counted once under
+  // its most recent signal. The "No Signal" row is an ICP-only fallback, not
+  // a real acquisition channel, so it gets a different visual treatment.
   function renderSignalConv(d){
     const rows = d.signal_conversion || [];
-    const withData = rows.filter(r => r.contacts > 0);
+    const channelRows = rows.filter(r => !r.is_fallback);
+    const withData    = channelRows.filter(r => r.contacts > 0);
     const best = withData.reduce((a, b) => (a && a.rate > b.rate) ? a : b, null);
     const tb = document.querySelector('#signal-conv tbody');
     tb.innerHTML = rows.map(r => {
       const cls = [];
       if (best && r === best) cls.push('best');
       if (r.contacts === 0)   cls.push('zero');
+      if (r.is_fallback)      cls.push('fallback');
+      const chipType = r.signal_type === 'no_signal' ? 'none' : r.signal_type;
       return `<tr class="${cls.join(' ')}">
-        <td><span class="sig-chip ${esc(r.signal_type)}">${esc(r.signal_type)}</span></td>
+        <td><span class="sig-chip ${esc(chipType)}">${esc(r.label || r.signal_type)}</span></td>
         <td class="num">${fmt(r.contacts)}</td>
         <td class="num">${fmt(r.qualified)}</td>
         <td class="num">${r.rate.toFixed(1)}%</td>
       </tr>`;
     }).join('');
-    const zero = rows.filter(r => r.contacts === 0 && r.signal_type !== 'none');
+    const zero = channelRows.filter(r => r.contacts === 0);
     document.getElementById('signal-callouts').innerHTML = zero.map(r =>
-      `<div class="callout">${esc(r.signal_type)} signals not yet collected — run <code>--collect</code> to activate this source.</div>`
+      `<div class="callout">${esc(r.label || r.signal_type)} collector not yet wired — 0 signals on record. Run <code>--collect</code> once the source is configured.</div>`
     ).join('');
   }
 
@@ -739,18 +779,21 @@
       </div>`).join('') : `<div class="state">No competitor data</div>`;
   }
 
-  // ── Bottleneck ──────────────────────────────────────
+  // ── Conversion Gap (formerly "Bottleneck") ─────────
+  // Only considers contact-level conversion steps. Firm-level drops
+  // (SEC→ICP, ICP→Tier2) are deliberate caps and not shown as gaps.
   function renderBottleneck(d){
     const b = d.bottleneck || {};
     const wrap = document.getElementById('bottleneck-wrap');
     if (!b || !b.message){
-      wrap.innerHTML = `<div class="state">Pipeline too short to compute bottleneck</div>`;
+      wrap.innerHTML = `<div class="state">No contact-level conversion gap — ready pipeline is healthy.</div>`;
       return;
     }
+    const label = b.label || 'Largest Contact-level Conversion Gap';
     wrap.innerHTML = `<div class="bottleneck">
-      <div class="ic">!</div>
+      <div class="ic">↗</div>
       <div class="body">
-        <div class="lbl">Bottleneck · ${b.rate}% pass-through</div>
+        <div class="lbl">${esc(label)} · ${b.rate}% pass-through</div>
         <div class="msg">${esc(b.message)}</div>
       </div>
     </div>`;
