@@ -275,21 +275,30 @@ def _contacts(conn) -> list[dict]:
         else:
             firm_coverage_map[fid] = ""  # no badge
 
+    LINKEDIN_ARTIFACTS = (
+        "Agree & Join LinkedIn", "Agree &amp; Join LinkedIn",
+        "Join to see", "Join LinkedIn", "Sign in to view",
+        "Log in to view", "Log in",
+        "| comments Agree", "comments Agree",
+        "By clicking", "| comments", "View post", "| LinkedIn",
+        "…\n",
+    )
+
     def clean_snippet(text: str) -> str:
         if not text:
             return ""
-        # Trim known LinkedIn / Exa boilerplate suffixes when they appear past
-        # the first 20 chars (so we keep snippets that legitimately begin with
-        # a similar phrase).
-        for suffix in ("By clicking", "| comments", "View post",
-                       "| LinkedIn", "Stuart Sim\n", "…\n"):
-            idx = text.find(suffix)
-            if idx > 20:
+        # Trim known LinkedIn / Exa boilerplate. We only cut when the artifact
+        # starts past char 0 — never strip a snippet that legitimately begins
+        # with one of these phrases.
+        for artifact in LINKEDIN_ARTIFACTS:
+            idx = text.find(artifact)
+            if idx > 0:
                 text = text[:idx]
         text = " ".join(text.split())  # collapse whitespace
+        if not text or len(text) < 20:
+            return ""  # caller treats empty as "no snippet, suppress card"
         if len(text) <= 200:
             return text
-        # Truncate cleanly at last word boundary before 200.
         cut = text.rfind(" ", 0, 200)
         return (text[:cut] if cut > 100 else text[:200]).rstrip(",.;:") + "…"
 

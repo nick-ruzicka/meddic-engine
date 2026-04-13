@@ -826,6 +826,12 @@
   /* Objection flag — red warning for has_objections firms */
   .obj-flag{background:rgba(239,68,68,0.16);color:#f87171;border:1px solid rgba(239,68,68,0.32)}
   /* LinkedIn icon — clickable link */
+  .activity-dot{
+    width:6px;height:6px;border-radius:50%;display:inline-block;
+    margin-right:4px;vertical-align:middle;
+  }
+  .activity-dot.fresh{background:#10b981;box-shadow:0 0 4px rgba(16,185,129,0.6)}
+  .activity-dot.aging{background:#f59e0b}
   .li-icon{
     display:inline-flex;align-items:center;justify-content:center;
     width:16px;height:16px;background:#0A66C2;color:#fff;border:0;
@@ -1187,7 +1193,7 @@
         </div>
       </div>
       <div class="contact-cell">
-        <div class="contact-name"><span class="nm">${esc(c.contact_name)}</span>${meddicPillFor(c)}${competitorTag(c)}${objectionTag(c)}${linkedinIcon(c)}${c.first_line ? '<span class="fl-ready" title="First line generated">READY</span>' : ''}</div>
+        <div class="contact-name">${activityDot(c)}<span class="nm">${esc(c.contact_name)}</span>${meddicPillFor(c)}${competitorTag(c)}${objectionTag(c)}${linkedinIcon(c)}${c.first_line ? '<span class="fl-ready" title="First line generated">READY</span>' : ''}</div>
         <div class="contact-title">${esc(c.title)}</div>
       </div>
       <div class="email-cell">
@@ -1543,6 +1549,15 @@
   function linkedinIcon(c){
     if (!c.linkedin_url) return '';
     return `<a class="li-icon" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener" title="LinkedIn profile" onclick="event.stopPropagation()">in</a>`;
+  }
+  function activityDot(c){
+    if (!c.last_activity_at) return '';
+    const d = new Date(c.last_activity_at);
+    if (isNaN(d.getTime())) return '';
+    const days = (Date.now() - d.getTime()) / 86400000;
+    if (days > 365) return '';
+    const cls = days <= 90 ? 'fresh' : 'aging';
+    return `<span class="activity-dot ${cls}" title="Last public activity: ${esc(c.last_activity_at)}"></span>`;
   }
   function objectionTag(c){
     return c.has_objections ? '<span class="obj-flag" title="Firm has compliance/AI-wrapper objection noted — lead with data-sovereignty angle">⚑</span>' : '';
@@ -2167,8 +2182,26 @@
     const lastActive = c.last_activity_at || '';
     if (!r && !handle && !lastActive) return '';
 
+    // Strip "Brian Maury on LinkedIn:" / "Stuart Sim's Post" style prefixes
+    // and reject items where the cleaned snippet would be too thin to be
+    // useful.
+    const stripNamePrefix = (text) => {
+      if (!text) return '';
+      const name = (c.contact_name || '').trim();
+      if (!name) return text;
+      const re = new RegExp(`^${name.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}(?:'s Post| on LinkedIn|:)?\\s*[:\\-]?\\s*`, 'i');
+      return text.replace(re, '').trim();
+    };
+    const linkedinPostsAllowed = (r?.recent_posts || []).filter(p => {
+      const url = (p.url || '').toLowerCase();
+      // For LinkedIn URLs, demand a real post link (not /in/ profile pages).
+      if (url.includes('linkedin.com') && !url.includes('linkedin.com/posts')) return false;
+      const snip = stripNamePrefix(p.snippet || '');
+      return snip.length > 30 || !url.includes('linkedin.com');
+    }).map(p => ({...p, snippet: stripNamePrefix(p.snippet || '')}));
+
     const items = r ? []
-      .concat((r.recent_posts || []).map(x => ({...x, _kind:'POST'})))
+      .concat(linkedinPostsAllowed.map(x => ({...x, _kind:'POST'})))
       .concat((r.speaking     || []).map(x => ({...x, _kind:'SPEAKING'})))
       .concat((r.press        || []).map(x => ({...x, _kind:'PRESS'})))
       : [];
