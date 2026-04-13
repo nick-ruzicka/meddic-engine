@@ -138,6 +138,52 @@ def build_parse_errors() -> list[dict]:
     return out
 
 
+def build_fallthrough(conn) -> dict:
+    """Why tier-1 contacts miss the queue. All counts filtered to tier=1
+    firms only — tier-2 placeholder contacts dominate raw counts and are
+    not the ops story."""
+    tier1 = "c.firm_id IN (SELECT id FROM firms WHERE tier = 1)"
+
+    below = conn.execute(f"""
+        SELECT COUNT(*) FROM contacts c
+         WHERE {tier1}
+           AND COALESCE(is_placeholder,0)=0
+           AND EXISTS (SELECT 1 FROM scores s WHERE s.contact_id=c.id AND s.score < 50)
+    """).fetchone()[0]
+
+    no_email = conn.execute(f"""
+        SELECT COUNT(*) FROM contacts c
+         WHERE {tier1}
+           AND COALESCE(is_placeholder,0)=0
+           AND (c.email IS NULL OR c.email = '' OR COALESCE(c.email_verified,0)=0)
+    """).fetchone()[0]
+
+    no_signal = conn.execute(f"""
+        SELECT COUNT(*) FROM contacts c
+         WHERE {tier1}
+           AND COALESCE(is_placeholder,0)=0
+           AND NOT EXISTS (
+               SELECT 1 FROM signals s
+                WHERE s.contact_id = c.id OR s.firm_id = c.firm_id
+           )
+    """).fetchone()[0]
+
+    exploring = conn.execute(f"""
+        SELECT COUNT(*) FROM contacts c
+          JOIN firms f ON f.id = c.firm_id
+         WHERE f.tier = 1
+           AND COALESCE(c.is_placeholder,0)=0
+           AND LOWER(COALESCE(f.buying_stage,'')) = 'exploring'
+    """).fetchone()[0]
+
+    return {
+        "below_threshold": below,
+        "no_email": no_email,
+        "no_signal": no_signal,
+        "exploring": exploring,
+    }
+
+
 def build_pipeline_cadence(conn) -> list[dict]:
     """Scored-per-day for the last 14 days."""
     return _rows(conn, """
@@ -163,6 +209,7 @@ def main() -> int:
             "recent_signals":    build_recent_signals(conn),
             "parse_errors":      build_parse_errors(),
             "pipeline_cadence":  build_pipeline_cadence(conn),
+            "fallthrough":       build_fallthrough(conn),
         }
     finally:
         conn.close()

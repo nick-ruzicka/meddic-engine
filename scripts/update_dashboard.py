@@ -67,12 +67,17 @@ def _stats(conn) -> dict:
                    f.id AS firm_id, f.name AS firm_name, f.buying_stage
               FROM signals sig
               JOIN firms f ON f.id = sig.firm_id
+              JOIN (
+                  SELECT firm_id, MAX(COALESCE(signal_date, created_at)) AS latest
+                    FROM signals
+                   GROUP BY firm_id
+              ) latest ON latest.firm_id = sig.firm_id
+                      AND COALESCE(sig.signal_date, sig.created_at) = latest.latest
              WHERE f.tier = 1
                AND COALESCE(f.buying_stage,'') IN ('deploying','evaluating')
-               AND COALESCE(sig.signal_date, sig.created_at) >=
-                   datetime('now', '-48 hours')
+             GROUP BY f.id
              ORDER BY COALESCE(sig.signal_date, sig.created_at) DESC
-             LIMIT 12
+             LIMIT 6
         """).fetchall()
         for t in trows:
             recent_triggers.append({

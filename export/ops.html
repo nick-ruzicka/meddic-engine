@@ -62,7 +62,7 @@
   section{margin-bottom:56px}
   section + section{margin-top:48px}
   .sec-title{font-family:var(--font-display);font-size:22px;font-weight:500;letter-spacing:0.02em;
-    text-transform:uppercase;margin:0 0 6px}
+    margin:0 0 6px}
   .sec-sub{font-size:12px;color:var(--text-3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:20px}
 
   .card{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:24px 28px}
@@ -228,8 +228,12 @@
     }
 
     const total = Math.max(1, rows.reduce((a,b) => a + b.n, 0));
-    document.getElementById('waterfall-sub').textContent = `Where ${total} contacts come from`;
-    document.getElementById('waterfall').innerHTML = rows.map(b => {
+    const subEl = document.getElementById('waterfall-sub');
+    const wfEl  = document.getElementById('waterfall');
+    const sumEl = document.getElementById('waterfall-summary');
+    if (!wfEl){ console.error('waterfall element not found'); return; }
+    if (subEl) subEl.textContent = `Where ${total} contacts come from`;
+    wfEl.innerHTML = rows.map(b => {
       const pct = (b.n / total) * 100;
       const vTag = (b.verified && b.k !== 'none')
         ? `<span style="color:var(--green);margin-left:8px">${b.verified} verified</span>` : '';
@@ -243,32 +247,32 @@
     const verified = rows.reduce((a,b) => a + (b.verified || 0), 0);
     const withEmail = rows.filter(b => b.k !== 'none').reduce((a,b) => a + b.n, 0);
     const missing  = rows.find(b => b.k === 'none')?.n || 0;
-    document.getElementById('waterfall-summary').innerHTML = `
+    if (sumEl) sumEl.innerHTML = `
       <span><b>${Math.round(verified/total*100)}%</b>verified</span>
       <span><b>${Math.round((withEmail - verified)/total*100)}%</b>found, unverified</span>
       <span><b>${Math.round(missing/total*100)}%</b>no email</span>`;
   }
 
-  function renderFallthrough(data){
-    const cs = data.contacts || [];
-    const belowScore = cs.filter(c => (c.score||0) < 50).length;
-    const noEmail    = cs.filter(c => !c.email || !c.email_verified).length;
-    const noSignal   = cs.filter(c => !c.signal_type).length;
-    const exploring  = cs.filter(c => (c.buying_stage||'').toLowerCase() === 'exploring').length;
-    const rows = [
-      {reason:'Score below threshold (50)',        count:belowScore, action:'Collect more signals or expand ICP criteria', sev: belowScore > 5 ? 'hi' : 'md'},
-      {reason:'No verified email',                 count:noEmail,    action:'Queue into Hunter.io enrichment batch',         sev: noEmail > 5 ? 'hi' : noEmail > 0 ? 'md' : 'lo'},
-      {reason:'No signal attached',                count:noSignal,   action:'Run collectors or attach manual signal',        sev: noSignal > cs.length/2 ? 'hi' : noSignal > 0 ? 'md' : 'lo'},
-      {reason:'Buying stage: exploring',           count:exploring,  action:'Deprioritize this cycle, re-score next run',    sev: exploring > 3 ? 'md' : 'lo'},
-    ];
-    document.getElementById('fallthrough').innerHTML = rows.map(r => `
-      <div class="fall-row">
-        <div>
-          <div class="reason">${esc(r.reason)}</div>
-          <div class="action">${esc(r.action)}</div>
-        </div>
-        <div class="num">${r.count}</div>
-      </div>`).join('');
+  function renderFallthrough(opsData){
+    const el = document.getElementById('fallthrough');
+    if (!el){ console.error('fallthrough element not found'); return; }
+    const ft = (opsData && opsData.fallthrough) || null;
+    const rows = ft ? [
+      {reason:`Score below threshold (50) — tier 1`, count:ft.below_threshold, action:'Collect more signals or expand ICP criteria'},
+      {reason:'No verified email — tier 1',          count:ft.no_email,        action:'Queue into Hunter.io enrichment batch'},
+      {reason:'No signal attached — tier 1',         count:ft.no_signal,       action:'Run collectors or attach manual signal'},
+      {reason:'Buying stage: exploring — tier 1',    count:ft.exploring,       action:'Deprioritize this cycle, re-score next run'},
+    ] : [];
+    el.innerHTML = rows.length
+      ? rows.map(r => `
+        <div class="fall-row">
+          <div>
+            <div class="reason">${esc(r.reason)}</div>
+            <div class="action">${esc(r.action)}</div>
+          </div>
+          <div class="num">${r.count}</div>
+        </div>`).join('')
+      : `<div class="state">Run scripts/update_ops.py to populate fallthrough counts.</div>`;
   }
 
   function renderStages(data){
@@ -328,7 +332,7 @@
       const r = await fetch('contacts_data.json', {cache:'no-store'});
       if (!r.ok) throw new Error('HTTP '+r.status);
       const data = await r.json();
-      renderWaterfall(data); renderFallthrough(data); renderStages(data); renderFirmTable(data);
+      renderWaterfall(data);
       const ts = data.generated_at ? new Date(data.generated_at).toLocaleString() : '—';
       document.getElementById('footer').textContent = `Generated ${ts} · ${(data.contacts||[]).length} Contacts`;
     
@@ -337,6 +341,7 @@
         const rx = await fetch('ops_data.json', {cache:'no-store'});
         if (rx.ok){
           const od = await rx.json();
+          renderFallthrough(od);
           const ts = od.generated_at ? new Date(od.generated_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
           ['upd-waterfall','upd-fallthrough','upd-cadence','upd-errors'].forEach(id => {
             const el = document.getElementById(id); if (el) el.textContent = 'Updated ' + ts;

@@ -208,11 +208,12 @@ def brief(queue_id: int):
   </div>
   <div class="dims">ICP {n(row["icp_fit"])} · AI {n(row["ai_readiness"])} · Reach {n(row["reachability"])} · Fresh {n(row["signal_freshness"])}</div>
 
-  {block("Why Now", brief_data.get("why_now", ""))}
+  {block("Identified Pain", brief_data.get("identified_pain") or brief_data.get("why_now", ""))}
   {block("Likely Objection", brief_data.get("objection", ""))}
-  {block("Your Angle", brief_data.get("angle", ""))}
-  {block("Proof Point", brief_data.get("proof_point", ""))}
-  {block("Why This Person", brief_data.get("why_this_contact", ""))}
+  {block("Decision Criteria", brief_data.get("decision_criteria") or brief_data.get("angle", ""))}
+  {block("Metrics", brief_data.get("metrics") or brief_data.get("proof_point", ""))}
+  {block("Decision Process", brief_data.get("decision_process", ""))}
+  {block("Why This Person", brief_data.get("champion_eb") or brief_data.get("why_this_contact", ""))}
   {block("Multi-Thread", brief_data.get("thread", ""))}
   {block("Suggested First Line", first_line)}
   {sig_html}

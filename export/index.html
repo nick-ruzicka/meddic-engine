@@ -67,7 +67,8 @@
   .nav-links a:hover{color:var(--text)}
   .nav-links a.active{color:var(--blue)}
   .nav-links .nav-sep{color:rgba(255,255,255,0.20);font-size:11px}
-  .nav-right{display:flex;align-items:center;gap:14px}
+  .nav-right{display:flex;align-items:center;gap:18px}
+  .alerts-wrap{padding:0 4px}
   .nav-meta{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
 
   /* Signals-live indicator */
@@ -89,7 +90,7 @@
   .signal-live.stale .live-dot{background:rgba(255,255,255,0.30)}
   @keyframes live-pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
-  main{max-width:1280px;margin:0 auto;padding:32px 28px 64px}
+  main{max-width:100%;margin:0;padding:28px 24px 64px}
 
   /* ==== HERO STRIP ==== */
   .hero{
@@ -121,7 +122,7 @@
   }
   .hero-inner{
     position:relative;z-index:1;
-    max-width:1280px;margin:0 auto;padding:36px 28px;
+    max-width:100%;margin:0;padding:36px 40px;
     min-height:160px;
     display:grid;grid-template-columns:65% 1fr;gap:0;align-items:stretch;
   }
@@ -163,7 +164,7 @@
     background:transparent;
     border:none;
     border-radius:0;
-    padding:20px 24px;
+    padding:28px 32px;
     border-top:2px solid transparent;
     border-left:1px solid rgba(255,255,255,0.08);
   }
@@ -201,7 +202,7 @@
   .coverage .dot{display:inline-block;width:6px;height:6px;border-radius:1px;margin-right:6px;vertical-align:middle}
 
   /* ==== TOOLBAR ==== */
-  .toolbar{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+  .toolbar{display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin-bottom:20px;padding:16px 0;border-bottom:1px solid var(--border)}
   .search{position:relative;flex:0 0 300px}
   .search input{
     width:100%;
@@ -246,7 +247,7 @@
   /* ==== TABLE ==== */
   .table{border-top:1px solid var(--border)}
   .thead{
-    display:grid;grid-template-columns:2fr 1.6fr 1.6fr 160px 220px 24px;
+    display:grid;grid-template-columns:minmax(280px,2.1fr) minmax(220px,1.6fr) minmax(260px,1.8fr) 140px 220px 28px;
     gap:0;padding:0;
     font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;
     color:rgba(255,255,255,0.35);
@@ -255,7 +256,7 @@
   .thead > div{padding:12px 16px;border-left:1px solid rgba(255,255,255,0.08)}
   .thead > div:first-child{border-left:none}
   .trow{
-    display:grid;grid-template-columns:2fr 1.6fr 1.6fr 160px 220px 24px;
+    display:grid;grid-template-columns:minmax(280px,2.1fr) minmax(220px,1.6fr) minmax(260px,1.8fr) 140px 220px 28px;
     gap:0;align-items:center;
     padding:0;
     border-bottom:1px solid rgba(255,255,255,0.06);
@@ -420,7 +421,7 @@
   .toast.error{border-color:var(--red-border);color:#f87171}
 
   footer{
-    max-width:1280px;margin:0 auto;padding:24px 28px 40px;
+    max-width:100%;margin:0;padding:24px 40px 40px;
     font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
     border-top:1px solid var(--border);
   }
@@ -557,7 +558,7 @@
   /* prose-cap */ .reasoning, .brief-section p, .account-brief p, .brief-row .v { max-width: 68ch }
 
   /* view-compact — single-row contacts, tighter rhythm */
-  .view-compact .trow{padding-top:8px;padding-bottom:8px;min-height:52px}
+  .view-compact .trow{padding-top:12px;padding-bottom:12px;min-height:60px}
   .view-compact .firm-tags{display:none}
   .view-compact .contact-title{display:none}
   .view-compact .avatar{width:28px;height:28px;font-size:11px}
@@ -612,7 +613,7 @@
            border-radius:4px;box-shadow:0 12px 40px rgba(0,0,0,0.5);z-index:40;overflow:hidden">
         <div style="padding:10px 14px;border-bottom:1px solid var(--border);
              font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);font-weight:600">
-          Recent Triggers · Last 48h
+          Latest Triggers · Tier 1 Active Stages
         </div>
         <div id="alerts-list" style="max-height:320px;overflow-y:auto"></div>
       </div>
