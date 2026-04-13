@@ -825,12 +825,13 @@
   .obj-flag{background:rgba(239,68,68,0.16);color:#f87171;border:1px solid rgba(239,68,68,0.32)}
   /* LinkedIn icon — clickable link */
   .li-icon{
-    background:rgba(70,91,255,0.15);color:#8b9fff;
-    border:1px solid rgba(70,91,255,0.28);width:18px;height:16px;
-    padding:0;font-size:9px;cursor:pointer;text-decoration:none;
-    transition:background 150ms;
+    display:inline-flex;align-items:center;justify-content:center;
+    width:16px;height:16px;background:#0A66C2;color:#fff;border:0;
+    font-size:8px;font-weight:700;border-radius:2px;
+    text-decoration:none;margin-left:6px;cursor:pointer;
+    transition:filter 150ms;
   }
-  .li-icon:hover{background:rgba(70,91,255,0.28);color:#fff}
+  .li-icon:hover{filter:brightness(1.15)}
 
 </style>
 </head>
@@ -1758,18 +1759,43 @@
     badge.style.display = '';
     badge.textContent = triggers.length;
     label.textContent = `${triggers.length} New`;
-    list.innerHTML = triggers.map(t => `
+    const sigKindColor = {
+      press:'pill--teal', twitter:'pill--blue', linkedin:'pill--violet',
+      hiring:'pill--amber', exa:'pill--teal', manual:'pill--muted',
+    };
+    const sigLinkLabel = {
+      press:'→ Read article ↗', twitter:'→ View tweet ↗',
+      linkedin:'→ View post ↗', hiring:'→ View posting ↗',
+      exa:'→ Read source ↗',
+    };
+    list.innerHTML = triggers.map(t => {
+      const kind = (t.signal_type || 'signal').toLowerCase();
+      const chipCls = sigKindColor[kind] || 'pill--muted';
+      const linkLabel = sigLinkLabel[kind] || '→ View source ↗';
+      const link = t.signal_url
+        ? `<div style="margin-top:6px"><a href="${esc(t.signal_url)}" target="_blank" rel="noopener" style="color:#8b9fff;font-size:11px;text-decoration:none" onclick="event.stopPropagation()">${linkLabel}</a></div>`
+        : '';
+      const re = t.contact_name
+        ? `<div style="margin-top:4px;font-size:11px;color:var(--text-3)">re: ${esc(t.contact_name)}${t.contact_title?` · ${esc(t.contact_title)}`:''}</div>`
+        : '';
+      const snippet = t.signal_content
+        ? `<div style="font-size:12px;color:var(--text-2);margin-top:4px;line-height:1.4">${esc(t.signal_content)}${t.signal_content.length>=120?'…':''}</div>`
+        : '';
+      return `
       <div style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer"
            data-alert-firm="${t.firm_id}">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
-          <div style="font-size:13px;font-weight:500;color:var(--text)">${esc(t.firm_name)}</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span class="pill ${chipCls}">${esc(kind.toUpperCase())}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--text-1)">${esc(t.firm_name)}</span>
+          </div>
           <div style="font-size:10px;color:var(--text-3);letter-spacing:0.04em">${esc(timeAgo(t.signal_date))}</div>
         </div>
-        <div style="font-size:11px;color:var(--text-3);margin-top:2px;text-transform:uppercase;letter-spacing:0.06em">
-          ${esc(t.signal_type || 'signal')}${t.buying_stage?` · ${esc(t.buying_stage)}`:''}
-        </div>
-        ${t.preview ? `<div style="font-size:12px;color:var(--text-2);margin-top:4px;line-height:1.4">${esc(t.preview)}${t.preview.length>=140?'…':''}</div>` : ''}
-      </div>`).join('');
+        ${snippet}
+        ${re}
+        ${link}
+      </div>`;
+    }).join('');
     list.querySelectorAll('[data-alert-firm]').forEach(el => {
       el.addEventListener('click', e => {
         const fid = parseInt(el.dataset.alertFirm, 10);
@@ -2105,33 +2131,51 @@
     });
   }
   function renderRecentActivity(c){
-    const r = c.research;
-    if (!r) return '';
-    const items = []
+    const r = c.research_json;
+    const handle = c.twitter_handle || '';
+    const lastActive = c.last_activity_at || '';
+    if (!r && !handle && !lastActive) return '';
+
+    const items = r ? []
       .concat((r.recent_posts || []).map(x => ({...x, _kind:'POST'})))
       .concat((r.speaking     || []).map(x => ({...x, _kind:'SPEAKING'})))
-      .concat((r.press        || []).map(x => ({...x, _kind:'PRESS'})));
-    if (!items.length && !r.activity_summary) return '';
+      .concat((r.press        || []).map(x => ({...x, _kind:'PRESS'})))
+      : [];
     items.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
     const top = items.slice(0, 4);
     const kindColor = {POST:'pill--blue', SPEAKING:'pill--violet', PRESS:'pill--teal'};
+
+    const lastLine = lastActive
+      ? `<div style="color:var(--text-3);font-size:11px;letter-spacing:0.04em;margin-bottom:8px">Last active: ${esc(lastActive)}</div>`
+      : '';
+    const summary = (r && r.activity_summary)
+      ? `<div style="color:var(--text-2);font-size:13px;line-height:1.55;margin-bottom:4px">${esc(r.activity_summary)}</div>`
+      : '';
+    const twitter = handle
+      ? `<div style="margin-top:8px"><a href="https://x.com/${esc(handle)}" target="_blank" rel="noopener" style="color:#8b9fff;font-size:12px;text-decoration:none">𝕏 @${esc(handle)} ↗</a></div>`
+      : '';
     const rows = top.map(it => {
       const chip = `<span class="pill ${kindColor[it._kind] || 'pill--muted'}">${it._kind}</span>`;
       const date = it.date ? `<span style="color:var(--text-3);font-size:11px;margin-left:6px">${esc(it.date)}</span>` : '';
       const title = esc(it.title || '(untitled)').slice(0, 200);
-      const href = it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noopener" style="color:var(--text-2);text-decoration:none">${title}</a>` : title;
+      const linkLabel = it._kind === 'POST' ? '→ View post ↗'
+                      : it._kind === 'SPEAKING' ? '→ View source ↗'
+                      : '→ Read article ↗';
+      const link = it.url
+        ? `<div style="margin-top:6px"><a href="${esc(it.url)}" target="_blank" rel="noopener" style="color:#8b9fff;font-size:11px;text-decoration:none">${linkLabel}</a></div>`
+        : '';
+      const titleHtml = it.url
+        ? `<a href="${esc(it.url)}" target="_blank" rel="noopener" style="color:var(--text-1);text-decoration:none">${title}</a>`
+        : title;
       const snippet = it.snippet ? `<div style="color:var(--text-3);font-size:12px;margin-top:2px;line-height:1.45">${esc(it.snippet.slice(0,180))}</div>` : '';
-      return `<div style="padding:8px 0;border-top:1px solid var(--divider)">${chip}${date}<div style="margin-top:4px">${href}</div>${snippet}</div>`;
+      return `<div style="padding:8px 0;border-top:1px solid var(--divider)">${chip}${date}<div style="margin-top:4px">${titleHtml}</div>${snippet}${link}</div>`;
     }).join('');
-    const summary = r.activity_summary
-      ? `<div style="color:var(--text-2);font-size:13px;line-height:1.55;margin-bottom:4px">${esc(r.activity_summary)}</div>`
-      : '';
-    const empty = (!top.length && !r.activity_summary)
+    const empty = (!top.length && !(r && r.activity_summary) && !handle)
       ? '<em>No recent public activity found.</em>' : '';
     return `
       <div class="side-panel__section">
         <h4>Recent activity</h4>
-        <div class="sp-body">${summary}${rows}${empty}</div>
+        <div class="sp-body">${lastLine}${summary}${rows}${twitter}${empty}</div>
       </div>`;
   }
 

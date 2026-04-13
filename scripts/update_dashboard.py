@@ -63,38 +63,43 @@ def _stats(conn) -> dict:
              GROUP BY COALESCE(NULLIF(c.email_source,''), 'none')
         """).fetchall()}
 
-    # Recent triggers — Tier-1 signals within the last 48h for firms in an
-    # active buying stage. Powers the alert bell.
+    # Recent triggers — Tier-1 signals from the last 48h, with full source
+    # links + contact attribution. Powers the alert bell.
     recent_triggers = []
     try:
         trows = conn.execute("""
-            SELECT sig.id AS sid, sig.signal_type, sig.signal_date, sig.created_at,
-                   sig.content, sig.source_url,
-                   f.id AS firm_id, f.name AS firm_name, f.buying_stage
-              FROM signals sig
-              JOIN firms f ON f.id = sig.firm_id
-              JOIN (
-                  SELECT firm_id, MAX(COALESCE(signal_date, created_at)) AS latest
-                    FROM signals
-                   GROUP BY firm_id
-              ) latest ON latest.firm_id = sig.firm_id
-                      AND COALESCE(sig.signal_date, sig.created_at) = latest.latest
+            SELECT s.id AS sid,
+                   s.signal_type, s.signal_subtype,
+                   s.content       AS signal_content,
+                   s.source_url    AS signal_url,
+                   s.signal_date,
+                   s.buying_stage,
+                   f.id AS firm_id, f.name AS firm_name, f.firm_type,
+                   c.name  AS contact_name,
+                   c.title AS contact_title
+              FROM signals s
+              JOIN firms f    ON f.id = s.firm_id
+              LEFT JOIN contacts c ON c.id = s.contact_id
              WHERE f.tier = 1
-               AND COALESCE(f.buying_stage,'') IN ('deploying','evaluating')
-             GROUP BY f.id
-             ORDER BY COALESCE(sig.signal_date, sig.created_at) DESC
-             LIMIT 6
+               AND s.signal_date IS NOT NULL
+               AND s.signal_date >= datetime('now', '-48 hours')
+             ORDER BY s.signal_date DESC
+             LIMIT 20
         """).fetchall()
         for t in trows:
             recent_triggers.append({
-                "signal_id":    t["sid"],
-                "firm_id":      t["firm_id"],
-                "firm_name":    t["firm_name"],
-                "signal_type":  t["signal_type"],
-                "signal_date":  t["signal_date"] or t["created_at"],
-                "buying_stage": t["buying_stage"] or "",
-                "preview":      (t["content"] or "")[:140],
-                "source_url":   t["source_url"] or "",
+                "signal_id":     t["sid"],
+                "firm_id":       t["firm_id"],
+                "firm_name":     t["firm_name"],
+                "firm_type":     t["firm_type"] or "",
+                "signal_type":   t["signal_type"] or "",
+                "signal_subtype": t["signal_subtype"] or "",
+                "signal_content": (t["signal_content"] or "")[:120],
+                "signal_url":    t["signal_url"] or "",
+                "signal_date":   t["signal_date"],
+                "buying_stage":  t["buying_stage"] or "",
+                "contact_name":  t["contact_name"] or "",
+                "contact_title": t["contact_title"] or "",
             })
     except Exception:
         pass
@@ -287,7 +292,7 @@ def _contacts(conn) -> list[dict]:
         "meddic_role":      r["meddic_role"] or "",
         "meddic_confidence": float(r["meddic_confidence"]) if r["meddic_confidence"] is not None else None,
         "meddic_reasoning": r["meddic_reasoning"] or "",
-        "research":         _parse_research(r["research_json"]),
+        "research_json":    _parse_research(r["research_json"]),
         "last_activity_at": r["last_activity_at"] or "",
         "score":            float(r["score"]) if r["score"] is not None else 0.0,
         "icp_fit":          float(r["icp_fit"]) if r["icp_fit"] is not None else None,
