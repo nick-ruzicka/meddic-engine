@@ -1158,6 +1158,17 @@
     const rankBadge = (c.firm_contact_count && c.firm_contact_count > 1)
       ? `<span class="tag pill pill--blue" style="background:rgba(70,91,255,0.12);color:#8b9fff;border-color:rgba(70,91,255,0.25);font-variant-numeric:tabular-nums">#${c.rank_at_firm}/${c.firm_contact_count}</span>`
       : '';
+    // Multi-thread firm coverage — only the TOP-ranked contact at a firm
+    // carries the badge, so firms with many contacts don't clutter every row.
+    const covMap = {
+      complete: {cls:'pill--green', txt:'EB+CH ✓', tip:'Both Economic Buyer and Champion identified at this firm (high confidence).'},
+      needs_ch: {cls:'pill--amber', txt:'needs CH', tip:'Economic Buyer identified — no high-confidence Champion yet.'},
+      needs_eb: {cls:'pill--amber', txt:'needs EB', tip:'Champion identified — no high-confidence Economic Buyer yet.'},
+    };
+    const covEntry = covMap[c.firm_coverage || ''];
+    const covBadge = (covEntry && (c.rank_at_firm || 1) === 1)
+      ? `<span class="tag pill ${covEntry.cls}" title="${esc(covEntry.tip)}">${esc(covEntry.txt)}</span>`
+      : '';
     const dotCls = c.email_verified && c.email ? 'v' : (c.email ? 'u' : 'm');
     const emailTxt = c.email || '—';
     const dims = dimensions(c);
@@ -1169,11 +1180,11 @@
         <div class="avatar">${esc(initials(c.firm_name))}</div>
         <div class="firm-info">
           <div class="firm-name">${esc(c.firm_name)}</div>
-          <div class="firm-tags">${typeTag}${stageTag}${sigTag}${statusTag}${dncTag}${rankBadge}</div>
+          <div class="firm-tags">${typeTag}${stageTag}${sigTag}${statusTag}${dncTag}${rankBadge}${covBadge}</div>
         </div>
       </div>
       <div class="contact-cell">
-        <div class="contact-name"><span class="nm">${esc(c.contact_name)}</span>${meddicPill(c.title)}${competitorTag(c)}${objectionTag(c)}${linkedinIcon(c)}${c.first_line ? '<span class="fl-ready" title="First line generated">READY</span>' : ''}</div>
+        <div class="contact-name"><span class="nm">${esc(c.contact_name)}</span>${meddicPillFor(c)}${competitorTag(c)}${objectionTag(c)}${linkedinIcon(c)}${c.first_line ? '<span class="fl-ready" title="First line generated">READY</span>' : ''}</div>
         <div class="contact-title">${esc(c.title)}</div>
       </div>
       <div class="email-cell">
@@ -1531,13 +1542,47 @@
     return c.has_objections ? '<span class="obj-flag" title="Firm has compliance/AI-wrapper objection noted — lead with data-sovereignty angle">⚑</span>' : '';
   }
 
+  // Prefer Claude-assigned role (c.meddic_role + c.meddic_confidence) with
+  // confidence bucketing per critique fix #6:
+  //   >= 0.80 → show role only, e.g. [EB]
+  //   0.50-0.79 → inferred, show asterisk, e.g. [EB*]
+  //   <  0.50 → treat as UNKNOWN in UI
+  // UNKNOWN → [?]   NULL (not yet classified) → fall back to title regex
+  function meddicPillFor(c){
+    const title = c.title || '';
+    const role = (c.meddic_role || '').toUpperCase();
+    const conf = (typeof c.meddic_confidence === 'number') ? c.meddic_confidence : null;
+    const reasoning = c.meddic_reasoning || '';
+
+    // Not yet classified — fall back to regex heuristic (legacy).
+    if (!role){
+      if (!title) return '';
+      const r = meddicRole(title);
+      const tip = r === 'EB' ? 'Economic Buyer — title-inferred (not yet verified by Claude)'
+                : r === 'CH' ? 'Champion — title-inferred (not yet verified by Claude)'
+                : 'User / Contact — title-inferred (not yet verified by Claude)';
+      return `<span class="meddic-pill" data-tooltip="${esc(tip)}">${r}</span>`;
+    }
+
+    // Claude classified.
+    if (role === 'UNKNOWN' || (conf !== null && conf < 0.5)){
+      const tip = reasoning || 'Insufficient information to classify confidently.';
+      return `<span class="meddic-pill" data-tooltip="${esc(tip)}">?</span>`;
+    }
+    const isInferred = (conf !== null && conf < 0.80);
+    const label = isInferred ? `${role}*` : role;
+    const tipBase = role === 'EB' ? 'Economic Buyer'
+                  : role === 'CH' ? 'Champion'
+                  : 'User / Contact';
+    const confStr = (conf !== null) ? ` · conf ${conf.toFixed(2)}` : '';
+    const infNote = isInferred ? ' — inferred, verify before outreach' : '';
+    const tip = `${tipBase}${confStr}${infNote}${reasoning ? ' — ' + reasoning : ''}`;
+    return `<span class="meddic-pill" data-tooltip="${esc(tip)}">${esc(label)}</span>`;
+  }
+  // Back-compat wrapper: callers that pass only a title string still work
+  // (falls through to the legacy heuristic).
   function meddicPill(title){
-    if (!title) return '';
-    const r = meddicRole(title);
-    const tip = r === 'EB' ? 'Economic Buyer — final authority on vendor selection'
-              : r === 'CH' ? 'Champion — internal advocate, builds the business case'
-              : 'User / Contact — practitioner, not decision maker';
-    return `<span class="meddic-pill" data-tooltip="${esc(tip)}">${r}</span>`;
+    return meddicPillFor({title: title});
   }
 
   function renderBrief(b){
@@ -1959,7 +2004,7 @@
       <div class="side-panel__head">
         <button class="side-panel__close" data-panel-close>×</button>
         <div class="sp-firm">${esc(c.firm_name)}</div>
-        <div class="sp-contact">${esc(c.contact_name)} · ${esc(c.title || '—')}${meddicPill(c.title)}</div>
+        <div class="sp-contact">${esc(c.contact_name)} · ${esc(c.title || '—')}${meddicPillFor(c)}</div>
         <div class="sp-email">${esc(c.email || '—')}<span class="sp-dot ${dotCls}"></span>· ${score}</div>
         ${(() => {
           const allPeers = (state.data?.contacts || [])
@@ -2009,6 +2054,7 @@
           ${c.signal_url ? `<div style="margin-top:8px;font-size:11px"><a href="${esc(c.signal_url)}" target="_blank" style="color:#8b9fff">${esc(c.signal_url)}</a></div>` : ''}
         </div>
       </div>
+      ${renderRecentActivity(c)}
       <div class="side-panel__section">
         <h4>Account intelligence
           ${!c.account_brief ? `<button class="btn btn--ghost btn-gen" data-act="gen_brief" ${disabled}>Generate ✦</button>` : ''}
@@ -2058,6 +2104,37 @@
       });
     });
   }
+  function renderRecentActivity(c){
+    const r = c.research;
+    if (!r) return '';
+    const items = []
+      .concat((r.recent_posts || []).map(x => ({...x, _kind:'POST'})))
+      .concat((r.speaking     || []).map(x => ({...x, _kind:'SPEAKING'})))
+      .concat((r.press        || []).map(x => ({...x, _kind:'PRESS'})));
+    if (!items.length && !r.activity_summary) return '';
+    items.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+    const top = items.slice(0, 4);
+    const kindColor = {POST:'pill--blue', SPEAKING:'pill--violet', PRESS:'pill--teal'};
+    const rows = top.map(it => {
+      const chip = `<span class="pill ${kindColor[it._kind] || 'pill--muted'}">${it._kind}</span>`;
+      const date = it.date ? `<span style="color:var(--text-3);font-size:11px;margin-left:6px">${esc(it.date)}</span>` : '';
+      const title = esc(it.title || '(untitled)').slice(0, 200);
+      const href = it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noopener" style="color:var(--text-2);text-decoration:none">${title}</a>` : title;
+      const snippet = it.snippet ? `<div style="color:var(--text-3);font-size:12px;margin-top:2px;line-height:1.45">${esc(it.snippet.slice(0,180))}</div>` : '';
+      return `<div style="padding:8px 0;border-top:1px solid var(--divider)">${chip}${date}<div style="margin-top:4px">${href}</div>${snippet}</div>`;
+    }).join('');
+    const summary = r.activity_summary
+      ? `<div style="color:var(--text-2);font-size:13px;line-height:1.55;margin-bottom:4px">${esc(r.activity_summary)}</div>`
+      : '';
+    const empty = (!top.length && !r.activity_summary)
+      ? '<em>No recent public activity found.</em>' : '';
+    return `
+      <div class="side-panel__section">
+        <h4>Recent activity</h4>
+        <div class="sp-body">${summary}${rows}${empty}</div>
+      </div>`;
+  }
+
   function renderBriefSP(b){
     const rows = [
       {k:'Identified pain',    v:b.identified_pain || b.why_now || '',      cls:'why'},

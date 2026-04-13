@@ -87,7 +87,9 @@ def _fetch_other_contacts(firm_id: int, exclude_contact_id: int) -> list[dict]:
 
 
 def _meddic_role(title: str) -> str:
-    """MEDDIC contact role badge: EB / CH / UC."""
+    """Legacy title-regex MEDDIC role — fallback only when Claude hasn't
+    classified the contact yet. Use _load_meddic_role() to read the stored
+    Claude-assigned role for a contact."""
     t = (title or "").lower()
     if any(k in t for k in ("cto", "cio", "ceo", "coo", "cdo", "caio",
                             "chief", "president", "managing director",
@@ -98,6 +100,174 @@ def _meddic_role(title: str) -> str:
                             "director", "vp", "vice president")):
         return "CH"
     return "UC"
+
+
+def _load_meddic_role(contact_id: int) -> dict:
+    """Return {role, confidence, reasoning} from contacts table, or empty dict."""
+    if not contact_id:
+        return {}
+    try:
+        conn = get_db()
+        row = conn.execute(
+            "SELECT meddic_role, meddic_confidence, meddic_reasoning "
+            "FROM contacts WHERE id=?", (contact_id,)
+        ).fetchone()
+        conn.close()
+        if not row or not row["meddic_role"]:
+            return {}
+        return {
+            "role": row["meddic_role"],
+            "confidence": float(row["meddic_confidence"] or 0.0),
+            "reasoning": row["meddic_reasoning"] or "",
+        }
+    except Exception as e:
+        logger.debug(f"_load_meddic_role failed: {e}")
+        return {}
+
+
+def _personal_signals(contact_id: int, limit: int = 3) -> list[dict]:
+    if not contact_id:
+        return []
+    try:
+        conn = get_db()
+        rows = conn.execute(
+            """SELECT signal_type, signal_subtype, content, signal_date, source_url
+                 FROM signals
+                WHERE contact_id = ?
+                ORDER BY COALESCE(signal_date, created_at) DESC
+                LIMIT ?""",
+            (contact_id, limit),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+    except Exception as e:
+        logger.debug(f"_personal_signals failed: {e}")
+        return []
+
+
+def _load_research(contact_id: int) -> dict:
+    if not contact_id:
+        return {}
+    try:
+        conn = get_db()
+        row = conn.execute(
+            "SELECT research_json FROM contacts WHERE id=?", (contact_id,)
+        ).fetchone()
+        conn.close()
+        if not row or not row["research_json"]:
+            return {}
+        return json.loads(row["research_json"])
+    except Exception as e:
+        logger.debug(f"_load_research failed: {e}")
+        return {}
+
+
+_MEDDIC_SYSTEM = (
+    "You classify a contact's B2B sales role for  — an enterprise AI "
+    "platform sold to PE firms, investment banks, hedge funds, and credit "
+    "funds.\n\n"
+    "Roles:\n"
+    "EB = Economic Buyer: final authority on vendor selection AND budget, "
+    "AND their remit covers technology / AI / data decisions. Not every "
+    "senior person is an EB — a Managing Director of Investor Relations is "
+    "NOT an EB for .\n"
+    "CH = Champion: internal advocate who will use the tool and build the "
+    "business case. Head of AI, Director of Technology, VP of Data, AI Lead, "
+    "Head of Research Technology.\n"
+    "UC = User / Contact: practitioner without purchase authority — analyst, "
+    "associate, VP without AI mandate.\n"
+    "UNKNOWN: insufficient information to classify confidently.\n\n"
+    "Return ONLY a valid JSON object, no markdown, in this exact shape:\n"
+    "{\"role\": \"EB|CH|UC|UNKNOWN\", \"confidence\": <0.0-1.0>, "
+    "\"reasoning\": \"<one sentence>\"}"
+)
+
+
+def _classify_meddic_role(firm: dict, contact: dict) -> dict | None:
+    """Single Haiku call. Returns {role, confidence, reasoning} or None on
+    failure. Safe to call repeatedly — persistence layer gates by
+    contacts.meddic_role IS NULL."""
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        return None
+
+    cid = contact.get("id")
+    personal = _personal_signals(cid, limit=3)
+    research = _load_research(cid)
+    activity_summary = research.get("activity_summary") or ""
+    other_contacts = _fetch_other_contacts(firm.get("id", 0), cid or 0)
+
+    personal_block = "\n".join(
+        f"- [{s.get('signal_type')}] {(s.get('content') or '')[:180]}"
+        for s in personal
+    ) if personal else "(none attributed)"
+    others_block = "\n".join(
+        f"- {o.get('name')} — {o.get('title') or '—'}" for o in other_contacts
+    ) if other_contacts else "(none on file)"
+
+    user = (
+        f"Contact: {contact.get('name')}\n"
+        f"Title: {contact.get('title') or '—'}\n"
+        f"Firm: {firm.get('name')} ({firm.get('firm_type') or '?'})\n\n"
+        f"Signals attributed to this person:\n{personal_block}\n\n"
+        f"Public activity summary: {activity_summary or '(no research)'}\n\n"
+        f"Other contacts at this firm (for context):\n{others_block}\n\n"
+        "Classify this contact. Return ONLY the JSON object specified in the "
+        "system prompt."
+    )
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+        resp = _call_claude_with_retry(
+            client,
+            model=BRIEF_MODEL, max_tokens=200, temperature=0,
+            system=_MEDDIC_SYSTEM,
+            messages=[{"role": "user", "content": user}],
+        )
+        raw = "".join(getattr(b, "text", "") for b in resp.content).strip()
+        if raw.startswith("```"):
+            raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.MULTILINE)
+        m = re.search(r"\{[\s\S]*\}", raw)
+        if not m:
+            return None
+        data = json.loads(m.group(0))
+        role = str(data.get("role", "")).upper().strip()
+        if role not in ("EB", "CH", "UC", "UNKNOWN"):
+            return None
+        try:
+            conf = float(data.get("confidence", 0.0))
+        except (TypeError, ValueError):
+            conf = 0.0
+        conf = max(0.0, min(1.0, conf))
+        reasoning = str(data.get("reasoning") or "").strip()
+        return {"role": role, "confidence": conf, "reasoning": reasoning}
+    except Exception as e:
+        logger.warning(
+            f"MEDDIC classification failed for {contact.get('name')}: {e}"
+        )
+        return None
+
+
+def _persist_meddic_role(contact_id: int, result: dict) -> None:
+    if not contact_id or not result:
+        return
+    try:
+        conn = get_db()
+        conn.execute(
+            """UPDATE contacts
+                  SET meddic_role = ?,
+                      meddic_confidence = ?,
+                      meddic_reasoning = ?,
+                      meddic_classified_at = datetime('now'),
+                      updated_at = datetime('now')
+                WHERE id = ?""",
+            (result["role"], result["confidence"],
+             result.get("reasoning") or "", contact_id),
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.debug(f"_persist_meddic_role failed: {e}")
 
 
 def _classify_role(title: str) -> str:
@@ -371,8 +541,48 @@ def generate_account_brief(firm: dict, contact: dict, signals: list[dict],
     )
     this_role = _classify_role(contact.get("title", ""))
     other_roles = [_classify_role(o.get("title", "")) for o in others]
-    meddic_role = _meddic_role(contact.get("title", ""))
-    meddic_role_label = {"EB": "ECONOMIC BUYER", "CH": "CHAMPION", "UC": "USER / CHAMPION"}[meddic_role]
+    # Prefer Claude-assigned MEDDIC role when available; otherwise fall back
+    # to the title regex. Confidence below 0.5 gets demoted to UNKNOWN for
+    # brief labeling (critique fix #6).
+    stored_meddic = _load_meddic_role(contact.get("id", 0))
+    if stored_meddic.get("role") and stored_meddic["role"] != "UNKNOWN" \
+       and stored_meddic.get("confidence", 0) >= 0.5:
+        meddic_role = stored_meddic["role"]
+    elif stored_meddic.get("role") == "UNKNOWN":
+        meddic_role = "UC"  # brief still needs a label
+    else:
+        meddic_role = _meddic_role(contact.get("title", ""))
+    meddic_role_label = {"EB": "ECONOMIC BUYER",
+                         "CH": "CHAMPION",
+                         "UC": "USER / CHAMPION"}.get(meddic_role, "CHAMPION")
+
+    # Pull per-contact research (posts/speaking/press) if available.
+    research = _load_research(contact.get("id", 0))
+    research_block = ""
+    if research and (research.get("activity_summary")
+                     or research.get("recent_posts")
+                     or research.get("speaking")
+                     or research.get("press")):
+        summary = research.get("activity_summary") or ""
+        items = (research.get("recent_posts", [])
+                 + research.get("speaking", [])
+                 + research.get("press", []))
+        top_items = sorted(
+            items, key=lambda x: (x.get("date") or ""), reverse=True
+        )[:2]
+        item_lines = [
+            f"  · [{it.get('signal_type')}] {it.get('date') or '?'}: "
+            f"{(it.get('title') or '')[:120]} — "
+            f"{(it.get('snippet') or '')[:160]}"
+            for it in top_items
+        ]
+        research_block = (
+            "CONTACT RESEARCH (use for specificity — reference actual "
+            "public activity where relevant, do not invent):\n"
+            f"Activity summary: {summary or '(no summary)'}\n"
+            "Top items:\n" + ("\n".join(item_lines) if item_lines else "  (none)")
+            + "\n"
+        )
 
     # Firm-type + competitor-aware decision criteria seed
     ft = (firm.get("firm_type") or "").lower()
@@ -442,6 +652,7 @@ OTHER CONTACTS AT THIS FIRM:
 MULTI-THREAD HINT:
 {pair_role_hint or '(single-threaded)'}
 
+{research_block}
 DECISION CRITERIA SEED (use verbatim as the first sentence of decision_criteria): "{dc_seed}"
 
 You are producing a MEDDIC-framed account brief. Return ONLY valid JSON, no markdown:
@@ -449,7 +660,7 @@ You are producing a MEDDIC-framed account brief. Return ONLY valid JSON, no mark
   "identified_pain": "1-2 sentences on the workflow pain this firm is feeling right now - reference the buying stage, signals, peer activity. This is the M-E-D-D-I-C 'I' - what hurts today.",
   "decision_criteria": "Start with the seed line above verbatim. Then add ONE sentence of firm-specific color (competitor context, AUM tier, or signal-driven nuance).",
   "metrics": "Pipe-separated bullet metrics ONLY. Format: 'Oak Hill: 6x ROI | $25T AUM using  | 1000+ use cases in production'. Pick 2-3 most relevant to this firm type. No prose.",
-  "champion_eb": "ONE sentence identifying this contact as {meddic_role_label} and why they matter for this deal. Reference title, workflow ownership, or political capital. If a complementary role exists at the firm, mention the multi-thread path.",
+  "champion_eb": "ONE sentence identifying this contact as {meddic_role_label} and why they matter. If CONTACT RESEARCH is provided above, reference a SPECIFIC public activity (e.g. 'spoke at [venue] in [month] about [topic]' or 'posted on [date] about [topic]') — do NOT just repeat title+firm. If no research available, reference workflow ownership or political capital.",
   "objection": "The most likely objection from this specific contact/firm type, plus one sentence on how to handle it. Lead with data sovereignty if compliance-flagged.",
   "thread": "ONE sentence on multi-thread strategy: 'Pair [this role] with [complementary role] at [firm] - [reason].' If solo, say 'Solo-thread viable - find [role] to strengthen.'"
 }}"""
@@ -549,6 +760,14 @@ def score_contact(firm: dict, contact: dict, signals: Optional[list[dict]] = Non
         result = _parse_claude_response(raw)
 
     score_id = _persist(firm, contact, signals, result, sections_used)
+
+    # Claude MEDDIC classification — idempotent: only fire when not yet set.
+    if not mock_mode:
+        existing = _load_meddic_role(contact.get("id"))
+        if not existing.get("role"):
+            meddic = _classify_meddic_role(firm, contact)
+            if meddic:
+                _persist_meddic_role(contact.get("id"), meddic)
 
     return {
         **result,

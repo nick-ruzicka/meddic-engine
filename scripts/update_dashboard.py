@@ -140,6 +140,12 @@ def _contacts(conn) -> list[dict]:
             c.email_verified    AS email_verified,
             c.email_source      AS email_source,
             c.linkedin_url      AS linkedin_url,
+            c.twitter_handle    AS twitter_handle,
+            c.research_json     AS research_json,
+            c.last_activity_at  AS last_activity_at,
+            c.meddic_role       AS meddic_role,
+            c.meddic_confidence AS meddic_confidence,
+            c.meddic_reasoning  AS meddic_reasoning,
             COALESCE(c.do_not_contact, 0) AS do_not_contact,
             f.id                AS firm_id,
             f.name              AS firm_name,
@@ -214,6 +220,8 @@ def _contacts(conn) -> list[dict]:
     rank_map: dict[int, int] = {}           # queue_id -> rank_at_firm
     firm_count_map: dict[int, int] = {}     # firm_id -> count of contacts at firm
     firm_peers_map: dict[int, list[dict]] = {}  # firm_id -> [{contact_name,title,score,queue_id}]
+    firm_coverage_map: dict[int, str] = {}      # firm_id -> coverage status
+    HIGH_CONFIDENCE = 0.80
     for fid, grp in firm_groups.items():
         grp_sorted = sorted(grp, key=lambda x: (x["score"] or 0), reverse=True)
         firm_count_map[fid] = len(grp_sorted)
@@ -225,6 +233,33 @@ def _contacts(conn) -> list[dict]:
         } for gr in grp_sorted]
         for idx, gr in enumerate(grp_sorted, 1):
             rank_map[gr["queue_id"]] = idx
+        # Multi-thread coverage — only count high-confidence Claude roles.
+        has_eb = any(
+            (gr["meddic_role"] == "EB"
+             and (gr["meddic_confidence"] or 0) >= HIGH_CONFIDENCE)
+            for gr in grp_sorted
+        )
+        has_ch = any(
+            (gr["meddic_role"] == "CH"
+             and (gr["meddic_confidence"] or 0) >= HIGH_CONFIDENCE)
+            for gr in grp_sorted
+        )
+        if has_eb and has_ch:
+            firm_coverage_map[fid] = "complete"
+        elif has_eb:
+            firm_coverage_map[fid] = "needs_ch"
+        elif has_ch:
+            firm_coverage_map[fid] = "needs_eb"
+        else:
+            firm_coverage_map[fid] = ""  # no badge
+
+    def _parse_research(raw):
+        if not raw:
+            return None
+        try:
+            return json.loads(raw)
+        except Exception:
+            return None
 
     return [{
         "queue_id":         r["queue_id"],
@@ -243,10 +278,17 @@ def _contacts(conn) -> list[dict]:
         "email_verified":   bool(r["email_verified"]),
         "email_source":     r["email_source"] or "",
         "linkedin_url":     r["linkedin_url"] or "",
+        "twitter_handle":   r["twitter_handle"] or "",
         "do_not_contact":   bool(r["do_not_contact"]),
         "rank_at_firm":     rank_map.get(r["queue_id"], 1),
         "firm_contact_count": firm_count_map.get(r["firm_id"], 1),
         "firm_peers":       firm_peers_map.get(r["firm_id"], []),
+        "firm_coverage":    firm_coverage_map.get(r["firm_id"], ""),
+        "meddic_role":      r["meddic_role"] or "",
+        "meddic_confidence": float(r["meddic_confidence"]) if r["meddic_confidence"] is not None else None,
+        "meddic_reasoning": r["meddic_reasoning"] or "",
+        "research":         _parse_research(r["research_json"]),
+        "last_activity_at": r["last_activity_at"] or "",
         "score":            float(r["score"]) if r["score"] is not None else 0.0,
         "icp_fit":          float(r["icp_fit"]) if r["icp_fit"] is not None else None,
         "ai_readiness":     float(r["ai_readiness"]) if r["ai_readiness"] is not None else None,

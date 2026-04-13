@@ -4,7 +4,16 @@
 
 ## What I built
 
-A fully functional outbound intelligence system that monitors 16,639 SEC-registered investment advisers (representing $15.2T in assets under management), filters to 7,115 ICP-qualified targets, and surfaces 273 contacts ready for outreach — scored, enriched, and briefed. Across the active pipeline: 569 named contacts, 497 with verified emails, 16 strong matches. The system ingests signals from Exa, Twitter, LinkedIn, and SEC filings; routes them through a MEDDIC-aware Claude scoring layer; and produces a reviewable queue with auto-generated first lines tuned to each contact's signal and buying stage. Every number on every dashboard is live from the pipeline.
+A fully functional outbound intelligence system that monitors 16,639 SEC-registered investment advisers ($15.2T AUM), filters to 7,115 ICP-qualified targets, and surfaces a reviewable queue of scored, researched, and briefed contacts. Across the active pipeline: 540 firms (40 tier-1, 500 tier-2), 569 named contacts, 497 with verified emails, 18 strong matches, 463 with MEDDIC-framed account briefs, and 269 in the pending review queue. Every number on every dashboard is live from the pipeline.
+
+What makes this system different from a typical outbound tool:
+
+- **Contact research enricher** — Exa pulls every named contact's recent posts, speaking appearances, and press quotes; Claude Haiku summarizes the activity into one fact-checked sentence. No more "Stuart Sim is Head of AI at Silver Lake" briefs — the system now writes "Stuart Sim joined Silver Lake as Head of AI in November 2025, leading a team of data scientists and engineers," sourced to the LinkedIn post.
+- **Signal attribution to named contacts** — A two-gate matcher (exact twitter handle, or last-name + first-initial + name-similarity ≥ 0.80) attaches social / press signals to the specific contact who authored them. Solves the "on-record executive quote outweighs all other signal types" scoring rule, which was silently dead before because collectors never filled `contact_id`.
+- **Claude-assigned MEDDIC roles with confidence** — A Haiku call classifies every researched contact as Economic Buyer / Champion / User / Unknown, with a 0–1 confidence score and one-sentence reasoning persisted for audit. Replaces the title-regex that was labeling every Managing Director "EB" regardless of whether their remit covered technology.
+- **Multi-thread coverage view per firm** — Each firm shows "EB+CH ✓" (both identified at high confidence), "needs CH", or "needs EB" — surfacing the +20 multi-threading scoring bonus that was impossible to earn without per-firm coverage visibility.
+
+The system ingests signals from Exa, Twitter, LinkedIn, and SEC filings; routes them through a MEDDIC-aware Claude scoring layer; and produces a reviewable queue with auto-generated first lines tuned to each contact's signal, buying stage, and now — their own published activity.
 
 ## Assumptions I made
 
@@ -60,10 +69,17 @@ Full AE territory mapping, per-rep voice profiles (so the first line sounds like
 
 | Metric | Target | Current |
 |---|---|---|
-| Contacts READY per week | 50+ | 273 in queue |
+| Firms monitored (tier-1 + tier-2) | 500+ | **540** (40 active, 500 watchlist) |
+| Named contacts in pipeline | 400+ | **569** |
+| Verified emails | >80% of contacts | **497** (87%) |
+| Contacts with account brief | >75% of scored | **463** (81%) |
+| Contacts with MEDDIC role (Claude-assigned) | Every scored contact | 8 classified (verification run) |
+| Strong matches (score ≥ 75) | 15+ | **18** |
+| Queue pending review | 200+ | **269** |
+| Avg ICP Fit / AI Readiness | 70 / 60 | **73 / 64** |
+| Cost per scored + briefed contact | <$1 | **~$0.002** (sonnet score + haiku brief + haiku MEDDIC) |
 | First line approval rate | >60% | Measuring at pilot |
 | Signal-to-meeting conversion | >5% | TBD — need pilot data |
-| Cost per qualified contact | <$1 | **$0.0002** |
 | AE time saved per account | 40 min | Estimated |
 
 The cost-per-contact number is the one that matters most. At $0.0002, the system is effectively free — the constraint isn't spend, it's AE attention. Every metric above is downstream of "is the queue good enough that AEs actually work it."
@@ -87,11 +103,22 @@ The cost-per-contact number is the one that matters most. At $0.0002, the system
 
 ## What I'd iterate
 
-1. **Slack push alerts** — "Centerview just posted about AI governance" delivered to the territory AE within 24h of the signal firing, with the scored contact attached.
-2. **CRM sync** — Approved contacts push to Salesforce/HubSpot on approve, with the signal + first line as an activity note.
-3. **Reply feedback loop** — Open, reply, and meeting-booked rates feed back into scoring weights, so the system learns which signal types actually convert for  specifically.
+1. **Reply feedback loop** — Open, reply, and meeting-booked rates feed back into scoring weights, so the system learns which signal types actually convert for  specifically. The scoring skill file becomes a living document calibrated by outcomes.
+2. **Slack push alerts** — "Centerview just posted about AI governance" delivered to the territory AE within 24h of the signal firing, with the scored contact + brief attached. Bridges the gap between signal fire and human action.
+3. **CRM sync** — Approved contacts push to Salesforce/HubSpot on approve, with the signal + brief + first line as an activity note.
 4. **Territory view** — Filter the queue by AE book so reps see only their accounts.
 5. **Voice profiles per AE** — First line generator reads the AE's approved history and mimics tone. Removes the "this smells like AI" tell.
+6. **Full research backfill** — The contact research enricher currently runs on-demand (`--research --limit N`). Scale it across all 569 tier-1 contacts with caching + 30-day refresh so every account brief references specific public activity by default.
+
+## What I'd build next
+
+The capabilities above are sequenced by ROI, but the three highest-leverage gaps remaining:
+
+**1. Reply feedback loop.** The scoring skill has opinions ("named executive tweet = +40", "junior analyst post = +15") that are currently unvalidated against outcomes. Once we have 50 sent emails with replies, those weights should move based on what actually converts — not based on what I guessed. This is the single biggest quality lever.
+
+**2. Slack push alerts.** The dashboard is a pull interface; signals are a push event. A CTO announcing an AI hire on Tuesday afternoon should be an AE's Slack ping within the hour, not a contact they discover on their next queue review. Every day of latency is a percentage point of conversion.
+
+**3. CRM sync with write-through.** Every approve/skip/flag today is captured in `review_decisions` but lives only in the local database. 's AEs live in Salesforce or HubSpot — if approvals don't flow there, the system is a research tool, not a workflow tool. The write-through is also the foundation for the feedback loop (outcomes live in the CRM).
 
 ## Demo
 

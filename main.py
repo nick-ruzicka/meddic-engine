@@ -267,6 +267,19 @@ def step_collect(config: dict, sample: bool = False) -> dict:
             console.print(f"  [green]✓[/green] {name}: {len(signals)} collected, {inserted} inserted")
 
         conn.commit()
+
+        # Attribute newly inserted signals to named contacts where possible.
+        try:
+            from scripts.attribute_signals import attribute_signals
+            attrib = attribute_signals(conn)
+            totals["attributed"] = attrib
+            console.print(
+                f"  [green]✓[/green] attribution: matched "
+                f"{attrib['matched_total']} of {attrib['scanned']} "
+                f"({attrib['matched_handle']} handle, {attrib['matched_name']} name)"
+            )
+        except Exception as e:
+            logger.warning(f"attribute_signals failed: {e}")
     finally:
         conn.close()
 
@@ -422,6 +435,8 @@ def main() -> int:
     parser.add_argument("--collect", action="store_true", help="Run signal collectors")
     parser.add_argument("--score",   action="store_true", help="Score unscored contacts")
     parser.add_argument("--enrich",  action="store_true", help="Run Hunter.io email enrichment")
+    parser.add_argument("--research", action="store_true",
+                        help="Pull per-contact research (posts/speaking/press) via Exa + Haiku summary")
     parser.add_argument("--sec-load",   action="store_true", help="Load SEC ADV + Schedule A bulk data")
     parser.add_argument("--sec-enrich", action="store_true", help="Promote TBD contacts using SEC + Hunter")
     parser.add_argument("--discover-team", nargs="*", metavar="FIRM",
@@ -468,6 +483,22 @@ def main() -> int:
 
     if args.full or args.score:
         step_score(config, limit=args.limit, sample=args.sample); did_work = True
+
+    if getattr(args, "research", False):
+        _banner("RESEARCH — per-contact Exa + Haiku activity")
+        from enrichment.contact_researcher import run_research_pass
+        conn = get_db()
+        try:
+            stats = run_research_pass(conn, limit=args.limit or 50)
+        finally:
+            conn.close()
+        console.print(
+            f"[green]Researched {stats['researched']}/{stats['selected']} contacts "
+            f"({stats['empty']} with no results), "
+            f"classified {stats.get('classified', 0)} MEDDIC roles — "
+            f"{stats['exa_calls']} Exa calls, {stats['haiku_calls']} Haiku calls[/green]"
+        )
+        did_work = True
 
     if args.full or args.enrich:
         _banner("ENRICH — Hunter.io email lookup")

@@ -205,6 +205,22 @@ def init_db():
     if "do_not_contact" not in contact_cols:
         c.execute("ALTER TABLE contacts ADD COLUMN do_not_contact INTEGER DEFAULT 0")
 
+    # Contact intelligence (research enricher + Claude MEDDIC classification).
+    # meddic_* columns are separate from the legacy `role_type` (executive_sponsor|
+    # technical_champion|both) so we don't overwrite seeded classifications.
+    if "research_json" not in contact_cols:
+        c.execute("ALTER TABLE contacts ADD COLUMN research_json TEXT")
+    if "last_activity_at" not in contact_cols:
+        c.execute("ALTER TABLE contacts ADD COLUMN last_activity_at TEXT")
+    if "meddic_role" not in contact_cols:
+        c.execute("ALTER TABLE contacts ADD COLUMN meddic_role TEXT")
+    if "meddic_confidence" not in contact_cols:
+        c.execute("ALTER TABLE contacts ADD COLUMN meddic_confidence REAL")
+    if "meddic_reasoning" not in contact_cols:
+        c.execute("ALTER TABLE contacts ADD COLUMN meddic_reasoning TEXT")
+    if "meddic_classified_at" not in contact_cols:
+        c.execute("ALTER TABLE contacts ADD COLUMN meddic_classified_at TEXT")
+
     conn.commit()
     conn.close()
     logger.info(f"Database initialized at {DB_PATH}")
