@@ -24,10 +24,9 @@ python3 app.py &
 API_PID=$!
 echo "✓ API running on port ${PORT:-8765} (pid $API_PID)"
 
-# Start dashboard static server
-cd export && python3 -m http.server 8080 &
+# Start dashboard static server (gzip-enabled)
+python3 scripts/static_server.py 8080 export &
 DASH_PID=$!
-cd ..
 echo "✓ Dashboard running on http://localhost:8080"
 echo ""
 echo "Press Ctrl+C to stop both servers"
