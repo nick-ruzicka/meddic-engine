@@ -86,6 +86,20 @@ def _fetch_other_contacts(firm_id: int, exclude_contact_id: int) -> list[dict]:
         return []
 
 
+def _meddic_role(title: str) -> str:
+    """MEDDIC contact role badge: EB / CH / UC."""
+    t = (title or "").lower()
+    if any(k in t for k in ("cto", "cio", "ceo", "coo", "cdo", "caio",
+                            "chief", "president", "managing director",
+                            " md", "md,", "md ", "partner")):
+        return "EB"
+    if any(k in t for k in ("head of ai", "head of data", "head of research",
+                            "head of technology", "head of engineering",
+                            "director", "vp", "vice president")):
+        return "CH"
+    return "UC"
+
+
 def _classify_role(title: str) -> str:
     """Cheap heuristic — is this contact an economic buyer or technical champion?"""
     t = (title or "").lower()
@@ -319,22 +333,94 @@ def generate_account_brief(firm: dict, contact: dict, signals: list[dict],
     aum = firm.get("aum_reported")
     aum_line = f"${aum/1e9:.1f}B" if aum else "not confirmed"
 
+    others = _fetch_other_contacts(firm.get("id", 0), contact.get("id", 0))
+    others_block = (
+        "\n".join(f"- {o.get('name')}, {o.get('title') or '—'}" for o in others)
+        if others else "(none — this is the only contact on file)"
+    )
+    this_role = _classify_role(contact.get("title", ""))
+    other_roles = [_classify_role(o.get("title", "")) for o in others]
+    meddic_role = _meddic_role(contact.get("title", ""))
+    meddic_role_label = {"EB": "ECONOMIC BUYER", "CH": "CHAMPION", "UC": "USER / CHAMPION"}[meddic_role]
+
+    # Firm-type + competitor-aware decision criteria seed
+    ft = (firm.get("firm_type") or "").lower()
+    comp = (firm.get("competitor") or "").lower()
+    if "alphasense" in comp:
+        dc_seed = "RAG accuracy on private docs, not just public market search."
+    elif "rogo" in comp and ft in ("ib", "investment_bank", "advisory"):
+        dc_seed = "Document synthesis depth, complementary to existing stack."
+    elif ft in ("pe", "private_equity", "credit", "credit_fund"):
+        dc_seed = "Speed to value, data sovereignty, ROI proof."
+    elif ft in ("ib", "investment_bank", "advisory"):
+        dc_seed = "Document synthesis depth at deal velocity, compliance-reviewable output."
+    elif ft in ("hf", "hedge_fund"):
+        dc_seed = "Analyst productivity on qualitative research, citation traceability."
+    else:
+        dc_seed = "Data sovereignty, measurable ROI, fit to existing workflow."
+
+    # Decision process — deterministic from buying_stage
+    bs = (firm.get("buying_stage") or "").lower()
+    if bs == "deploying":
+        decision_process = "Active vendor selection - decision likely within 90 days."
+    elif bs == "evaluating":
+        decision_process = "3-6 month evaluation window - build relationship with champion now."
+    elif bs == "exploring":
+        decision_process = "12-18 month horizon - nurture sequence, not hot outreach."
+    else:
+        decision_process = "Timing unconfirmed - let signals drive cadence."
+    # Find a complementary pair if any
+    pair_role_hint = ""
+    if this_role == "economic_buyer" and "technical_champion" in other_roles:
+        idx = other_roles.index("technical_champion")
+        pair_role_hint = (
+            f"This contact is an ECONOMIC BUYER. A technical champion exists at this firm "
+            f"({others[idx].get('name')}, {others[idx].get('title')}) — recommend pairing them."
+        )
+    elif this_role == "technical_champion" and "economic_buyer" in other_roles:
+        idx = other_roles.index("economic_buyer")
+        pair_role_hint = (
+            f"This contact is a TECHNICAL CHAMPION. An economic buyer exists at this firm "
+            f"({others[idx].get('name')}, {others[idx].get('title')}) — recommend pairing them."
+        )
+    elif this_role == "economic_buyer":
+        pair_role_hint = (
+            "This contact is an ECONOMIC BUYER. No technical champion on file — recommend "
+            "finding a CTO / Head of AI / Head of Data to dual-thread."
+        )
+    elif this_role == "technical_champion":
+        pair_role_hint = (
+            "This contact is a TECHNICAL CHAMPION. Recommend pairing with an economic buyer "
+            "(CIO, Managing Partner, President) to advance past compliance review."
+        )
+
     user = f"""FIRM: {firm.get('name')} ({firm.get('firm_type')})
 AUM: {aum_line}
 CONTACT: {contact.get('name')}, {contact.get('title')}
+CONTACT ROLE CLASSIFICATION: {this_role}
+MEDDIC ROLE: {meddic_role_label}
 BUYING STAGE: {firm.get('buying_stage') or 'unknown'}
 COMPETITOR: {firm.get('competitor') if firm.get('competitor') and firm.get('competitor') != 'none' else 'not identified'}
 SIGNALS: {sig_line}
-SCORE: {score_result.get('score')} — {score_result.get('label')}
+SCORE: {score_result.get('score')} - {score_result.get('label')}
 REASONING: {(score_result.get('reasoning') or '')[:400]}
 
-Generate a brief with EXACTLY these four fields.
-Return ONLY valid JSON, no markdown, no explanation:
+OTHER CONTACTS AT THIS FIRM:
+{others_block}
+
+MULTI-THREAD HINT:
+{pair_role_hint or '(single-threaded)'}
+
+DECISION CRITERIA SEED (use verbatim as the first sentence of decision_criteria): "{dc_seed}"
+
+You are producing a MEDDIC-framed account brief. Return ONLY valid JSON, no markdown:
 {{
-  "why_now": "1-2 sentences on why outreach makes sense specifically this week — reference the buying stage, any signals, peer firm activity",
-  "objection": "The most likely objection from this specific contact/firm type, plus one sentence on how to handle it",
-  "angle": "The specific pitch angle for this firm — which workflow pain, which proof point, how to frame  for their exact situation",
-  "proof_point": "The single most relevant customer reference or data point for this firm type"
+  "identified_pain": "1-2 sentences on the workflow pain this firm is feeling right now - reference the buying stage, signals, peer activity. This is the M-E-D-D-I-C 'I' - what hurts today.",
+  "decision_criteria": "Start with the seed line above verbatim. Then add ONE sentence of firm-specific color (competitor context, AUM tier, or signal-driven nuance).",
+  "metrics": "Pipe-separated bullet metrics ONLY. Format: 'Oak Hill: 6x ROI | $25T AUM using  | 1000+ use cases in production'. Pick 2-3 most relevant to this firm type. No prose.",
+  "champion_eb": "ONE sentence identifying this contact as {meddic_role_label} and why they matter for this deal. Reference title, workflow ownership, or political capital. If a complementary role exists at the firm, mention the multi-thread path.",
+  "objection": "The most likely objection from this specific contact/firm type, plus one sentence on how to handle it. Lead with data sovereignty if compliance-flagged.",
+  "thread": "ONE sentence on multi-thread strategy: 'Pair [this role] with [complementary role] at [firm] - [reason].' If solo, say 'Solo-thread viable - find [role] to strengthen.'"
 }}"""
 
     try:
@@ -354,10 +440,15 @@ Return ONLY valid JSON, no markdown, no explanation:
         if not m:
             return None
         data = json.loads(m.group(0))
-        for k in ("why_now", "objection", "angle", "proof_point"):
+        for k in ("identified_pain", "decision_criteria", "metrics",
+                  "champion_eb", "objection"):
             if not data.get(k):
                 return None
             data[k] = str(data[k]).replace("—", "-").strip()
+        if data.get("thread"):
+            data["thread"] = str(data["thread"]).replace("—", "-").strip()
+        data["decision_process"] = decision_process
+        data["meddic_role"] = meddic_role
         return data
     except Exception as e:
         logger.warning(f"brief generation failed for {firm.get('name')}/{contact.get('name')}: {e}")

@@ -81,6 +81,59 @@ twitter:
       - "Bloomberg interface"
       - "Rogo limitation"
 
+  # Known Twitter handles → firm name (used to resolve firm_id on tweets).
+  # Handle is case-insensitive, no leading @.
+  firm_handles:
+    blackstone: Blackstone
+    blackstoneinc: Blackstone
+    apolloglobal: Apollo Global Management
+    apollolp: Apollo Global Management
+    kkr_co: KKR
+    kkrfunds: KKR
+    carlylegroup: Carlyle Group
+    thecarlylegroup: Carlyle Group
+    silverlake: Silver Lake
+    slpartners: Silver Lake
+    aresmgmt: Ares Management
+    vistaequity: Vista Equity Partners
+    brookfield: Brookfield Asset Management
+    brookfield_am: Brookfield Asset Management
+    warburgpincus: Warburg Pincus
+    generalatlantic: General Atlantic
+    evercore: Evercore
+    pjtpartners: PJT Partners
+    houlihanlokey: Houlihan Lokey
+    moelisandcompany: Moelis & Company
+    williamblair: William Blair
+    pipersandler: Piper Sandler
+    jefferies: Jefferies
+    oaktreecap: Oaktree Capital Management
+    franciscoptnrs: Francisco Partners
+    thomabravo: Thoma Bravo
+    tpg: TPG
+    baincapital: Bain Capital
+    permira: Permira
+    citadel: Citadel
+    renaissance_rt: Renaissance Technologies LLC
+    twosigma: Two Sigma Investments, LP
+    aqrcapital: AQR Capital Management, LLC
+    millenniummgmt: Millennium Management LLC
+    pointe72: Point72
+    blackrock: BlackRock Fund Advisors
+    vanguard_group: Vanguard Capital Management, LLC
+    fidelity: Fidelity Management & Research Company LLC
+    goldmansachs: Goldman Sachs Asset Management, L.P.
+    morganstanley: Morgan Stanley Investment Management Inc.
+    jpmorgan: J.P. Morgan Asset Management (UK)
+    ubs: UBS Asset Management
+    franklintempleton: Franklin Templeton
+    neubergerberman: Neuberger Berman
+    alliancebernstein: AllianceBernstein
+    barings_llc: Barings
+    pgim: PGIM, Inc.
+    wellingtonmgmt: Wellington Management Company LLP
+    hplokey: Houlihan Lokey
+
   # Finance-specific context filters (must appear in bio or recent tweets)
   firm_context_filters:
     - private equity

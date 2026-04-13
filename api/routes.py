@@ -266,6 +266,46 @@ def flag():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# POST /dnc — mark contact Do Not Contact, remove from queue
+# ─────────────────────────────────────────────────────────────────────────────
+
+@api_bp.route("/dnc", methods=["POST"])
+@require_api_key
+def dnc():
+    body = request.get_json(silent=True) or {}
+    contact_id = body.get("contact_id")
+    if not contact_id:
+        return jsonify({"error": "contact_id required"}), 400
+
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT id FROM contacts WHERE id = ?", (contact_id,)
+        ).fetchone()
+        if not row:
+            return jsonify({"error": "contact_id not found"}), 404
+
+        conn.execute(
+            "UPDATE contacts SET do_not_contact = 1, updated_at = datetime('now') WHERE id = ?",
+            (contact_id,),
+        )
+        # Flip any pending queue rows for this contact to 'skipped' with dnc reason
+        conn.execute(
+            """UPDATE outreach_queue
+               SET status = 'skipped',
+                   skip_reason = 'dnc',
+                   updated_at = datetime('now')
+             WHERE contact_id = ? AND status = 'pending'""",
+            (contact_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"ok": True, "contact_id": contact_id})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # POST /activate — promote a Tier-2 firm to Tier 1
 # ─────────────────────────────────────────────────────────────────────────────
 

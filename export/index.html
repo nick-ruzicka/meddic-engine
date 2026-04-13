@@ -445,6 +445,10 @@
   .brief-row.obj .k{color:var(--amber)}
   .brief-row.ang .k{color:var(--green)}
   .brief-row.prf .k{color:rgba(255,255,255,0.35)}
+  .brief-row.dp  .k{color:var(--violet,#7c3aed)}
+  .meddic-pill{display:inline-block;margin-left:6px;padding:1px 5px;border-radius:2px;
+    background:rgba(70,91,255,0.15);color:#465BFF;font-size:8px;font-weight:600;
+    letter-spacing:0.08em;text-transform:uppercase;vertical-align:1px}
   .brief-row .v{font-size:13px;line-height:1.6;color:rgba(255,255,255,0.80)}
   .brief-raw{margin-top:14px;font-size:12px}
   .brief-raw summary{cursor:pointer;color:var(--text-3);font-size:10px;
@@ -592,6 +596,27 @@
   </nav>
   <div class="nav-right">
     <span class="nav-meta" id="gen-meta"></span>
+    <div class="alerts-wrap" id="alerts-wrap" style="position:relative;display:none">
+      <button class="btn-alerts" id="btn-alerts" title="Recent triggers"
+        style="position:relative;background:transparent;border:1px solid var(--border-strong);color:var(--text);
+               padding:7px 12px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;
+               font-family:var(--font-ui);font-weight:500;border-radius:3px">
+        <span style="margin-right:4px">🔔</span>
+        <span id="alerts-label">Alerts</span>
+        <span id="alerts-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#ef4444;
+               color:#fff;font-size:9px;min-width:16px;height:16px;border-radius:8px;padding:0 4px;
+               line-height:16px;text-align:center;font-weight:600;letter-spacing:0">0</span>
+      </button>
+      <div id="alerts-panel" style="display:none;position:absolute;top:calc(100% + 8px);right:0;
+           width:360px;background:var(--elevated);border:1px solid var(--border-strong);
+           border-radius:4px;box-shadow:0 12px 40px rgba(0,0,0,0.5);z-index:40;overflow:hidden">
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);
+             font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);font-weight:600">
+          Recent Triggers · Last 48h
+        </div>
+        <div id="alerts-list" style="max-height:320px;overflow-y:auto"></div>
+      </div>
+    </div>
     <button class="btn-run" id="btn-run" title="Run full pipeline"><span class="bolt">⚡</span>Run Pipeline</button>
   </div>
 </header>
@@ -607,7 +632,7 @@
     <div class="hero-left">
       <div class="hero-eyebrow">Outbound Intelligence</div>
       <h1 class="hero-title">Institutional Outreach</h1>
-      <div class="hero-sub">Surfacing AI transformation signals across 20 target institutions</div>
+      <div class="hero-sub">Surfacing AI transformation signals across <span id="hero-target-count">20</span> target institutions</div>
     </div>
     <div class="hero-right">
       <div class="hero-stat"><span class="n" id="h-firms">20</span><span class="l">Tier 1 Active</span></div>
@@ -625,6 +650,7 @@
     <div class="stat-card need"><div class="lbl">Need Email</div><div class="val" data-k="need">—</div><div class="sub">Scored but missing address</div></div>
     <div class="stat-card gap"><div class="lbl">Signal Gaps</div><div class="val" data-k="gap">—</div><div class="sub">No signal attached</div></div>
   </div>
+  <div class="stat-footnote" style="font-size:11.5px;color:var(--text-3);margin:-10px 0 24px;padding-left:2px">Tier 1 contacts only · Tier 2 contacts excluded from enrichment by design</div>
 
   <div class="coverage">
     <div class="lbl">Contact Coverage</div>
@@ -645,6 +671,7 @@
         <button data-v="approved">Approved</button>
         <button data-v="skipped">Skipped</button>
         <button data-v="flagged">Flagged</button>
+        <button data-v="dnc">DNC</button>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:4px"><span class="tlabel">Score</span>
@@ -754,21 +781,29 @@
   function filtered(){
     const cs = state.data?.contacts || [];
     const q = state.search.trim().toLowerCase();
-    return cs.filter(c =>
-      (state.status === 'all' || c.status === state.status) &&
-      (c.score >= state.minScore) &&
-      (state.tier === 'all' || String(c.tier || 1) === state.tier) &&
-      (!q || (c.firm_name||'').toLowerCase().includes(q) || (c.contact_name||'').toLowerCase().includes(q))
-    );
+    return cs.filter(c => {
+      // DNC tab: only DNC contacts. All other tabs: exclude DNC by default.
+      if (state.status === 'dnc'){
+        if (!c.do_not_contact) return false;
+      } else {
+        if (c.do_not_contact) return false;
+        if (state.status !== 'all' && c.status !== state.status) return false;
+      }
+      if (c.score < state.minScore) return false;
+      if (state.tier !== 'all' && String(c.tier || 1) !== state.tier) return false;
+      if (q && !((c.firm_name||'').toLowerCase().includes(q) || (c.contact_name||'').toLowerCase().includes(q))) return false;
+      return true;
+    });
   }
 
   function derivedStats(){
-    const cs = state.data?.contacts || [];
+    // Stat cards reflect TIER 1 only — Tier 2 isn't enrichment-scoped by design.
+    const cs = (state.data?.contacts || []).filter(c => (c.tier || 1) === 1);
     let ready=0, verified=0, need=0, gap=0;
     for (const c of cs){
       if (c.score >= 55 && c.email_verified && c.email) ready++;
       if (c.email_verified && c.email) verified++;
-      else if (c.score > 0 && !c.email) need++;
+      else if (!c.email || !c.email_verified) need++;
       if (!c.signal_type) gap++;
     }
     return {ready, verified, need, gap, total: cs.length};
@@ -831,11 +866,15 @@
     if (c.tier === 2) return tier2RowHTML(c);
     const isOpen = state.expandedId === '__ALL__' || state.expandedId === c.queue_id;
     const disabled = c.status !== 'pending' ? 'disabled' : '';
-    const rowCls = 'trow' + (c.status !== 'pending' ? ' decided' : '') + (isOpen ? ' open' : '');
+    const rowCls = 'trow' + (c.status !== 'pending' ? ' decided' : '') + (isOpen ? ' open' : '') + (c.do_not_contact ? ' dnc' : '');
     const statusTag = c.status !== 'pending' ? `<span class="tag status-${esc(c.status)}">${esc(c.status)}</span>` : '';
     const sigTag = c.signal_type ? `<span class="tag sig-${esc(c.signal_type)}">${esc(c.signal_type)}</span>` : '';
     const typeTag = c.firm_type ? `<span class="tag type">${esc(prettyType(c.firm_type))}</span>` : '';
     const stageTag = c.action ? `<span class="tag stage">${esc(c.action)}</span>` : '';
+    const dncTag = c.do_not_contact ? `<span class="tag" style="background:rgba(239,68,68,0.15);color:#ef4444;border-color:rgba(239,68,68,0.35)">DNC</span>` : '';
+    const rankBadge = (c.firm_contact_count && c.firm_contact_count > 1)
+      ? `<span class="tag" style="background:rgba(70,91,255,0.12);color:#8b9fff;border-color:rgba(70,91,255,0.25);font-variant-numeric:tabular-nums">#${c.rank_at_firm}/${c.firm_contact_count}</span>`
+      : '';
     const dotCls = c.email_verified && c.email ? 'v' : (c.email ? 'u' : 'm');
     const emailTxt = c.email || '—';
     const dims = dimensions(c);
@@ -847,11 +886,11 @@
         <div class="avatar">${esc(initials(c.firm_name))}</div>
         <div class="firm-info">
           <div class="firm-name">${esc(c.firm_name)}</div>
-          <div class="firm-tags">${typeTag}${stageTag}${sigTag}${statusTag}</div>
+          <div class="firm-tags">${typeTag}${stageTag}${sigTag}${statusTag}${dncTag}${rankBadge}</div>
         </div>
       </div>
       <div class="contact-cell">
-        <div class="contact-name">${esc(c.contact_name)}</div>
+        <div class="contact-name">${esc(c.contact_name)}${meddicPill(c.title)}</div>
         <div class="contact-title">${esc(c.title)}</div>
       </div>
       <div class="email-cell"><span class="email-dot ${dotCls}"></span><span class="em">${esc(emailTxt)}</span></div>
@@ -865,6 +904,8 @@
           <button class="btn" data-act="skip" ${disabled}>Skip</button>
         </div>
         <button class="btn flag" data-act="flag" ${disabled}>Flag</button>
+        <button class="btn" data-act="dnc" title="Do Not Contact" ${c.do_not_contact?'disabled':''}
+          style="color:#ef4444;border-color:rgba(239,68,68,0.35);padding:6px 8px">⊘</button>
       </div>
       <div class="chev">▾</div>
     </div>
@@ -890,10 +931,35 @@
         <div class="box full">
           <div class="first-line-head">
             <div class="box-lbl" style="margin-bottom:0">Suggested First Line</div>
-            <button class="btn-gen" data-act="generate" ${disabled}>${c.first_line ? 'Regenerate ✦' : 'Generate ✦'}</button>
+            <div style="display:flex;gap:8px;align-items:center">
+              <a class="btn-gen" href="/brief/${c.queue_id}" target="_blank"
+                style="text-decoration:none;display:inline-flex;align-items:center">Export Brief ⎘</a>
+              <button class="btn-gen" data-act="generate" ${disabled}>${c.first_line ? 'Regenerate ✦' : 'Generate ✦'}</button>
+            </div>
           </div>
           <textarea class="first-line" placeholder="Click Generate ✦ or write a personalized opener for ${esc(c.contact_name)}…" ${disabled}>${esc(c.first_line)}</textarea>
         </div>
+        ${(c.firm_peers && c.firm_peers.length > 1) ? `
+        <div class="box full">
+          <div class="box-lbl">Other Contacts at ${esc(c.firm_name)}</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+            ${c.firm_peers.map(p => {
+              const isSelf = p.queue_id === c.queue_id;
+              const sc = Math.round(p.score||0);
+              return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:6px 10px;
+                   background:${isSelf?'var(--blue-dim)':'var(--overlay)'};
+                   border:1px solid ${isSelf?'var(--blue-border)':'var(--border)'};border-radius:3px;
+                   cursor:${isSelf?'default':'pointer'}" ${isSelf?'':`data-peer-qid="${p.queue_id}"`}>
+                <div style="font-variant-numeric:tabular-nums;font-size:13px;color:${isSelf?'#8b9fff':'var(--text)'};font-weight:${isSelf?'600':'500'}">${sc}</div>
+                <div>
+                  <div style="font-size:13px;color:var(--text);font-weight:${isSelf?'600':'400'}">${esc(p.contact_name)}${isSelf?' <span style=\"color:#8b9fff;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;margin-left:6px\">current</span>':''}</div>
+                  <div style="font-size:11px;color:var(--text-3)">${esc(p.title || '—')}</div>
+                </div>
+                <div style="color:var(--text-3);font-size:11px">${isSelf?'':'jump →'}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>` : ''}
         <div class="box full">
           <div class="box-lbl">Confidence Breakdown</div>
           ${dims.map(d => `
@@ -942,6 +1008,7 @@
     const s = state.data?.stats || {};
     const set = (id, v) => { const e = document.getElementById(id); if (e && v != null) e.textContent = v; };
     set('h-firms', s.tier1_firms != null ? s.tier1_firms : s.total_firms);
+    set('hero-target-count', s.tier1_firms != null ? s.tier1_firms : s.total_firms);
     set('h-signals', s.total_signals);
     set('h-strong', s.strong_match);
   }
@@ -954,14 +1021,20 @@
     el.footer.textContent = `Generated ${ts} · ${n} Contacts`;
     el.genMeta.textContent = state.data.generated_at ? `Updated ${new Date(state.data.generated_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}` : '';
     renderSignalLive();
+    renderAlerts();
   }
 
   function renderSignalLive(){
     const box = document.getElementById('signal-live');
     if (!box) return;
-    const cs = state.data?.contacts || [];
+    // Prefer stats.latest_signal (global max, includes firm_id=NULL rows).
     let latest = 0;
-    for (const c of cs){
+    const gl = state.data?.stats?.latest_signal;
+    if (gl){
+      const t = new Date(gl).getTime();
+      if (!isNaN(t)) latest = t;
+    }
+    for (const c of (state.data?.contacts || [])){
       if (!c.signal_date) continue;
       const t = new Date(c.signal_date).getTime();
       if (!isNaN(t) && t > latest) latest = t;
@@ -1011,6 +1084,20 @@
       const qid = parseInt(host.dataset.qid, 10);
       btn.addEventListener('click', e => { e.stopPropagation(); handleAction(qid, btn.dataset.act, btn); });
     });
+    // Peer-jump: clicking another contact at the same firm jumps to that row
+    document.querySelectorAll('[data-peer-qid]').forEach(el => {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        const target = parseInt(el.dataset.peerQid, 10);
+        if (!target) return;
+        state.expandedId = target;
+        render();
+        setTimeout(() => {
+          const row = document.querySelector(`.trow[data-qid="${target}"]`);
+          if (row) row.scrollIntoView({block:'center', behavior:'smooth'});
+        }, 0);
+      });
+    });
   }
 
   async function handleActivate(firmId, btn){
@@ -1029,6 +1116,21 @@
       btn.disabled = false;
       btn.innerHTML = orig;
       showToast('Activate failed: ' + err.message, true);
+    }
+  }
+
+  async function handleDnc(qid, btn){
+    const c = state.data.contacts.find(x => x.queue_id === qid);
+    if (!c || c.do_not_contact) return;
+    if (!confirm(`Mark ${c.contact_name} as Do Not Contact? They will be removed from the queue.`)) return;
+    try {
+      await apiCall('/api/dnc', {contact_id: c.contact_id});
+      c.do_not_contact = true;
+      c.status = 'skipped';
+      showToast(`${c.contact_name} marked Do Not Contact`);
+      render();
+    } catch (err) {
+      showToast('DNC failed: ' + err.message, true);
     }
   }
 
@@ -1109,6 +1211,7 @@
     }
     if (act === 'generate'){ return generateFirstLine(qid, btn); }
     if (act === 'gen_brief'){ return generateBrief(qid, btn); }
+    if (act === 'dnc'){ return handleDnc(qid, btn); }
     if (c.status !== 'pending') return;
 
     const ta = document.querySelector(`.expand[data-qid="${qid}"] textarea.first-line`);
@@ -1128,14 +1231,39 @@
     }
   }
 
+  function meddicRole(title){
+    const t = (title || '').toLowerCase();
+    if (/\b(cto|cio|ceo|coo|cdo|caio|chief|president|managing director|\bmd\b|partner)\b/.test(t)) return 'EB';
+    if (/\b(head of ai|head of data|head of research|head of technology|head of engineering|director|vp|vice president)\b/.test(t)) return 'CH';
+    return 'UC';
+  }
+  function meddicPill(title){
+    if (!title) return '';
+    const r = meddicRole(title);
+    return `<span class="meddic-pill" title="${r==='EB'?'Economic Buyer':r==='CH'?'Champion':'User / Champion'}">${r}</span>`;
+  }
+
   function renderBrief(b){
     if (!b) return '';
+    // MEDDIC-framed fields with legacy fallbacks
+    const pain      = b.identified_pain    || b.why_now;
+    const criteria  = b.decision_criteria  || b.angle;
+    const metrics   = b.metrics            || b.proof_point;
+    const champEB   = b.champion_eb        || b.why_this_contact;
+    const role      = (b.meddic_role || '').toUpperCase();
+    const champLbl  = role === 'EB' ? 'Economic Buyer'
+                    : role === 'CH' ? 'Champion'
+                    : role === 'UC' ? 'User / Champion'
+                    : 'Champion / Economic Buyer';
     const rows = [
-      {cls:'why', k:'Why Now',          v:b.why_now},
-      {cls:'obj', k:'Likely Objection', v:b.objection},
-      {cls:'ang', k:'Your Angle',       v:b.angle},
-      {cls:'prf', k:'Proof Point',      v:b.proof_point},
+      {cls:'why', k:'Identified Pain',    v:pain},
+      {cls:'obj', k:'Objection',          v:b.objection},
+      {cls:'ang', k:'Decision Criteria',  v:criteria},
+      {cls:'prf', k:'Metrics',            v:metrics},
     ];
+    if (champEB)            rows.push({cls:'wtc', k:champLbl,           v:champEB});
+    if (b.decision_process) rows.push({cls:'dp',  k:'Decision Process', v:b.decision_process});
+    if (b.thread)           rows.push({cls:'thr', k:'⇄ Multi-Thread',   v:b.thread});
     return rows.map(r => `
       <div class="brief-row ${r.cls}">
         <div class="k">${r.k}</div>
@@ -1253,6 +1381,75 @@
     }
   }
 
+  // ── Alerts panel ────────────────────────────────────────────────────────
+  function timeAgo(iso){
+    if (!iso) return '';
+    const t = new Date(iso).getTime();
+    if (isNaN(t)) return '';
+    const h = (Date.now() - t) / 36e5;
+    if (h < 1) return `${Math.max(1, Math.round(h*60))}m ago`;
+    if (h < 48) return `${Math.round(h)}h ago`;
+    return `${Math.round(h/24)}d ago`;
+  }
+
+  function renderAlerts(){
+    const wrap = document.getElementById('alerts-wrap');
+    const list = document.getElementById('alerts-list');
+    const badge = document.getElementById('alerts-badge');
+    const label = document.getElementById('alerts-label');
+    if (!wrap || !list) return;
+    const triggers = (state.data?.stats?.recent_triggers) || [];
+    if (!triggers.length){
+      wrap.style.display = 'none';
+      return;
+    }
+    wrap.style.display = '';
+    badge.style.display = '';
+    badge.textContent = triggers.length;
+    label.textContent = `${triggers.length} New`;
+    list.innerHTML = triggers.map(t => `
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer"
+           data-alert-firm="${t.firm_id}">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">${esc(t.firm_name)}</div>
+          <div style="font-size:10px;color:var(--text-3);letter-spacing:0.04em">${esc(timeAgo(t.signal_date))}</div>
+        </div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:2px;text-transform:uppercase;letter-spacing:0.06em">
+          ${esc(t.signal_type || 'signal')}${t.buying_stage?` · ${esc(t.buying_stage)}`:''}
+        </div>
+        ${t.preview ? `<div style="font-size:12px;color:var(--text-2);margin-top:4px;line-height:1.4">${esc(t.preview)}${t.preview.length>=140?'…':''}</div>` : ''}
+      </div>`).join('');
+    list.querySelectorAll('[data-alert-firm]').forEach(el => {
+      el.addEventListener('click', e => {
+        const fid = parseInt(el.dataset.alertFirm, 10);
+        document.getElementById('alerts-panel').style.display = 'none';
+        // Jump to first contact for that firm
+        const rec = (state.data?.contacts || []).find(c => c.firm_id === fid && c.queue_id);
+        if (rec){
+          state.expandedId = rec.queue_id;
+          render();
+          setTimeout(() => {
+            const row = document.querySelector(`.trow[data-qid="${rec.queue_id}"]`);
+            if (row) row.scrollIntoView({block:'center', behavior:'smooth'});
+          }, 0);
+        }
+      });
+    });
+  }
+
+  function bindAlerts(){
+    const btn = document.getElementById('btn-alerts');
+    const panel = document.getElementById('alerts-panel');
+    if (!btn || !panel) return;
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    });
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#alerts-wrap')) panel.style.display = 'none';
+    });
+  }
+
   // ── Run Pipeline ────────────────────────────────────────────────────────
   function bindRunPipeline(){
     const btn = document.getElementById('btn-run');
@@ -1345,6 +1542,7 @@
 
   bindTabs();
   bindRunPipeline();
+  bindAlerts();
   bindKeyboard();
   load().then(() => showShortcutHint(5000));
   setInterval(refreshStats, STATS_REFRESH_MS);

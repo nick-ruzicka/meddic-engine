@@ -57,8 +57,44 @@ def _stats(conn) -> dict:
              GROUP BY COALESCE(NULLIF(email_source,''), 'none')
         """).fetchall()}
 
+    # Recent triggers — Tier-1 signals within the last 48h for firms in an
+    # active buying stage. Powers the alert bell.
+    recent_triggers = []
+    try:
+        trows = conn.execute("""
+            SELECT sig.id AS sid, sig.signal_type, sig.signal_date, sig.created_at,
+                   sig.content, sig.source_url,
+                   f.id AS firm_id, f.name AS firm_name, f.buying_stage
+              FROM signals sig
+              JOIN firms f ON f.id = sig.firm_id
+             WHERE f.tier = 1
+               AND COALESCE(f.buying_stage,'') IN ('deploying','evaluating')
+               AND COALESCE(sig.signal_date, sig.created_at) >=
+                   datetime('now', '-48 hours')
+             ORDER BY COALESCE(sig.signal_date, sig.created_at) DESC
+             LIMIT 12
+        """).fetchall()
+        for t in trows:
+            recent_triggers.append({
+                "signal_id":    t["sid"],
+                "firm_id":      t["firm_id"],
+                "firm_name":    t["firm_name"],
+                "signal_type":  t["signal_type"],
+                "signal_date":  t["signal_date"] or t["created_at"],
+                "buying_stage": t["buying_stage"] or "",
+                "preview":      (t["content"] or "")[:140],
+                "source_url":   t["source_url"] or "",
+            })
+    except Exception:
+        pass
+
+    latest_row = conn.execute("SELECT MAX(signal_date) FROM signals").fetchone()
+    latest_signal = latest_row[0] if latest_row else None
+
     return {
+        "latest_signal":  latest_signal,
         "email_sources":  email_sources,
+        "recent_triggers": recent_triggers,
         "total_firms":    active,
         "tier1":          tier1,
         "tier2":          tier2,
@@ -93,6 +129,8 @@ def _contacts(conn) -> list[dict]:
             c.email             AS email,
             c.email_verified    AS email_verified,
             c.email_source      AS email_source,
+            c.linkedin_url      AS linkedin_url,
+            COALESCE(c.do_not_contact, 0) AS do_not_contact,
             f.id                AS firm_id,
             f.name              AS firm_name,
             f.firm_type         AS firm_type,
@@ -130,28 +168,21 @@ def _contacts(conn) -> list[dict]:
         )
         ORDER BY
             COALESCE(s.score, 0) DESC,
-            -- Title priority: CTO / Head of AI / Chief AI Officer first,
-            -- then other named technical leaders, then general executives.
-            -- Title outranks signal_freshness so the right *person* always wins the tie.
+            -- Head of AI first, then CTO, CIO, CInvO, MD, everyone else.
+            -- Title beats freshness so the right *person* wins at equal score.
             CASE
-              WHEN LOWER(c.title) LIKE '%chief technology%'        THEN 1
-              WHEN LOWER(c.title) LIKE '%cto%'                     THEN 1
-              WHEN LOWER(c.title) LIKE '%head of ai%'              THEN 2
-              WHEN LOWER(c.title) LIKE '%chief ai%'                THEN 2
-              WHEN LOWER(c.title) LIKE '%head of data%'            THEN 3
-              WHEN LOWER(c.title) LIKE '%chief data%'              THEN 3
-              WHEN LOWER(c.title) LIKE '%head of technology%'      THEN 3
-              WHEN LOWER(c.title) LIKE '%chief information%'       THEN 4
-              WHEN LOWER(c.title) LIKE '%cio%'                     THEN 4
-              WHEN LOWER(c.title) LIKE '%managing director%ai%'    THEN 5
-              WHEN LOWER(c.title) LIKE '%partner%'                 THEN 6
-              WHEN LOWER(c.title) LIKE '%president%'               THEN 8
-              WHEN LOWER(c.title) LIKE '%coo%'                     THEN 9
-              WHEN LOWER(c.title) LIKE '%chief operating%'         THEN 9
-              ELSE 7
+              WHEN LOWER(c.title) LIKE '%head of ai%'         THEN 1
+              WHEN LOWER(c.title) LIKE '%chief ai%'           THEN 1
+              WHEN LOWER(c.title) LIKE '%chief technology%'   THEN 2
+              WHEN LOWER(c.title) LIKE '%cto%'                THEN 2
+              WHEN LOWER(c.title) LIKE '%chief information%'  THEN 3
+              WHEN LOWER(c.title) LIKE '%cio%' AND LOWER(c.title) NOT LIKE '%invest%' THEN 3
+              WHEN LOWER(c.title) LIKE '%chief investment%'   THEN 4
+              WHEN LOWER(c.title) LIKE '%managing director%'  THEN 5
+              ELSE 10
             END ASC,
             COALESCE(s.signal_freshness, 0) DESC,
-            q.id DESC
+            q.id ASC
     """).fetchall()
 
     def _parse_sections(raw):
@@ -162,6 +193,25 @@ def _contacts(conn) -> list[dict]:
             return v if isinstance(v, list) else []
         except Exception:
             return []
+
+    # Build intra-firm ranking (by score desc) and per-firm contact list
+    firm_groups: dict[int, list[dict]] = {}
+    for r in rows:
+        firm_groups.setdefault(r["firm_id"], []).append(r)
+    rank_map: dict[int, int] = {}           # queue_id -> rank_at_firm
+    firm_count_map: dict[int, int] = {}     # firm_id -> count of contacts at firm
+    firm_peers_map: dict[int, list[dict]] = {}  # firm_id -> [{contact_name,title,score,queue_id}]
+    for fid, grp in firm_groups.items():
+        grp_sorted = sorted(grp, key=lambda x: (x["score"] or 0), reverse=True)
+        firm_count_map[fid] = len(grp_sorted)
+        firm_peers_map[fid] = [{
+            "queue_id":     gr["queue_id"],
+            "contact_name": gr["contact_name"],
+            "title":        gr["title"] or "",
+            "score":        float(gr["score"]) if gr["score"] is not None else 0.0,
+        } for gr in grp_sorted]
+        for idx, gr in enumerate(grp_sorted, 1):
+            rank_map[gr["queue_id"]] = idx
 
     return [{
         "queue_id":         r["queue_id"],
@@ -176,6 +226,11 @@ def _contacts(conn) -> list[dict]:
         "email":            r["email"] or "",
         "email_verified":   bool(r["email_verified"]),
         "email_source":     r["email_source"] or "",
+        "linkedin_url":     r["linkedin_url"] or "",
+        "do_not_contact":   bool(r["do_not_contact"]),
+        "rank_at_firm":     rank_map.get(r["queue_id"], 1),
+        "firm_contact_count": firm_count_map.get(r["firm_id"], 1),
+        "firm_peers":       firm_peers_map.get(r["firm_id"], []),
         "score":            float(r["score"]) if r["score"] is not None else 0.0,
         "icp_fit":          float(r["icp_fit"]) if r["icp_fit"] is not None else None,
         "ai_readiness":     float(r["ai_readiness"]) if r["ai_readiness"] is not None else None,

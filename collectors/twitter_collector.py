@@ -118,6 +118,53 @@ def _is_recent(iso_date: str, days: int = RECENT_DAYS) -> bool:
         return True
 
 
+def _load_firms() -> list[dict]:
+    """Load firms (id, name) from DB for content-based resolution."""
+    try:
+        from database import get_db
+        conn = get_db()
+        rows = [dict(r) for r in conn.execute("SELECT id, name FROM firms").fetchall()]
+        conn.close()
+        return rows
+    except Exception as e:
+        logger.warning(f"twitter: could not load firms table: {e}")
+        return []
+
+
+def _build_handle_index(firm_handles_cfg: dict, firms: list[dict]) -> dict[str, int]:
+    """Map lowercase handle → firm_id using config 'handle: firm_name' pairs."""
+    name_to_id = {(f.get("name") or "").lower(): f["id"] for f in firms}
+    index: dict[str, int] = {}
+    for handle, firm_name in (firm_handles_cfg or {}).items():
+        fid = name_to_id.get((firm_name or "").lower())
+        if fid:
+            index[handle.lower().lstrip("@")] = fid
+    return index
+
+
+def _resolve_firm_from_content(text: str, firms: list[dict]) -> int | None:
+    """Same approach as exa_collector._resolve_firm — substring match."""
+    if not text:
+        return None
+    lo = text.lower()
+    for f in firms:
+        name = (f.get("name") or "").lower().strip()
+        if name and len(name) >= 4 and name in lo:
+            return f["id"]
+    return None
+
+
+def _resolve_firm(handle: str, text: str,
+                  handle_index: dict[str, int],
+                  firms: list[dict]) -> int | None:
+    """Handle lookup first, then fuzzy content match."""
+    if handle:
+        fid = handle_index.get(handle.lower().lstrip("@"))
+        if fid:
+            return fid
+    return _resolve_firm_from_content(text, firms)
+
+
 def _normalize(tweet: dict) -> dict | None:
     """Turn a TwitterAPI.io tweet into a signal dict. Returns None if unusable."""
     tid = str(tweet.get("id") or tweet.get("tweet_id") or "").strip()
@@ -154,19 +201,35 @@ def _normalize(tweet: dict) -> dict | None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _iter_tweets(payload: dict | None) -> Iterable[dict]:
-    """TwitterAPI.io returns tweets under various keys. Check common ones."""
+    """TwitterAPI.io returns tweets under various keys. Handle all shapes:
+       - advanced_search:  {"tweets": [...]}
+       - user/last_tweets: {"status":"success","data":{"tweets":[...]}}
+       - legacy:           {"data": [...]} or {"results": [...]}
+    """
     if not payload:
         return []
-    for key in ("tweets", "data", "results", "statuses"):
+    # Flat list at top level
+    for key in ("tweets", "results", "statuses"):
         v = payload.get(key)
         if isinstance(v, list):
             return v
+    # Nested under `data`
+    data = payload.get("data")
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        for key in ("tweets", "results"):
+            v = data.get(key)
+            if isinstance(v, list):
+                return v
     if isinstance(payload, list):
         return payload
     return []
 
 
-def _collect_accounts(handles: list[str]) -> list[dict]:
+def _collect_accounts(handles: list[str],
+                      handle_index: dict[str, int],
+                      firms: list[dict]) -> list[dict]:
     out = []
     for handle in handles:
         handle = handle.lstrip("@")
@@ -181,6 +244,9 @@ def _collect_accounts(handles: list[str]) -> list[dict]:
             if not sig["author_handle"]:
                 sig["author_handle"] = handle
                 sig["source_url"] = f"https://twitter.com/{handle}/status/{sig['_tid']}"
+            sig["firm_id"] = _resolve_firm(sig["author_handle"], sig["content"],
+                                           handle_index, firms)
+            sig["buying_stage"] = infer_buying_stage(sig["content"])
             out.append(sig)
         logger.info(f"twitter:accounts {handle} → {sum(1 for _ in _iter_tweets(payload))} raw")
     return out
@@ -202,11 +268,15 @@ def _build_queries(keywords: dict, context_filters: list[str]) -> list[tuple[str
     return queries
 
 
-def _collect_search(keywords: dict, context_filters: list[str]) -> list[dict]:
+def _collect_search(keywords: dict, context_filters: list[str],
+                    handle_index: dict[str, int],
+                    firms: list[dict]) -> list[dict]:
     out = []
     for category, query in _build_queries(keywords, context_filters):
-        payload = _get("/twitter/search/recent",
-                       {"query": query, "maxResults": SEARCH_MAX_RESULTS})
+        # /twitter/search/recent was deprecated → advanced_search returns same shape
+        # under `tweets` key. queryType=Latest orders by recency.
+        payload = _get("/twitter/tweet/advanced_search",
+                       {"query": query, "queryType": "Latest"})
         n_raw = 0
         for tweet in _iter_tweets(payload):
             n_raw += 1
@@ -216,6 +286,9 @@ def _collect_search(keywords: dict, context_filters: list[str]) -> list[dict]:
             # Trust explicit category hint over keyword classification if text is ambiguous
             if sig["signal_subtype"] == "pain" and category != "pain":
                 sig["signal_subtype"] = category
+            sig["firm_id"] = _resolve_firm(sig["author_handle"], sig["content"],
+                                           handle_index, firms)
+            sig["buying_stage"] = infer_buying_stage(sig["content"])
             out.append(sig)
         logger.info(f"twitter:search [{category}] '{query}' → {n_raw} raw")
     return out
@@ -234,15 +307,21 @@ def collect(config: dict) -> list[dict]:
     handles = twitter_cfg.get("monitored_accounts") or []
     keywords = twitter_cfg.get("keywords") or {}
     ctx = twitter_cfg.get("firm_context_filters") or []
+    firm_handles_cfg = twitter_cfg.get("firm_handles") or {}
+
+    firms = _load_firms()
+    handle_index = _build_handle_index(firm_handles_cfg, firms)
+    logger.info(f"twitter: firm resolution ready — "
+                f"{len(handle_index)} handles mapped, {len(firms)} firms for fuzzy match")
 
     try:
-        accounts = _collect_accounts(handles)
+        accounts = _collect_accounts(handles, handle_index, firms)
     except Exception as e:
         logger.exception(f"twitter account mode failed: {e}")
         accounts = []
 
     try:
-        search = _collect_search(keywords, ctx)
+        search = _collect_search(keywords, ctx, handle_index, firms)
     except Exception as e:
         logger.exception(f"twitter search mode failed: {e}")
         search = []

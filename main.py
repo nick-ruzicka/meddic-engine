@@ -22,7 +22,7 @@ import os
 import subprocess
 import sys
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
 
@@ -166,12 +166,28 @@ def _load_firm_contact_signals(firm_id: int, contact_id: int) -> tuple[dict, dic
     return firm, contact, signals
 
 
+MAX_SIGNAL_AGE_DAYS = 180  # drop signals older than this at ingest time
+
+
 def _insert_signal(conn, sig: dict) -> bool:
     """Insert a normalized signal dict. Returns True if inserted."""
     firm_id = sig.get("firm_id") or _firm_id_for(conn, sig.get("firm_name"), sig.get("domain"))
     if not firm_id:
         logger.debug(f"skip signal — no firm match: {sig.get('firm_name') or sig.get('domain')}")
         return False
+
+    sig_date = sig.get("signal_date")
+    if sig_date:
+        try:
+            dt = datetime.fromisoformat(str(sig_date).replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            cutoff = datetime.now(timezone.utc) - timedelta(days=MAX_SIGNAL_AGE_DAYS)
+            if dt < cutoff:
+                logger.debug(f"skip signal — older than {MAX_SIGNAL_AGE_DAYS}d: {sig_date}")
+                return False
+        except Exception:
+            pass  # unparseable date → allow through
 
     freshness = calculate_freshness_days(sig.get("signal_date", ""))
     conn.execute(
