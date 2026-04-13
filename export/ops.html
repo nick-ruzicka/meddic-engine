@@ -127,10 +127,13 @@
   @media (max-width:960px){.t-span-4,.t-span-3,.t-span-2{grid-column:span 6}}
 
   /* ── Waterfall ── */
-  .hbar{display:grid;grid-template-columns:minmax(0,160px) 1fr 210px;gap:18px;align-items:center;margin-bottom:16px}
+  .hbar{display:grid;grid-template-columns:minmax(0,220px) 1fr 210px;gap:18px;align-items:center;margin-bottom:16px}
   .hbar:last-child{margin-bottom:0}
   .hbar .lbl{font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-2);font-weight:500;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hbar .lbl-wrap{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .hbar .lbl-desc{font-size:10px;letter-spacing:0.02em;text-transform:none;color:var(--ink-3);
+    font-weight:400;line-height:1.35;white-space:normal;overflow:hidden}
   .hbar .track{height:8px;background:rgba(139,111,78,0.10);border-radius:2px;overflow:hidden}
   .hbar .track > div{height:100%;border-radius:2px;transition:width 600ms cubic-bezier(.22,.75,.31,1)}
   .hbar .meta{display:grid;grid-template-columns:52px 52px 78px;gap:14px;align-items:end;text-align:right}
@@ -543,13 +546,13 @@
   function renderWaterfall(data){
     const sources = (data.stats && data.stats.email_sources) || null;
     const buckets = [
-      {k:'exa_team_page',    lbl:'Exa Team Page'},
-      {k:'team_page_direct', lbl:'Direct Team Page'},
-      {k:'hunter',           lbl:'Hunter Verified'},
-      {k:'pattern',          lbl:'Pattern Guess'},
-      {k:'linkedin',         lbl:'LinkedIn'},
-      {k:'manual',           lbl:'Manual'},
-      {k:'none',             lbl:'No Email'},
+      {k:'exa_team_page',    lbl:'Exa Team Page',     desc:'Exa semantic search locates the firm\u2019s team/leadership page; Claude extracts names + titles from the returned content.'},
+      {k:'team_page_direct', lbl:'Direct Team Page',  desc:'requests.get() on a known team-page URL, parsed with BeautifulSoup, then Claude extracts contacts from the stripped HTML.'},
+      {k:'hunter',           lbl:'Hunter Verified',   desc:'Hunter.io Email Finder + Verifier API \u2014 name + domain \u2192 verified mailbox.'},
+      {k:'pattern',          lbl:'Pattern Guess',     desc:'Fallback: first.last@domain style inference when no verifier returns a hit. Unverified.'},
+      {k:'linkedin',         lbl:'LinkedIn',          desc:'Proxycurl LinkedIn lookup for profile metadata; email resolved via Hunter. Collector not yet connected.'},
+      {k:'manual',           lbl:'Manual',            desc:'Hand-entered via seed data or the review queue \u2014 bypasses the enrichment pipeline.'},
+      {k:'none',             lbl:'No Email',          desc:'Contact discovered but no resolvable email through any source in the waterfall.'},
     ];
     let rows;
     if (sources){
@@ -577,7 +580,10 @@
         ? `<div class="cell vf"><div class="v">${b.verified}</div><div class="k">verified</div></div>`
         : `<div class="cell vf"><div class="v">—</div><div class="k">verified</div></div>`;
       return `<div class="hbar">
-        <div class="lbl">${esc(b.lbl)}</div>
+        <div class="lbl-wrap">
+          <div class="lbl" title="${esc(b.desc || '')}">${esc(b.lbl)}</div>
+          ${b.desc ? `<div class="lbl-desc">${esc(b.desc)}</div>` : ''}
+        </div>
         <div class="track"><div style="width:${Math.max(1.5,pct)}%;background:${b.color}"></div></div>
         <div class="meta">
           <div class="cell"><div class="v">${b.n}</div><div class="k">count</div></div>

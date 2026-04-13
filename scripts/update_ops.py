@@ -264,8 +264,12 @@ def build_source_health(conn, days: int = 14) -> dict:
         t = r["signal_type"] or "unknown"
         per_type.setdefault(t, {})[r["day"]] = r["n"]
 
-    # Ensure known sources always show up, even with zero activity
-    for t in ("press", "twitter", "linkedin", "hiring", "exa"):
+    # Ensure wired collectors always show up, even with zero recent activity.
+    # Exa is intentionally excluded — its output is written with signal_type='press'
+    # (see collectors/exa_collector.py), so a separate 'exa' row would always
+    # render as not_wired and misrepresent the actual pipeline state. LinkedIn is
+    # excluded until the collector is connected — surface it only once it fires.
+    for t in ("press", "twitter", "hiring"):
         per_type.setdefault(t, {})
 
     # Has this source EVER produced a signal in the whole DB? Lets us
