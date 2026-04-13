@@ -64,7 +64,8 @@ def _stats(conn) -> dict:
         """).fetchall()}
 
     # Recent triggers — Tier-1 signals from the last 48h, with full source
-    # links + contact attribution. Powers the alert bell.
+    # links + contact attribution. Powers the alert bell. Noise filtering
+    # is in SQL (cheap exclusions) plus a Python pass for the OR-condition.
     recent_triggers = []
     try:
         trows = conn.execute("""
@@ -83,10 +84,24 @@ def _stats(conn) -> dict:
              WHERE f.tier = 1
                AND s.signal_date IS NOT NULL
                AND s.signal_date >= datetime('now', '-48 hours')
+               AND COALESCE(s.source_url,'') NOT LIKE '%.com%'
+               AND COALESCE(s.source_url,'') NOT LIKE '%sec.gov/Archives%'
+               AND LENGTH(COALESCE(s.content,'')) >= 30
+               AND COALESCE(s.content,'') NOT LIKE 'UNITED STATES%'
+               AND COALESCE(s.content,'') NOT LIKE 'Table of Contents%'
              ORDER BY s.signal_date DESC
-             LIMIT 20
+             LIMIT 80
         """).fetchall()
+        BUYING_KEEP = {"deploying", "evaluating", "transformation"}
         for t in trows:
+            stage = (t["buying_stage"] or "").lower()
+            subtype = (t["signal_subtype"] or "").lower()
+            content_lc = (t["signal_content"] or "").lower()
+            keep = (stage in BUYING_KEEP
+                    or subtype == "ai_first"
+                    or "ai" in content_lc)
+            if not keep:
+                continue
             recent_triggers.append({
                 "signal_id":     t["sid"],
                 "firm_id":       t["firm_id"],
@@ -101,6 +116,8 @@ def _stats(conn) -> dict:
                 "contact_name":  t["contact_name"] or "",
                 "contact_title": t["contact_title"] or "",
             })
+            if len(recent_triggers) >= 20:
+                break
     except Exception:
         pass
 
@@ -258,13 +275,46 @@ def _contacts(conn) -> list[dict]:
         else:
             firm_coverage_map[fid] = ""  # no badge
 
+    def clean_snippet(text: str) -> str:
+        if not text:
+            return ""
+        # Trim known LinkedIn / Exa boilerplate suffixes when they appear past
+        # the first 20 chars (so we keep snippets that legitimately begin with
+        # a similar phrase).
+        for suffix in ("By clicking", "| comments", "View post",
+                       "| LinkedIn", "Stuart Sim\n", "…\n"):
+            idx = text.find(suffix)
+            if idx > 20:
+                text = text[:idx]
+        text = " ".join(text.split())  # collapse whitespace
+        if len(text) <= 200:
+            return text
+        # Truncate cleanly at last word boundary before 200.
+        cut = text.rfind(" ", 0, 200)
+        return (text[:cut] if cut > 100 else text[:200]).rstrip(",.;:") + "…"
+
+    def _clean_items(items):
+        out = []
+        for it in (items or []):
+            if not isinstance(it, dict):
+                continue
+            it = dict(it)
+            it["snippet"] = clean_snippet(it.get("snippet", ""))
+            out.append(it)
+        return out
+
     def _parse_research(raw):
         if not raw:
             return None
         try:
-            return json.loads(raw)
+            data = json.loads(raw)
         except Exception:
             return None
+        if isinstance(data, dict):
+            data["recent_posts"] = _clean_items(data.get("recent_posts"))
+            data["speaking"]     = _clean_items(data.get("speaking"))
+            data["press"]        = _clean_items(data.get("press"))
+        return data
 
     return [{
         "queue_id":         r["queue_id"],

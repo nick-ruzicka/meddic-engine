@@ -2185,21 +2185,51 @@
     const twitter = handle
       ? `<div style="margin-top:8px"><a href="https://x.com/${esc(handle)}" target="_blank" rel="noopener" style="color:#8b9fff;font-size:12px;text-decoration:none">𝕏 @${esc(handle)} ↗</a></div>`
       : '';
+    // Per-URL classification: a real LinkedIn POST gets the LinkedIn icon and
+    // a blue accent; a Twitter/X URL gets the 𝕏 icon and a light-blue accent;
+    // generic profile pages (linkedin.com/in/... or company /people/) are
+    // labeled "View profile" with no special styling.
+    function classify(url){
+      if (!url) return {kind:'plain'};
+      const u = url.toLowerCase();
+      if (u.includes('linkedin.com/posts'))
+        return {kind:'li-post', icon:'in', iconStyle:'background:#0A66C2;color:#fff', linkLabel:'→ View LinkedIn post ↗', border:'#0A66C2'};
+      if (u.includes('linkedin.com/in/') || u.includes('/people/'))
+        return {kind:'profile', linkLabel:'→ View profile ↗'};
+      if (u.includes('twitter.com/') || u.includes('x.com/'))
+        return {kind:'tweet', icon:'𝕏', iconStyle:'background:#000;color:#fff;font-family:var(--font-display,serif)', linkLabel:'→ View tweet ↗', border:'#1DA1F2'};
+      return {kind:'plain'};
+    }
+
     const rows = top.map(it => {
+      const cls = classify(it.url);
       const chip = `<span class="pill ${kindColor[it._kind] || 'pill--muted'}">${it._kind}</span>`;
+      const iconHtml = cls.icon
+        ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:2px;font-size:8px;font-weight:700;margin-right:6px;${cls.iconStyle}">${cls.icon}</span>`
+        : '';
       const date = it.date ? `<span style="color:var(--text-3);font-size:11px;margin-left:6px">${esc(it.date)}</span>` : '';
       const title = esc(it.title || '(untitled)').slice(0, 200);
-      const linkLabel = it._kind === 'POST' ? '→ View post ↗'
-                      : it._kind === 'SPEAKING' ? '→ View source ↗'
-                      : '→ Read article ↗';
+      // For real LinkedIn/Twitter posts the snippet IS the content — surface
+      // it as the primary line; the title (often "Stuart Sim's Post") is
+      // less useful than the actual post text.
+      const useSnippetAsTitle = (cls.kind === 'li-post' || cls.kind === 'tweet') && it.snippet;
+      const headlineRaw = useSnippetAsTitle ? it.snippet : (it.title || '(untitled)');
+      const headline = esc(headlineRaw).slice(0, 200);
+      const headlineHtml = it.url
+        ? `<a href="${esc(it.url)}" target="_blank" rel="noopener" style="color:var(--text-1);text-decoration:none">${headline}</a>`
+        : headline;
+      const subline = (!useSnippetAsTitle && it.snippet)
+        ? `<div style="color:var(--text-3);font-size:12px;margin-top:2px;line-height:1.45">${esc(it.snippet)}</div>` : '';
+      const linkLabel = cls.linkLabel || (it._kind === 'POST' ? '→ View post ↗' : it._kind === 'SPEAKING' ? '→ View source ↗' : '→ Read article ↗');
       const link = it.url
         ? `<div style="margin-top:6px"><a href="${esc(it.url)}" target="_blank" rel="noopener" style="color:#8b9fff;font-size:11px;text-decoration:none">${linkLabel}</a></div>`
         : '';
-      const titleHtml = it.url
-        ? `<a href="${esc(it.url)}" target="_blank" rel="noopener" style="color:var(--text-1);text-decoration:none">${title}</a>`
-        : title;
-      const snippet = it.snippet ? `<div style="color:var(--text-3);font-size:12px;margin-top:2px;line-height:1.45">${esc(it.snippet.slice(0,180))}</div>` : '';
-      return `<div style="padding:8px 0;border-top:1px solid var(--divider)">${chip}${date}<div style="margin-top:4px">${titleHtml}</div>${snippet}${link}</div>`;
+      const borderStyle = cls.border ? `border-left:2px solid ${cls.border};padding-left:10px;` : '';
+      return `<div style="padding:8px 0 8px 0;border-top:1px solid var(--divider);${borderStyle}">
+        <div style="display:flex;align-items:center;gap:4px">${iconHtml}${chip}${date}</div>
+        <div style="margin-top:4px;font-size:13px;line-height:1.4">${headlineHtml}</div>
+        ${subline}${link}
+      </div>`;
     }).join('');
     const empty = (!top.length && !(r && r.activity_summary) && !handle)
       ? '<em>No recent public activity found.</em>' : '';

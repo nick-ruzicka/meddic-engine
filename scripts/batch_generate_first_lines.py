@@ -53,6 +53,7 @@ SQL = """
 SELECT
     q.id AS queue_id, q.contact_id, q.firm_id,
     c.name AS contact_name, c.title, c.do_not_contact,
+    c.research_json,
     f.name AS firm_name, f.firm_type, f.buying_stage,
     f.competitor, f.has_objections,
     s.score, s.label, s.reasoning, s.account_brief,
@@ -78,6 +79,20 @@ ORDER BY s.score DESC
 """
 
 
+def _first_linkedin_post(research_json_raw):
+    if not research_json_raw:
+        return None
+    try:
+        rj = json.loads(research_json_raw)
+    except Exception:
+        return None
+    posts = (rj or {}).get("recent_posts") or []
+    for p in posts:
+        if "linkedin.com/posts" in (p.get("url") or "").lower():
+            return p
+    return None
+
+
 def build_user_message(row, brief: dict) -> str:
     sig_line = (
         f"{(row['signal_content'] or '').strip()[:300]} "
@@ -87,6 +102,17 @@ def build_user_message(row, brief: dict) -> str:
     )
     angle = (brief or {}).get("angle", "")
     why_now = (brief or {}).get("why_now", "")
+    li_post = _first_linkedin_post(row["research_json"]) if "research_json" in row.keys() else None
+    li_block = ""
+    if li_post:
+        li_block = (
+            "\nCONTACT'S RECENT LINKEDIN POST:\n"
+            f"\"{(li_post.get('snippet') or '').strip()[:400]}\"\n"
+            f"Posted: {li_post.get('date') or 'unknown'}\n"
+            "Reference this post specifically in the first line if relevant — "
+            "quoting a phrase or naming the announcement makes the opener "
+            "unmistakably tied to this person.\n"
+        )
     return (
         f"Firm: {row['firm_name']} ({row['firm_type'] or 'unknown'}, "
         f"{row['buying_stage'] or 'unknown stage'})\n"
@@ -95,9 +121,11 @@ def build_user_message(row, brief: dict) -> str:
         f"Top signal: {sig_line}\n"
         f"Score: {row['score'] or 0} - {row['label'] or ''}\n"
         f"Why now: {why_now[:280]}\n"
-        f"Pitch angle: {angle[:280]}\n\n"
+        f"Pitch angle: {angle[:280]}\n"
+        f"{li_block}\n"
         "Write ONE personalized first line for a cold outreach email. "
-        "Reference the specific signal if present. "
+        "Reference the LinkedIn post specifically if provided; otherwise "
+        "reference the signal. "
         f"{'Lead with compliance assurance. ' if row['has_objections'] else ''}"
         "Max 2 sentences. No em dashes. Return only the first line text, nothing else."
     )
