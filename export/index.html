@@ -1995,7 +1995,10 @@
       el.innerHTML = '<div class="brief-error">No tier-1 signals in last 48h</div>';
       return;
     }
-    const safe = esc(brief).replace(/\n/g, '<br>');
+    const safe = esc(brief)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br>');
     el.innerHTML = `
       <div class="brief-header">
         <span class="brief-label">✦ AI Brief</span>
