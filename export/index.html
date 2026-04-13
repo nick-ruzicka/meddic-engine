@@ -283,7 +283,8 @@
   .firm-tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
 
   .contact-cell{min-width:0}
-  .contact-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .contact-name{font-size:13px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+  .contact-name > .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
   .contact-title{font-size:11px;color:var(--text-3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0.02em}
 
   .email-cell{display:flex;align-items:center;gap:8px;min-width:0;font-size:12px;color:var(--text-2);font-family:var(--font-mono);letter-spacing:-0.01em}
@@ -717,7 +718,7 @@
 
   /* source badge — data provenance pill next to email dot */
   .src-badge{
-    display:inline-block;margin:0 8px 0 2px;
+    display:inline-block;
     font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:0.04em;
     padding:2px 6px;border-radius:2px;vertical-align:middle;
     border:1px solid transparent;line-height:1;
@@ -758,9 +759,9 @@
 
   /* panel navigation */
   .sp-nav{
-    display:flex;align-items:center;gap:12px;margin-top:12px;
+    display:flex;align-items:center;gap:10px;margin-top:10px;
+    padding-top:10px;border-top:1px solid var(--border);
     font-family:var(--font-mono);font-size:11px;color:var(--text-3);
-    padding-top:12px;border-top:1px solid var(--border);
   }
   .sp-nav button{
     background:transparent;border:1px solid var(--border);color:var(--text-2);
@@ -770,6 +771,29 @@
   .sp-nav button:hover:not(:disabled){border-color:var(--border-strong);color:var(--text)}
   .sp-nav button:disabled{opacity:0.35;cursor:default}
   .sp-nav .counter{color:var(--text-2);letter-spacing:0.06em;margin:0 4px}
+
+
+  /* Normalize inline row pills (single source of truth) */
+  .meddic-pill, .comp-tag, .src-badge, .fl-ready, .sig-chip, .obj-flag, .li-icon{
+    display:inline-flex;align-items:center;justify-content:center;
+    height:16px;padding:0 6px;border-radius:2px;line-height:1;
+    font-family:var(--font-mono);font-size:10px;font-weight:600;
+    letter-spacing:0.04em;vertical-align:middle;margin:0;flex-shrink:0;
+  }
+  .meddic-pill{margin-left:2px}
+  .comp-tag, .fl-ready, .obj-flag{margin-left:0}
+  .src-badge{margin:0}
+  .sig-chip{font-weight:500;letter-spacing:0.02em}
+  /* Objection flag — red warning for has_objections firms */
+  .obj-flag{background:rgba(239,68,68,0.16);color:#f87171;border:1px solid rgba(239,68,68,0.32)}
+  /* LinkedIn icon — clickable link */
+  .li-icon{
+    background:rgba(70,91,255,0.15);color:#8b9fff;
+    border:1px solid rgba(70,91,255,0.28);width:18px;height:16px;
+    padding:0;font-size:9px;cursor:pointer;text-decoration:none;
+    transition:background 120ms;
+  }
+  .li-icon:hover{background:rgba(70,91,255,0.28);color:#fff}
 
 </style>
 </head>
@@ -1095,7 +1119,7 @@
         </div>
       </div>
       <div class="contact-cell">
-        <div class="contact-name">${esc(c.contact_name)}${meddicPill(c.title)}${competitorTag(c)}${c.first_line ? '<span class="fl-ready" title="First line generated">READY</span>' : ''}</div>
+        <div class="contact-name"><span class="nm">${esc(c.contact_name)}</span>${meddicPill(c.title)}${competitorTag(c)}${objectionTag(c)}${linkedinIcon(c)}${c.first_line ? '<span class="fl-ready" title="First line generated">READY</span>' : ''}</div>
         <div class="contact-title">${esc(c.title)}</div>
       </div>
       <div class="email-cell">
@@ -1435,6 +1459,15 @@
     const short = COMP_LABELS[k] || k;
     const full  = COMP_FULL[k] || k;
     return `<span class="comp-tag ${esc(k)}" title="${esc(full)}">${esc(short)}</span>`;
+  }
+
+
+  function linkedinIcon(c){
+    if (!c.linkedin_url) return '';
+    return `<a class="li-icon" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener" title="LinkedIn profile" onclick="event.stopPropagation()">in</a>`;
+  }
+  function objectionTag(c){
+    return c.has_objections ? '<span class="obj-flag" title="Firm has compliance/AI-wrapper objection noted — lead with data-sovereignty angle">⚑</span>' : '';
   }
 
   function meddicPill(title){
