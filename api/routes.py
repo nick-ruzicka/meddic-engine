@@ -34,6 +34,7 @@ from database import get_db
 # Flask workers, but the demo deployment runs one process.
 _RUN_COOLDOWN_S = 120
 _last_run: dict[str, float] = {}
+_run_proc: dict[str, object] = {}  # mode -> {proc, started_at, log}
 
 logger = logging.getLogger(__name__)
 
@@ -722,9 +723,28 @@ def run_pipeline():
         # Fire-and-forget: caller polls /stats for progress. Output goes to a
         # per-mode log file so hangs and traces are visible after the fact.
         log_f = open(log_path, "w")
-        subprocess.Popen(cmd, cwd=ROOT, stdout=log_f, stderr=log_f)
+        proc = subprocess.Popen(cmd, cwd=ROOT, stdout=log_f, stderr=log_f)
+        _run_proc[mode] = {"proc": proc, "started_at": now, "log": log_path}
     except Exception as e:
         logger.exception("failed to launch pipeline")
         return jsonify({"error": str(e)}), 500
 
     return jsonify({"ok": True, "mode": mode, "log": log_path})
+
+
+@api_bp.route("/run/status", methods=["GET"])
+@require_api_key
+def run_status():
+    mode = (request.args.get("mode") or "full").lower()
+    info = _run_proc.get(mode)
+    if not info:
+        return jsonify({"running": False, "mode": mode})
+    proc = info["proc"]
+    rc = proc.poll()
+    elapsed = int(time.time() - info["started_at"])
+    if rc is None:
+        return jsonify({"running": True, "mode": mode, "elapsed_s": elapsed})
+    return jsonify({
+        "running": False, "mode": mode, "elapsed_s": elapsed,
+        "exit_code": rc, "ok": rc == 0,
+    })

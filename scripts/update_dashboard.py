@@ -92,16 +92,7 @@ def _stats(conn) -> dict:
              ORDER BY s.signal_date DESC
              LIMIT 80
         """).fetchall()
-        BUYING_KEEP = {"deploying", "evaluating", "transformation"}
         for t in trows:
-            stage = (t["buying_stage"] or "").lower()
-            subtype = (t["signal_subtype"] or "").lower()
-            content_lc = (t["signal_content"] or "").lower()
-            keep = (stage in BUYING_KEEP
-                    or subtype == "ai_first"
-                    or "ai" in content_lc)
-            if not keep:
-                continue
             recent_triggers.append({
                 "signal_id":     t["sid"],
                 "firm_id":       t["firm_id"],
