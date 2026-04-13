@@ -21,11 +21,18 @@ import logging
 import os
 import subprocess
 import sys
+import time
+from datetime import datetime
 from functools import wraps
 
 from flask import Blueprint, jsonify, request
 
 from database import get_db
+
+# In-memory rate limiter for /run. Single-process only; not safe across
+# Flask workers, but the demo deployment runs one process.
+_RUN_COOLDOWN_S = 120
+_last_run: dict[str, float] = {}
 
 logger = logging.getLogger(__name__)
 
@@ -553,6 +560,25 @@ def generate_brief():
     return jsonify({"ok": True, "brief": brief})
 
 
+@api_bp.route("/healthz", methods=["GET"])
+def healthz():
+    """Unauthenticated liveness probe — DB reachable + row count."""
+    try:
+        conn = get_db()
+        try:
+            firms = conn.execute("SELECT count(*) FROM firms").fetchone()[0]
+        finally:
+            conn.close()
+        return jsonify({
+            "status":    "ok",
+            "firms":     firms,
+            "timestamp": datetime.now().isoformat(timespec="seconds"),
+        })
+    except Exception as e:
+        logger.exception("healthz failed")
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 @api_bp.route("/run", methods=["POST"])
 @require_api_key
 def run_pipeline():
@@ -560,6 +586,16 @@ def run_pipeline():
     mode = (body.get("mode") or "").lower()
     if mode not in VALID_RUN_MODES:
         return jsonify({"error": f"mode must be one of {sorted(VALID_RUN_MODES)}"}), 400
+
+    now = time.time()
+    last = _last_run.get(mode, 0)
+    if now - last < _RUN_COOLDOWN_S:
+        wait_s = int(_RUN_COOLDOWN_S - (now - last))
+        return jsonify({
+            "ok": False,
+            "error": f"Rate limited — wait {wait_s}s before re-running '{mode}'",
+        }), 429
+    _last_run[mode] = now
 
     if mode == "sample":
         cmd = [sys.executable, MAIN_PY, "--full", "--sample"]

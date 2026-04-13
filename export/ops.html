@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared.css">
 <style>
   :root{
     /* Warm sand — shared with analytics */
@@ -124,9 +125,10 @@
   @media (max-width:960px){.t-span-4,.t-span-3,.t-span-2{grid-column:span 6}}
 
   /* ── Waterfall ── */
-  .hbar{display:grid;grid-template-columns:160px 1fr 210px;gap:18px;align-items:center;margin-bottom:16px}
+  .hbar{display:grid;grid-template-columns:minmax(0,160px) 1fr 210px;gap:18px;align-items:center;margin-bottom:16px}
   .hbar:last-child{margin-bottom:0}
-  .hbar .lbl{font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-2);font-weight:500}
+  .hbar .lbl{font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-2);font-weight:500;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .hbar .track{height:8px;background:rgba(139,111,78,0.10);border-radius:2px;overflow:hidden}
   .hbar .track > div{height:100%;border-radius:2px;transition:width 600ms cubic-bezier(.22,.75,.31,1)}
   .hbar .meta{display:grid;grid-template-columns:52px 52px 78px;gap:14px;align-items:end;text-align:right}
@@ -182,7 +184,7 @@
   .cadence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
   .cad-row{padding:18px 20px;background:rgba(255,255,255,0.35);
     border:1px solid var(--border);border-left:3px solid var(--umber);border-radius:2px;
-    transition:border-left-color 180ms}
+    transition:border-left-color 150ms}
   .cad-row:hover{border-left-color:var(--umber-deep)}
   .cad-row .lbl{font-size:10px;color:var(--ink-3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;font-weight:600}
   .cad-row .val{font-family:var(--font-display);font-size:30px;color:var(--ink);font-weight:500;line-height:1;letter-spacing:-0.01em;font-variant-numeric:tabular-nums}
@@ -472,6 +474,19 @@
     none:             '#C25A1E',
   };
 
+  function formatUpdated(ts){
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return '—';
+    const now = new Date();
+    const diff = now - d;
+    const hours = diff / 3600000;
+    const hm = d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+    if (hours < 1) return 'just now';
+    if (hours < 24 && d.toDateString() === now.toDateString()) return `Today ${hm}`;
+    const y = new Date(now); y.setDate(y.getDate() - 1);
+    if (d.toDateString() === y.toDateString()) return `Yesterday ${hm}`;
+    return d.toLocaleDateString('en-US', {month:'short', day:'numeric'}) + ' ' + hm;
+  }
   function timeAgo(iso){
     if (!iso) return '—';
     const t = new Date(iso).getTime();
@@ -819,7 +834,7 @@
       renderFirmVelocity(od);
       renderEnrichmentTiming(od);
       renderParseErrors(od);
-      const ts = od.generated_at ? new Date(od.generated_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
+      const ts = od.generated_at ? formatUpdated(od.generated_at) : '—';
       ['upd-waterfall','upd-fallthrough','upd-cadence','upd-errors'].forEach(id => {
         const el = document.getElementById(id); if (el) el.textContent = 'Updated ' + ts;
       });

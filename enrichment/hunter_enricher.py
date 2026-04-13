@@ -134,7 +134,10 @@ def find_email(name: str, domain: str) -> dict:
         "verified": status == "valid",
         "source": "hunter_finder",
     }
-    _cache_put(name, domain, result)
+    # Cache successful lookups only — a NULL today might be a real email next
+    # week. Negative results are cheap to retry; a stale 'no email' is costly.
+    if result.get("email"):
+        _cache_put(name, domain, result)
     return result
 
 

@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared.css">
 <style>
   :root{
     /* Sand theme — 's real tokens from .com/about */
@@ -45,7 +46,23 @@
   .nav-links a.active{color:var(--blue)}
   .nav-links .nav-sep{color:rgba(0,0,0,0.25);font-size:11px}
 
-  main{max-width:1080px;margin:0 auto;padding:40px 28px 96px;color:var(--text)}
+  main{max-width:1080px;margin:0 auto;padding:40px 28px 96px;color:var(--text);position:relative}
+  /* Sticky section nav — outside content column, hidden on narrow viewports */
+  .side-nav{
+    position:fixed;top:96px;
+    left:calc((100vw - 1080px) / 2 - 172px);
+    width:152px;display:flex;flex-direction:column;gap:2px;
+    font-size:11.5px;letter-spacing:0.02em;z-index:5;
+  }
+  .side-nav a{
+    display:block;padding:7px 12px 7px 14px;border-left:1px solid var(--border);
+    color:var(--text-3);text-decoration:none;transition:color 140ms, border-color 140ms, background 140ms;
+  }
+  .side-nav a:hover{color:var(--text);background:rgba(70,91,255,0.05)}
+  .side-nav a.active{color:#465BFF;border-left-color:#465BFF;font-weight:500}
+  .side-nav .sn-label{font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;
+    color:var(--text-3);margin-bottom:10px;padding-left:14px;font-weight:600}
+  @media (max-width:1260px){.side-nav{display:none}}
   main section, main .card, main table{color:inherit}
   .hb-grid-bg{
     background-image:
@@ -247,6 +264,16 @@
   </nav>
 </header>
 
+<nav class="side-nav" id="side-nav" aria-label="Methodology sections">
+  <div class="sn-label">On this page</div>
+  <a href="#discovery">Discovery</a>
+  <a href="#signal-collection">Signals</a>
+  <a href="#meddic">MEDDIC</a>
+  <a href="#scoring-formula">Scoring</a>
+  <a href="#skill-router">Router</a>
+  <a href="#score-labels">Labels</a>
+</nav>
+
 <main>
   <div class="page-header">
     <div class="page-eyebrow">Methodology</div>
@@ -254,7 +281,7 @@
     <div class="page-sub">The system behind the scores — how <span id="m-tier1-sub">20</span> target institutions become your outreach queue.</div>
   </div>
 
-  <section>
+  <section id="discovery">
     <div class="sec-eyebrow">Step 1 · Discovery</div>
     <h2 class="sec-title">From <span id="m-icp-title">7,115</span> ICP firms to <span id="m-tier1-title">20</span> named accounts</h2>
     <div class="sec-body">We start with <span id="m-icp-qualified">7,115</span> ICP-qualified firms from SEC filings. The top <span id="m-tier2">500</span> by AUM enter Tier 2 monitoring — firmographic scoring only, no contact enrichment. When a Tier 2 firm triggers a signal, it promotes to Tier 1 for full enrichment and contact scoring. The <span id="m-tier1">20</span> Tier 1 firms are hand-curated top-tier institutions with named contacts, verified emails, and full account briefs.</div>
@@ -269,7 +296,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="signal-collection">
     <div class="sec-eyebrow">Step 2 · Signal Collection</div>
     <h2 class="sec-title">What we look for</h2>
     <div class="sec-body">Four categories of signal, each scored for recency and relevance. The system watches for evidence that a firm is actively transforming — not just capable of it.</div>
@@ -301,7 +328,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="meddic">
     <div class="sec-eyebrow">Scoring Philosophy</div>
     <h2 class="sec-title">MEDDIC as the scoring backbone</h2>
     <div class="sec-body">Every contact is scored against MEDDIC criteria. The four weighted dimensions below are not arbitrary — each one maps to a MEDDIC letter, so a composite score doubles as a read on deal qualification.</div>
@@ -318,7 +345,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="scoring-formula">
     <div class="sec-eyebrow">Step 3 · Scoring</div>
     <h2 class="sec-title">How we score each contact</h2>
     <div class="sec-body">A weighted composite across four dimensions. Every dimension is scored 0-100 by Claude given the firm, contact, and signal context.</div>
@@ -335,7 +362,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="skill-router">
     <div class="sec-eyebrow">Step 4 · Skill Router</div>
     <h2 class="sec-title">How the AI adapts per firm</h2>
     <div class="sec-body">Before scoring, a deterministic router selects which skill sections to load into Claude's prompt. A PE firm sees different scoring rules than an investment bank; a firm with known objections sees compliance-weighted language.</div>
@@ -354,7 +381,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="score-labels">
     <div class="sec-eyebrow">Step 5 · Labels</div>
     <h2 class="sec-title">Score thresholds</h2>
     <div class="sec-body">The composite score maps to a decision bucket. Only Strong and Good matches move to the review queue.</div>
@@ -410,7 +437,18 @@
         setNum('m-icp-title',     f.icp_qualified);
         generated_at = d.generated_at || generated_at;
       }
-    } catch(err){ /* graceful degrade — placeholders remain */ }
+    } catch(err){
+      // Fallback to committed static numbers so the page never shows dashes
+      // if analytics_data.json is missing (e.g., fresh checkout, no pipeline run).
+      const fb = {
+        'm-sec-indexed':'16,639','m-icp-qualified':'7,115','m-icp-title':'7,115',
+        'm-tier2':'500','m-tier1':'40+','m-tier1-sub':'40+','m-tier1-title':'40+',
+        'meth-icp':'7,115','meth-tier2':'500','meth-tier1':'40+','meth-ready':'200+',
+      };
+      for (const [id, v] of Object.entries(fb)){
+        const el = document.getElementById(id); if (el) el.textContent = v;
+      }
+    }
     // Secondary: contacts_data.json for the footer contact count
     try{
       const r2 = await fetch('contacts_data.json', {cache:'no-store'});
@@ -427,6 +465,22 @@
       : `Generated ${ts}`;
   }
   load();
+
+  // Side-nav scrollspy — highlights the currently-visible section.
+  (() => {
+    const links = document.querySelectorAll('.side-nav a[href^="#"]');
+    if (!links.length || !('IntersectionObserver' in window)) return;
+    const map = new Map();
+    links.forEach(a => { const el = document.getElementById(a.getAttribute('href').slice(1)); if (el) map.set(el, a); });
+    const io = new IntersectionObserver((entries) => {
+      const visible = entries.filter(e => e.isIntersecting).sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (!visible) return;
+      links.forEach(a => a.classList.remove('active'));
+      const link = map.get(visible.target);
+      if (link) link.classList.add('active');
+    }, {rootMargin:'-30% 0px -55% 0px', threshold:0});
+    map.forEach((_, sec) => io.observe(sec));
+  })();
 })();
 
   // Hydrate CTA numbers from contacts_data.json

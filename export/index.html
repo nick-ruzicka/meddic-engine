@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<link rel="preload" as="fetch" href="contacts_data.json" crossorigin>
 <link rel="stylesheet" href="/shared.css">
 <style>
   :root{
@@ -419,7 +420,7 @@
     color:var(--text-2);font-size:13px;letter-spacing:0.02em;
     padding:10px 16px;border-radius:2px;
     transform:translateY(8px);opacity:0;pointer-events:none;
-    transition:transform 200ms ease, opacity 200ms ease;
+    transition:transform 220ms ease, opacity 220ms ease;
     font-family:var(--font-ui);
   }
   .toast.show{transform:translateY(0);opacity:1}
@@ -505,7 +506,7 @@
     background:transparent;border:1px solid transparent;
     padding:4px 8px;font-size:10px;letter-spacing:0.06em;
     text-transform:uppercase;color:var(--text-2);
-    cursor:pointer;border-radius:2px;transition:all 120ms;
+    cursor:pointer;border-radius:2px;transition:all 150ms;
   }
   .skip-menu button:hover{background:rgba(245,158,11,0.12);color:#fbbf24;border-color:var(--amber-border)}
 
@@ -543,7 +544,7 @@
     font-family:var(--font-mono);font-size:10.5px;
     color:var(--text-2);letter-spacing:0.02em;
     opacity:0;pointer-events:none;transform:translateY(6px);
-    transition:opacity 180ms ease-out, transform 180ms ease-out;
+    transition:opacity 150ms ease-out, transform 150ms ease-out;
   }
   .shortcut-hint.show{opacity:1;transform:translateY(0)}
   .shortcut-hint kbd{
@@ -632,14 +633,14 @@
   .firm-header{
     display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;
     background:rgba(255,255,255,0.02);user-select:none;
-    transition:background 120ms;
+    transition:background 150ms;
   }
   .firm-header:hover{background:rgba(255,255,255,0.05)}
   .firm-header .fh-chev{
     color:var(--text-2);
     font-size:12px;
     width:14px;
-    transition:transform 200ms ease, translate 200ms ease;
+    transition:transform 220ms ease, translate 220ms ease;
     flex-shrink:0;
     font-weight:600;
   }
@@ -652,6 +653,23 @@
   .firm-header .fh-tags{display:flex;gap:4px;margin-left:6px;flex-wrap:wrap}
   .firm-header .fh-summary{color:var(--text-3);font-size:11.5px;margin-left:auto;font-variant-numeric:tabular-nums;display:flex;gap:14px;align-items:center}
   .firm-header .fh-summary b{color:var(--text-2);font-weight:500}
+  /* Tier-2 info tooltip */
+  .t2-info{position:relative;display:inline-flex;align-items:center;justify-content:center;
+    width:16px;height:16px;border-radius:50%;border:1px solid var(--border-strong);
+    color:var(--text-3);font-size:10px;cursor:help;user-select:none;margin-left:2px;
+    transition:color 140ms, border-color 140ms}
+  .t2-info:hover,.t2-info:focus-visible{color:var(--text);border-color:var(--text-2);outline:none}
+  .t2-info .t2-tip{
+    position:absolute;bottom:calc(100% + 10px);right:0;
+    width:320px;padding:12px 14px;
+    background:var(--surface);color:var(--text-2);
+    border:1px solid var(--border-strong);border-radius:3px;
+    font-size:11.5px;line-height:1.5;text-transform:none;letter-spacing:0;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);
+    opacity:0;pointer-events:none;transform:translateY(4px);
+    transition:opacity 160ms, transform 160ms;z-index:50;
+  }
+  .t2-info:hover .t2-tip,.t2-info:focus-visible .t2-tip{opacity:1;transform:translateY(0)}
   .firm-group.collapsed .fh-chev{transform:rotate(-90deg)}
   .firm-group.collapsed .firm-contacts{display:none}
   .firm-contacts{}
@@ -676,7 +694,7 @@
 
   .firm-header .fh-top-link{
     font-size:11px; color:#465BFF; cursor:pointer; font-weight:500;
-    padding:2px 6px; border-radius:2px; transition:background 120ms;
+    padding:2px 6px; border-radius:2px; transition:background 150ms;
   }
   .firm-header .fh-top-link:hover{background:rgba(70,91,255,0.10)}
 
@@ -770,11 +788,26 @@
   .sp-nav button{
     background:transparent;border:1px solid var(--border);color:var(--text-2);
     padding:5px 10px;border-radius:2px;font-family:var(--font-mono);
-    font-size:11px;cursor:pointer;transition:all 120ms;
+    font-size:11px;cursor:pointer;transition:all 150ms;
   }
   .sp-nav button:hover:not(:disabled){border-color:var(--border-strong);color:var(--text)}
   .sp-nav button:disabled{opacity:0.35;cursor:default}
   .sp-nav .counter{color:var(--text-2);letter-spacing:0.06em;margin:0 4px}
+  /* peer filter chips */
+  .sp-chips{display:flex;gap:6px;margin-top:10px;margin-bottom:8px;flex-wrap:wrap}
+  .sp-chip{
+    display:inline-flex;align-items:center;gap:6px;padding:4px 10px;
+    font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;font-weight:500;
+    background:transparent;color:var(--text-3);
+    border:1px solid var(--border);border-radius:2px;cursor:pointer;
+    transition:background 140ms, color 140ms, border-color 140ms;
+  }
+  .sp-chip:hover{color:var(--text);border-color:var(--border-strong)}
+  .sp-chip .n{font-family:var(--font-mono);color:var(--text-3);font-size:10px;letter-spacing:0;text-transform:none}
+  .sp-chip.active .n{color:inherit}
+  .sp-chip.chip-strong.active{background:rgba(70,91,255,0.12);color:#8b9fff;border-color:rgba(70,91,255,0.45)}
+  .sp-chip.chip-good.active{background:rgba(245,158,11,0.12);color:#fbbf24;border-color:rgba(245,158,11,0.45)}
+  .sp-chip.chip-all.active{background:rgba(255,255,255,0.06);color:var(--text);border-color:var(--border-strong)}
 
 
   /* Normalize inline row pills (single source of truth) */
@@ -795,7 +828,7 @@
     background:rgba(70,91,255,0.15);color:#8b9fff;
     border:1px solid rgba(70,91,255,0.28);width:18px;height:16px;
     padding:0;font-size:9px;cursor:pointer;text-decoration:none;
-    transition:background 120ms;
+    transition:background 150ms;
   }
   .li-icon:hover{background:rgba(70,91,255,0.28);color:#fff}
 
@@ -847,7 +880,7 @@
         <div id="alerts-list" style="max-height:320px;overflow-y:auto"></div>
       </div>
     </div>
-    <button class="btn-run" id="btn-run" title="Run full pipeline"><span class="bolt">⚡</span>Run Pipeline</button>
+    <button class="btn btn--primary btn-run" id="btn-run" title="Run full pipeline"><span class="bolt">⚡</span>Run Pipeline</button>
   </div>
 </header>
 <aside id="side-panel" class="side-panel" role="dialog" aria-hidden="true"></aside>
@@ -928,7 +961,7 @@
         <button data-v="expanded" title="Expanded — full cards">⊞ Expanded</button>
       </div>
     </div>
-    <button class="btn-export" id="btn-export" disabled>Export Approved <span id="approved-count"></span></button>
+    <button class="btn btn--ghost btn-export" id="btn-export" disabled>Export Approved <span id="approved-count"></span></button>
   </div>
 
   <div class="table" id="table-wrap">
@@ -964,7 +997,9 @@
     data:null, status:'all',
     minScore: Number.isFinite(_qpMin) ? _qpMin : 0,
     maxScore: Number.isFinite(_qpMax) ? _qpMax : 100,
-    tier:'all', search:'', expandedId:null, view:'compact', panelQid:null, collapsedFirms:new Set(), focusedQid:null };
+    tier:'all', search:'', expandedId:null, view:'compact', panelQid:null, collapsedFirms:new Set(), focusedQid:null,
+    peerFilter: 'all', /* 'strong' | 'good' | 'all' */
+  };
   const el = {
     content: document.getElementById('content'),
     footer: document.getElementById('footer'),
@@ -1031,8 +1066,15 @@
         if (state.status !== 'all' && c.status !== state.status) return false;
       }
       if (c.score < state.minScore) return false;
+      if (c.score > state.maxScore) return false;
       if (state.tier !== 'all' && String(c.tier || 1) !== state.tier) return false;
-      if (q && !((c.firm_name||'').toLowerCase().includes(q) || (c.contact_name||'').toLowerCase().includes(q))) return false;
+      if (q) {
+        const hay = [
+          c.firm_name, c.contact_name, c.title, c.buying_stage,
+          c.competitor, c.email_source, c.label,
+        ].map(v => (v||'').toLowerCase()).join(' ');
+        if (!hay.includes(q)) return false;
+      }
       return true;
     });
   }
@@ -1083,8 +1125,8 @@
         <div class="firm-info">
           <div class="firm-name">${esc(c.firm_name)}</div>
           <div class="firm-tags">
-            ${c.firm_type ? `<span class="tag type">${esc(prettyType(c.firm_type))}</span>` : ''}
-            <span class="tag">Tier 2</span>
+            ${c.firm_type ? `<span class="tag type pill pill--blue">${esc(prettyType(c.firm_type))}</span>` : ''}
+            <span class="tag pill pill--muted">Tier 2</span>
           </div>
         </div>
       </div>
@@ -1094,7 +1136,7 @@
       </div>
       <div class="email-cell"><span class="em" style="color:var(--text-3)">—</span></div>
       <div class="score-cell">
-        <span class="tag">ENRICHMENT NEEDED</span>
+        <span class="tag pill pill--muted">ENRICHMENT NEEDED</span>
       </div>
       <div class="actions" onclick="event.stopPropagation()">
         <button class="btn approve" data-act="activate" data-firm="${fid}">Activate →</button>
@@ -1108,13 +1150,13 @@
     const isOpen = state.expandedId === '__ALL__' || state.expandedId === c.queue_id;
     const disabled = c.status !== 'pending' ? 'disabled' : '';
     const rowCls = 'trow' + (c.status !== 'pending' ? ' decided' : '') + (isOpen ? ' open' : '') + (c.do_not_contact ? ' dnc' : '');
-    const statusTag = c.status !== 'pending' ? `<span class="tag status-${esc(c.status)}">${esc(c.status)}</span>` : '';
-    const sigTag = c.signal_type ? `<span class="tag sig-${esc(c.signal_type)}">${esc(c.signal_type)}</span>` : '';
-    const typeTag = c.firm_type ? `<span class="tag type">${esc(prettyType(c.firm_type))}</span>` : '';
-    const stageTag = c.action ? `<span class="tag stage">${esc(c.action)}</span>` : '';
-    const dncTag = c.do_not_contact ? `<span class="tag" style="background:rgba(239,68,68,0.15);color:#ef4444;border-color:rgba(239,68,68,0.35)">DNC</span>` : '';
+    const statusTag = c.status !== 'pending' ? `<span class="tag status-${esc(c.status)} pill pill--muted">${esc(c.status)}</span>` : '';
+    const sigTag = c.signal_type ? `<span class="tag sig-${esc(c.signal_type)} pill pill--violet">${esc(c.signal_type)}</span>` : '';
+    const typeTag = c.firm_type ? `<span class="tag type pill pill--blue">${esc(prettyType(c.firm_type))}</span>` : '';
+    const stageTag = c.action ? `<span class="tag stage pill pill--amber">${esc(c.action)}</span>` : '';
+    const dncTag = c.do_not_contact ? `<span class="tag pill pill--red" style="background:rgba(239,68,68,0.15);color:#ef4444;border-color:rgba(239,68,68,0.35)">DNC</span>` : '';
     const rankBadge = (c.firm_contact_count && c.firm_contact_count > 1)
-      ? `<span class="tag" style="background:rgba(70,91,255,0.12);color:#8b9fff;border-color:rgba(70,91,255,0.25);font-variant-numeric:tabular-nums">#${c.rank_at_firm}/${c.firm_contact_count}</span>`
+      ? `<span class="tag pill pill--blue" style="background:rgba(70,91,255,0.12);color:#8b9fff;border-color:rgba(70,91,255,0.25);font-variant-numeric:tabular-nums">#${c.rank_at_firm}/${c.firm_contact_count}</span>`
       : '';
     const dotCls = c.email_verified && c.email ? 'v' : (c.email ? 'u' : 'm');
     const emailTxt = c.email || '—';
@@ -1185,7 +1227,7 @@
       state.topFirmsComputed = true;
     }
     const html = groups.map(g => firmGroupHTML(g)).join('')
-               + (t2.length ? `<div class="firm-group"><div class="firm-header" style="cursor:default"><span class="fh-chev" style="visibility:hidden">▾</span><div class="fh-avatar">T2</div><div class="fh-name">Tier 2 Monitored</div><div class="fh-summary"><span>Tier 2 watchlist — ${t2.length} firms monitored, will promote on signal trigger</span></div></div><div class="firm-contacts">${t2.map(rowHTML).join('')}</div></div>` : '');
+               + (t2.length ? `<div class="firm-group"><div class="firm-header" style="cursor:default"><span class="fh-chev" style="visibility:hidden">▾</span><div class="fh-avatar">T2</div><div class="fh-name">Tier 2 Monitored</div><div class="fh-summary"><span>Tier 2 watchlist — ${t2.length} firms monitored, will promote on signal trigger</span><span class="t2-info" tabindex="0" aria-label="What is Tier 2?">ⓘ<span class="t2-tip">Tier 2 firms receive firmographic scoring only. When a hiring signal, press mention, or competitor frustration event is detected, the firm auto-promotes to Tier 1 — full contact enrichment, Claude scoring, and account brief generation.</span></span></div></div><div class="firm-contacts">${t2.map(rowHTML).join('')}</div></div>` : '');
     el.content.innerHTML = html;
     bindRows();
     bindFirmHeaders();
@@ -1590,6 +1632,15 @@
     wire('tab-view', 'view');
     wire('tab-status', 'status');
     wire('tab-score', 'minScore', v => parseFloat(v));
+    // Sync score tab highlight to URL-driven minScore (?min_score=55 or 75)
+    if (state.minScore > 0){
+      const grp = document.getElementById('tab-score');
+      const match = grp.querySelector(`button[data-v="${state.minScore}"]`);
+      if (match){
+        grp.querySelectorAll('button').forEach(x => x.classList.remove('active'));
+        match.classList.add('active');
+      }
+    }
     wire('tab-tier', 'tier');
 
     el.search.addEventListener('input', e => { state.search = e.target.value; render(); });
@@ -1826,8 +1877,8 @@
                     : collapsedByUser ? true
                     : !isTopFirm;
     const top = Math.round(g.topScore);
-    const stageTag = g.buying_stage ? `<span class="tag stage">${esc(g.buying_stage)}</span>` : '';
-    const typeTag  = g.firm_type ? `<span class="tag type">${esc(prettyType(g.firm_type))}</span>` : '';
+    const stageTag = g.buying_stage ? `<span class="tag stage pill pill--amber">${esc(g.buying_stage)}</span>` : '';
+    const typeTag  = g.firm_type ? `<span class="tag type pill pill--blue">${esc(prettyType(g.firm_type))}</span>` : '';
     const aum = g.aum_range ? ` · <b>${esc(g.aum_range)}</b>` : '';
     return `<div class="firm-group${collapsed?' collapsed':''}" data-firm-id="${g.firm_id}">
       <div class="firm-header">
@@ -1911,16 +1962,35 @@
         <div class="sp-contact">${esc(c.contact_name)} · ${esc(c.title || '—')}${meddicPill(c.title)}</div>
         <div class="sp-email">${esc(c.email || '—')}<span class="sp-dot ${dotCls}"></span>· ${score}</div>
         ${(() => {
-          const peers = (state.data?.contacts || [])
+          const allPeers = (state.data?.contacts || [])
             .filter(x => x.firm_name === c.firm_name && (x.tier||1) === 1)
             .sort((a,b) => (b.score||0) - (a.score||0));
-          if (peers.length <= 1) return '';
-          const idx = peers.findIndex(p => p.queue_id === c.queue_id);
-          const prevQid = idx > 0 ? peers[idx-1].queue_id : null;
-          const nextQid = idx < peers.length - 1 ? peers[idx+1].queue_id : null;
-          return `<div class="sp-nav">
+          if (allPeers.length <= 1) return '';
+          const counts = {
+            strong: allPeers.filter(p => (p.score||0) >= 75).length,
+            good:   allPeers.filter(p => (p.score||0) >= 55 && (p.score||0) < 75).length,
+            all:    allPeers.length,
+          };
+          const filter = counts[state.peerFilter] > 0 ? state.peerFilter : 'all';
+          const peers = allPeers.filter(p => {
+            if (filter === 'strong') return (p.score||0) >= 75;
+            if (filter === 'good')   return (p.score||0) >= 55 && (p.score||0) < 75;
+            return true;
+          });
+          const inSet = peers.find(p => p.queue_id === c.queue_id);
+          const eff = inSet ? peers : allPeers;
+          const idx = eff.findIndex(p => p.queue_id === c.queue_id);
+          const prevQid = idx > 0 ? eff[idx-1].queue_id : null;
+          const nextQid = idx >= 0 && idx < eff.length - 1 ? eff[idx+1].queue_id : null;
+          const chip = (k, lbl, cls) => `<button class="sp-chip ${cls} ${filter===k?'active':''}" data-peer-filter="${k}">${lbl}<span class="n">${counts[k]}</span></button>`;
+          return `<div class="sp-chips">
+            ${chip('strong','Strong','chip-strong')}
+            ${chip('good','Good','chip-good')}
+            ${chip('all','All','chip-all')}
+          </div>
+          <div class="sp-nav">
             <button data-peer-qid="${prevQid||''}" ${prevQid?'':'disabled'}>← prev</button>
-            <span class="counter">${idx+1} of ${peers.length}</span>
+            <span class="counter">${idx+1} of ${eff.length}</span>
             <button data-peer-qid="${nextQid||''}" ${nextQid?'':'disabled'}>next →</button>
           </div>`;
         })()}
@@ -1934,14 +2004,14 @@
       <div class="side-panel__section">
         <h4>Source signal${c.signal_date ? ` · ${esc(fmtDate(c.signal_date))}` : ''}</h4>
         <div class="sp-body">
-          ${c.signal_type ? `<span class="tag sig-${esc(c.signal_type)}" style="margin-bottom:8px;display:inline-block">${esc(c.signal_type)}</span>` : ''}
+          ${c.signal_type ? `<span class="tag sig-${esc(c.signal_type)} pill pill--violet" style="margin-bottom:8px;display:inline-block">${esc(c.signal_type)}</span>` : ''}
           ${c.signal_content ? `<div style="margin-top:4px">${esc(c.signal_content.slice(0,280))}${c.signal_content.length>280?'…':''}</div>` : '<em>No signal attached</em>'}
           ${c.signal_url ? `<div style="margin-top:8px;font-size:11px"><a href="${esc(c.signal_url)}" target="_blank" style="color:#8b9fff">${esc(c.signal_url)}</a></div>` : ''}
         </div>
       </div>
       <div class="side-panel__section">
         <h4>Account intelligence
-          ${!c.account_brief ? `<button class="btn-gen" data-act="gen_brief" ${disabled}>Generate ✦</button>` : ''}
+          ${!c.account_brief ? `<button class="btn btn--ghost btn-gen" data-act="gen_brief" ${disabled}>Generate ✦</button>` : ''}
         </h4>
         <div class="sp-body">${c.account_brief ? renderBriefSP(c.account_brief) :
           `<em>No brief generated yet. Click <b>Generate ✦</b> to produce a one-page intelligence brief for ${esc(c.contact_name)}.</em>`}</div>
@@ -1949,7 +2019,7 @@
       </div>
       <div class="side-panel__section">
         <h4>Suggested first line
-          <button class="btn-gen" data-act="generate" ${disabled}>${c.first_line ? 'Regenerate ✦' : 'Generate ✦'}</button>
+          <button class="btn btn--ghost btn-gen" data-act="generate" ${disabled}>${c.first_line ? 'Regenerate ✦' : 'Generate ✦'}</button>
         </h4>
         <textarea class="sp-fl-textarea first-line" placeholder="Personalized opener for ${esc(c.contact_name)}…" ${disabled}>${esc(c.first_line || '')}</textarea>
       </div>
@@ -1970,6 +2040,12 @@
       </div>` : ''}
     `;
     panel.querySelectorAll('[data-panel-close]').forEach(b => b.addEventListener('click', closePanel));
+    panel.querySelectorAll('[data-peer-filter]').forEach(b => {
+      b.addEventListener('click', () => {
+        state.peerFilter = b.dataset.peerFilter;
+        renderPanel();
+      });
+    });
     panel.querySelectorAll('[data-peer-qid]').forEach(b => {
       const qid = parseInt(b.dataset.peerQid, 10);
       if (!qid) return;
