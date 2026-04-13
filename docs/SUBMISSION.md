@@ -4,7 +4,7 @@
 
 ## What I built
 
-A fully functional outbound intelligence system that monitors 16,639 SEC-registered investment advisers, filters to 7,115 ICP-qualified targets, and surfaces 247 contacts ready for outreach — scored, enriched, and briefed. The system ingests signals from Exa, Twitter, LinkedIn, and SEC filings; routes them through a MEDDIC-aware Claude scoring layer; and produces a reviewable queue with auto-generated first lines tuned to each contact's signal and buying stage. Every number on every dashboard is live from the pipeline.
+A fully functional outbound intelligence system that monitors 16,639 SEC-registered investment advisers (representing $15.2T in assets under management), filters to 7,115 ICP-qualified targets, and surfaces 273 contacts ready for outreach — scored, enriched, and briefed. Across the active pipeline: 569 named contacts, 497 with verified emails, 16 strong matches. The system ingests signals from Exa, Twitter, LinkedIn, and SEC filings; routes them through a MEDDIC-aware Claude scoring layer; and produces a reviewable queue with auto-generated first lines tuned to each contact's signal and buying stage. Every number on every dashboard is live from the pipeline.
 
 ## Assumptions I made
 
@@ -60,7 +60,7 @@ Full AE territory mapping, per-rep voice profiles (so the first line sounds like
 
 | Metric | Target | Current |
 |---|---|---|
-| Contacts READY per week | 50+ | 247 total in queue |
+| Contacts READY per week | 50+ | 273 in queue |
 | First line approval rate | >60% | Measuring at pilot |
 | Signal-to-meeting conversion | >5% | TBD — need pilot data |
 | Cost per qualified contact | <$1 | **$0.0002** |
