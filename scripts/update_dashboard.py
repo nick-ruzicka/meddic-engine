@@ -402,6 +402,21 @@ def _contacts(conn) -> list[dict]:
         "first_line":       r["first_line"] or "",
         "status":           r["status"],
         })
+
+    # Firm-diversity sort: top 3 at each firm float up, rest fall below.
+    # Primary  : MIN(rank_at_firm, 4) ASC — top 3 mingle; rank 4+ drops
+    # Secondary: score DESC              — within the same tier, higher score wins
+    # Tertiary : existing title priority (CTO/CIO/Head of AI) preserved
+    #            by chaining a stable sort — we sort by secondary first, then
+    #            primary, so equal-primary rows keep their SQL-ordered sequence.
+    # Rationale: avoids 12 Francisco Partners contacts dominating the top list
+    # before a single Silver Lake / Blackstone / Vista contact shows up.
+    def _sort_key(c):
+        return (
+            min(c.get("rank_at_firm") or 99, 4),
+            -float(c.get("score") or 0),
+        )
+    out.sort(key=_sort_key)
     return out
 
 

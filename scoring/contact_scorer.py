@@ -759,6 +759,18 @@ def score_contact(firm: dict, contact: dict, signals: Optional[list[dict]] = Non
         raw = _call_claude(prompt_text, user_msg)
         result = _parse_claude_response(raw)
 
+    # Firm has no signals at all → don't let freshness=0 tank the composite.
+    # Baseline 35 represents "exploring, no fresh public activity yet".
+    if not signals and result.get("signal_freshness", 0) < 35:
+        result["signal_freshness"] = 35.0
+        result["score"] = round(
+            0.30 * result.get("icp_fit", 0)
+            + 0.25 * result.get("ai_readiness", 0)
+            + 0.25 * result.get("reachability", 0)
+            + 0.20 * result["signal_freshness"], 1,
+        )
+        result["label"], result["action"] = _label_for(result["score"])
+
     score_id = _persist(firm, contact, signals, result, sections_used)
 
     # Claude MEDDIC classification — idempotent: only fire when not yet set.
