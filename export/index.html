@@ -731,8 +731,10 @@
     display:inline-block;margin-left:8px;font-size:10px;letter-spacing:0.04em;
     padding:1px 6px;border-radius:2px;color:var(--text-3);
     border:1px solid var(--border);font-family:var(--font-mono);
-    vertical-align:middle;
+    vertical-align:middle;text-decoration:none;cursor:pointer;
+    transition:background 150ms;
   }
+  a.sig-chip:hover{background:rgba(255,255,255,0.05)}
   .sig-chip.fresh{color:var(--green);border-color:rgba(16,185,129,0.30)}
   .sig-chip.warm {color:var(--amber);border-color:rgba(245,158,11,0.30)}
   .sig-chip.cold {color:var(--text-3)}
@@ -872,13 +874,13 @@
                line-height:16px;text-align:center;font-weight:600;letter-spacing:0">0</span>
       </button>
       <div id="alerts-panel" style="display:none;position:absolute;top:calc(100% + 8px);right:0;
-           width:360px;background:var(--elevated);border:1px solid var(--border-strong);
+           width:380px;background:var(--elevated);border:1px solid var(--border-strong);
            border-radius:4px;box-shadow:0 12px 40px rgba(0,0,0,0.5);z-index:40;overflow:hidden">
         <div style="padding:10px 14px;border-bottom:1px solid var(--border);
              font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);font-weight:600">
-          Latest Triggers · Tier 1 Active Stages
+          Latest Triggers · Tier 1 · last 48h
         </div>
-        <div id="alerts-list" style="max-height:320px;overflow-y:auto"></div>
+        <div id="alerts-list" style="max-height:480px;overflow-y:auto"></div>
       </div>
     </div>
     <button class="btn btn--primary btn-run" id="btn-run" title="Run full pipeline"><span class="bolt">⚡</span>Run Pipeline</button>
@@ -1198,6 +1200,9 @@
           if (isNaN(h)) return '';
           const cls = h < 24 ? 'fresh' : h < 24*7 ? 'warm' : 'cold';
           const txt = h < 1 ? `${Math.round(h*60)}m` : h < 48 ? `${Math.round(h)}h` : h < 24*30 ? `${Math.round(h/24)}d` : `${Math.round(h/24/30)}mo`;
+          if (c.signal_url){
+            return `<a href="${esc(c.signal_url)}" target="_blank" rel="noopener" class="sig-chip ${cls}" title="Open source" onclick="event.stopPropagation()">${txt} ↗</a>`;
+          }
           return `<span class="sig-chip ${cls}">${txt}</span>`;
         })()}
       </div>
@@ -1759,21 +1764,32 @@
     badge.style.display = '';
     badge.textContent = triggers.length;
     label.textContent = `${triggers.length} New`;
-    const sigKindColor = {
-      press:'pill--teal', twitter:'pill--blue', linkedin:'pill--violet',
-      hiring:'pill--amber', exa:'pill--teal', manual:'pill--muted',
+    // Per-spec inline chip styles by signal kind.
+    const SIG_STYLE = {
+      press:    'background:rgba(16,185,129,0.15);color:#34d399',
+      twitter:  'background:rgba(29,161,242,0.15);color:#1DA1F2',
+      exa:      'background:rgba(124,58,237,0.15);color:#a78bfa',
+      hiring:   'background:rgba(245,158,11,0.15);color:#fbbf24',
+      linkedin: 'background:rgba(70,91,255,0.15);color:#8b9fff',
     };
-    const sigLinkLabel = {
+    const SIG_LINK = {
       press:'→ Read article ↗', twitter:'→ View tweet ↗',
       linkedin:'→ View post ↗', hiring:'→ View posting ↗',
       exa:'→ Read source ↗',
     };
+    // Badge count uses only triggers newer than last_seen watermark.
+    const lastSeen = localStorage.getItem('alerts_last_seen') || '';
+    const newCount = triggers.filter(t => (t.signal_date || '') > lastSeen).length;
+    badge.style.display = newCount > 0 ? '' : 'none';
+    badge.textContent = newCount;
+    label.textContent = newCount > 0 ? `${newCount} New` : 'Alerts';
+
     list.innerHTML = triggers.map(t => {
       const kind = (t.signal_type || 'signal').toLowerCase();
-      const chipCls = sigKindColor[kind] || 'pill--muted';
-      const linkLabel = sigLinkLabel[kind] || '→ View source ↗';
+      const chipStyle = SIG_STYLE[kind] || 'background:rgba(255,255,255,0.06);color:var(--text-3)';
+      const linkLabel = SIG_LINK[kind] || '→ View source ↗';
       const link = t.signal_url
-        ? `<div style="margin-top:6px"><a href="${esc(t.signal_url)}" target="_blank" rel="noopener" style="color:#8b9fff;font-size:11px;text-decoration:none" onclick="event.stopPropagation()">${linkLabel}</a></div>`
+        ? `<a href="${esc(t.signal_url)}" target="_blank" rel="noopener" style="color:#8b9fff;font-size:11px;text-decoration:none;white-space:nowrap" onclick="event.stopPropagation()">${linkLabel}</a>`
         : '';
       const re = t.contact_name
         ? `<div style="margin-top:4px;font-size:11px;color:var(--text-3)">re: ${esc(t.contact_name)}${t.contact_title?` · ${esc(t.contact_title)}`:''}</div>`
@@ -1782,22 +1798,24 @@
         ? `<div style="font-size:12px;color:var(--text-2);margin-top:4px;line-height:1.4">${esc(t.signal_content)}${t.signal_content.length>=120?'…':''}</div>`
         : '';
       return `
-      <div style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer"
-           data-alert-firm="${t.firm_id}">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            <span class="pill ${chipCls}">${esc(kind.toUpperCase())}</span>
-            <span style="font-size:13px;font-weight:600;color:var(--text-1)">${esc(t.firm_name)}</span>
+            <span style="display:inline-flex;align-items:center;padding:2px 6px;border-radius:2px;font-size:10px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;${chipStyle}">${esc(kind)}</span>
+            <a href="#" data-alert-firm="${t.firm_id}" style="font-size:13px;font-weight:600;color:var(--text-1);text-decoration:none;cursor:pointer">${esc(t.firm_name)}</a>
           </div>
-          <div style="font-size:10px;color:var(--text-3);letter-spacing:0.04em">${esc(timeAgo(t.signal_date))}</div>
+          <div style="font-size:10px;color:var(--text-3);letter-spacing:0.04em;white-space:nowrap">${esc(timeAgo(t.signal_date))}</div>
         </div>
         ${snippet}
-        ${re}
-        ${link}
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin-top:4px">
+          <div>${re}</div>
+          ${link}
+        </div>
       </div>`;
     }).join('');
     list.querySelectorAll('[data-alert-firm]').forEach(el => {
       el.addEventListener('click', e => {
+        e.preventDefault();
         const fid = parseInt(el.dataset.alertFirm, 10);
         document.getElementById('alerts-panel').style.display = 'none';
         // Jump to first contact for that firm
@@ -1820,10 +1838,23 @@
     if (!btn || !panel) return;
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      const opening = panel.style.display === 'none';
+      panel.style.display = opening ? 'block' : 'none';
+      if (opening){
+        // Mark current latest signal as seen → badge clears.
+        const triggers = (state.data?.stats?.recent_triggers) || [];
+        const maxDate = triggers.reduce((m, t) => (t.signal_date || '') > m ? (t.signal_date || '') : m, '');
+        if (maxDate) localStorage.setItem('alerts_last_seen', maxDate);
+        renderAlerts();
+      }
     });
     document.addEventListener('click', e => {
       if (!e.target.closest('#alerts-wrap')) panel.style.display = 'none';
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && panel.style.display !== 'none'){
+        panel.style.display = 'none';
+      }
     });
   }
 
