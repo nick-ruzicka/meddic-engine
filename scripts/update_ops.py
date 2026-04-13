@@ -268,23 +268,50 @@ def build_source_health(conn, days: int = 14) -> dict:
     for t in ("press", "twitter", "linkedin", "hiring", "exa"):
         per_type.setdefault(t, {})
 
+    # Has this source EVER produced a signal in the whole DB? Lets us
+    # distinguish "not wired yet" from "wired but stale."
+    ever_rows = conn.execute(
+        "SELECT signal_type, COUNT(*) AS n FROM signals GROUP BY signal_type"
+    ).fetchall()
+    ever_seen = {r["signal_type"]: r["n"] for r in ever_rows if r["signal_type"]}
+
+    status_labels = {
+        "active":     "Active",
+        "stale":      "Stale · last signal > 3 days ago",
+        "quiet":      "Quiet · wired but no recent activity",
+        "not_wired":  "Not wired · collector not configured",
+    }
+
     out = []
     for t, daymap in per_type.items():
         series = [daymap.get(d, 0) for d in day_keys]
-        total = sum(series)
-        last_nonzero = next((days-1-i for i, v in enumerate(reversed(series)) if v > 0), None)
+        total  = sum(series)
+        last_nonzero = next(
+            (days-1-i for i, v in enumerate(reversed(series)) if v > 0), None)
         last_active = day_keys[last_nonzero] if last_nonzero is not None else None
+        ever_total = ever_seen.get(t, 0)
+        if (series[-1] or series[-2] or series[-3] or 0) > 0:
+            status = "active"
+        elif total > 0:
+            status = "stale"
+        elif ever_total > 0:
+            status = "quiet"
+        else:
+            status = "not_wired"
         out.append({
-            "signal_type": t,
-            "series":      series,
-            "days":        day_keys,
-            "total":       total,
-            "last_active": last_active,
-            "status":      ("active"   if (series[-1] or series[-2] or series[-3] or 0) > 0
-                            else "stale" if total > 0
-                            else "silent"),
+            "signal_type":    t,
+            "series":         series,
+            "days":           day_keys,
+            "total":          total,
+            "ever_total":     ever_total,
+            "last_active":    last_active,
+            "status":         status,
+            "status_label":   status_labels[status],
         })
-    out.sort(key=lambda x: (-x["total"], x["signal_type"]))
+    # Sort: active first, then by recent volume, then by ever-seen volume.
+    # Never-wired sources sink to the bottom.
+    status_rank = {"active": 0, "stale": 1, "quiet": 2, "not_wired": 3}
+    out.sort(key=lambda x: (status_rank[x["status"]], -x["total"], -x["ever_total"], x["signal_type"]))
     return {"days": days, "sources": out}
 
 

@@ -130,6 +130,20 @@ def build_dimensions(conn) -> dict:
                                    "reachability": 25, "signal_freshness": 20}[key]}
         else:
             out[key] = {"avg": 0, "min": 0, "max": 0, "weight": 0}
+
+    # Attach a one-line narrative pointing at the weakest dimension so a
+    # reader immediately knows WHY the composite score looks the way it does.
+    weakest_key = min(out, key=lambda k: out[k]["avg"])
+    narratives = {
+        "icp_fit":          "ICP fit is the floor — firms without PE/credit/IB/HF/WM classification hold the composite back.",
+        "ai_readiness":     "AI readiness is the weakest dimension — many firms lack named AI leadership or public deployment signals.",
+        "reachability":     "Reachability is the weakest dimension — contacts without a Hunter-verified email cap out at 60. Enrichment sweep is the highest-leverage fix.",
+        "signal_freshness": "Signal freshness is the weakest dimension — Twitter/press cadence for Tier-1 targets is ~1 event/firm/quarter, so most scores carry a >30-day signal.",
+    }
+    out["_narrative"] = {
+        "weakest":  weakest_key,
+        "message":  narratives.get(weakest_key, ""),
+    }
     return out
 
 
@@ -191,20 +205,39 @@ def build_funnel(conn) -> dict:
         "ready":           ready,
     }
 
-    # Ordered stages for funnel rendering — labels/order live here.
-    stage_order = [
-        ("sec_indexed",     "SEC-indexed"),
-        ("icp_qualified",   "ICP-qualified"),
-        ("tier2_monitored", "Tier 2 monitored"),
-        ("tier1_active",    "Tier 1 active"),
-        ("ready",           "Ready for outreach"),
+    # Funnel stages carry `unit` and `note` so the renderer can show a
+    # visual separator between the firm-level funnel (monotonic descending
+    # by design: SEC → ICP → monitor → active) and the contact-level
+    # fan-out (each Tier-1 firm expands into ~14 scored contacts).
+    stage_defs = [
+        ("sec_indexed",     "SEC-indexed",         "firms",
+         "All registered investment advisers."),
+        ("icp_qualified",   "ICP-qualified",       "firms",
+         "PE, credit, IB, HF, WM firms filtered from SEC universe."),
+        ("tier2_monitored", "Tier 2 monitored",    "firms",
+         "Top 500 ICP firms by AUM — firmographic scoring only (deliberate cap)."),
+        ("tier1_active",    "Tier 1 active",       "firms",
+         "Hand-curated accounts with named contacts + signals."),
+        ("contacts_scored", "Contacts scored",     "contacts",
+         "Tier-1 contacts enriched and scored against ICP+signals."),
+        ("ready",           "Ready for outreach",  "contacts",
+         "Score ≥ 55 with verified email."),
     ]
-    max_n = max((flat[k] for k, _ in stage_order), default=1) or 1
-    flat["stages"] = [
-        {"key": k, "label": lbl, "count": flat[k],
-         "pct": round(100 * flat[k] / max_n, 1)}
-        for k, lbl in stage_order
-    ]
+    firm_base    = flat["sec_indexed"] or 1
+    contact_base = max(flat["contacts_scored"], 1)
+    flat["stages"] = []
+    for key, label, unit, note in stage_defs:
+        count = flat[key]
+        base  = firm_base if unit == "firms" else contact_base
+        flat["stages"].append({
+            "key":   key,
+            "label": label,
+            "unit":  unit,
+            "count": count,
+            "note":  note,
+            # pct is within-unit so firms and contacts don't mix scales
+            "pct":   round(100 * count / base, 1) if base else 0.0,
+        })
     return flat
 
 
@@ -221,6 +254,19 @@ def build_by_firm_type(conn) -> list[dict]:
          GROUP BY f.firm_type
          ORDER BY avg_score DESC NULLS LAST
     """)
+    # Always include canonical types so hedge fund + wealth mgmt show up as
+    # 0-firms rather than disappearing (reader wonders if the product supports them).
+    canonical = {"pe": "Private Equity", "credit": "Credit",
+                 "investment_bank": "Investment Bank", "hedge_fund": "Hedge Fund",
+                 "wealth_management": "Wealth Management"}
+    seen = {r["firm_type"] for r in rows}
+    for key in canonical:
+        if key not in seen:
+            rows.append({"firm_type": key, "firms": 0, "scored": 0,
+                         "avg_score": None, "strong": 0})
+    for r in rows:
+        r["label"] = canonical.get(r["firm_type"], r["firm_type"] or "unknown")
+    rows.sort(key=lambda r: (r["firms"] == 0, -(r["avg_score"] or 0)))
     return rows
 
 
@@ -279,46 +325,66 @@ def build_flagged(conn) -> list[dict]:
 
 
 def build_signal_conversion(conn) -> list[dict]:
-    """Per-signal-type qualified-rate. 'none' = contacts with no signal attached."""
+    """Per-signal-type qualified-rate, attributed to each contact's PRIMARY
+    (most recent) signal so a contact appears in exactly one row.
+
+    The 'no_signal' bucket captures scored contacts where nothing in the
+    signals table references them — these are ICP-fit-only fallbacks, not a
+    real acquisition channel. The UI labels them accordingly."""
     rows = conn.execute("""
-        WITH cs AS (
-          SELECT DISTINCT c.id AS contact_id, sig.signal_type
+        WITH ranked AS (
+          SELECT c.id AS contact_id,
+                 sig.signal_type,
+                 ROW_NUMBER() OVER (
+                   PARTITION BY c.id
+                   ORDER BY COALESCE(sig.signal_date, sig.created_at) DESC
+                 ) AS rn
             FROM contacts c
             JOIN signals sig
               ON sig.contact_id = c.id OR sig.firm_id = c.firm_id
+           WHERE COALESCE(c.is_placeholder,0) = 0
         )
-        SELECT cs.signal_type AS signal_type,
-               COUNT(DISTINCT cs.contact_id) AS contacts,
-               SUM(CASE WHEN sc.score >= 55 THEN 1 ELSE 0 END) AS qualified
-          FROM cs
-          LEFT JOIN scores sc ON sc.contact_id = cs.contact_id
-         GROUP BY cs.signal_type
+        SELECT r.signal_type AS signal_type,
+               COUNT(DISTINCT r.contact_id) AS contacts,
+               COUNT(DISTINCT CASE WHEN sc.score >= 55
+                                   THEN r.contact_id END) AS qualified
+          FROM ranked r
+          LEFT JOIN scores sc ON sc.contact_id = r.contact_id
+         WHERE r.rn = 1
+         GROUP BY r.signal_type
     """).fetchall()
     out = [dict(r) for r in rows]
-    # 'none' bucket
     no_sig = conn.execute("""
         SELECT COUNT(DISTINCT c.id) AS contacts,
-               SUM(CASE WHEN sc.score >= 55 THEN 1 ELSE 0 END) AS qualified
+               COUNT(DISTINCT CASE WHEN sc.score >= 55 THEN c.id END) AS qualified
           FROM contacts c
           LEFT JOIN scores sc ON sc.contact_id = c.id
-         WHERE NOT EXISTS (
-           SELECT 1 FROM signals s
-            WHERE s.contact_id = c.id OR s.firm_id = c.firm_id
-         )
+         WHERE COALESCE(c.is_placeholder,0) = 0
+           AND NOT EXISTS (
+             SELECT 1 FROM signals s
+              WHERE s.contact_id = c.id OR s.firm_id = c.firm_id
+           )
     """).fetchone()
-    out.append({"signal_type": "none",
+    out.append({"signal_type": "no_signal",
                 "contacts": no_sig["contacts"] or 0,
                 "qualified": no_sig["qualified"] or 0})
-    # Ensure each canonical type is present (zero row if absent)
     seen = {r["signal_type"] for r in out}
     for t in ("twitter", "linkedin", "press", "hiring"):
         if t not in seen:
             out.append({"signal_type": t, "contacts": 0, "qualified": 0})
-    # Compute rate
+    labels = {
+        "twitter":   "Twitter / X",
+        "linkedin":  "LinkedIn",
+        "press":     "Press Coverage",
+        "hiring":    "Hiring Signals",
+        "no_signal": "No Signal · ICP-only fallback",
+    }
     for r in out:
-        r["rate"] = round(100 * (r["qualified"] or 0) / r["contacts"], 1) if r["contacts"] else 0.0
-    # Preferred order
-    order = {"twitter":0, "linkedin":1, "press":2, "hiring":3, "none":4}
+        r["label"]       = labels.get(r["signal_type"], r["signal_type"])
+        r["rate"]        = (round(100 * (r["qualified"] or 0) / r["contacts"], 1)
+                            if r["contacts"] else 0.0)
+        r["is_fallback"] = r["signal_type"] == "no_signal"
+    order = {"twitter":0, "linkedin":1, "press":2, "hiring":3, "no_signal":4}
     out.sort(key=lambda r: order.get(r["signal_type"], 99))
     return out
 
@@ -375,50 +441,99 @@ def build_aum_coverage(conn) -> dict:
 
 
 def build_ready_and_cost(conn) -> dict:
-    """Ready = score >= 55 AND verified email. Cost = hunter contacts × $0.002 per ready."""
+    """Ready = score >= 55 AND verified email.
+
+    Fully-loaded cost per ready lead, including Claude + Hunter:
+      * Sonnet-4 scoring     ~$0.0135 per score call (≈2k in / 500 out tokens)
+      * Haiku brief          ~$0.0024 per brief (≈1k in / 400 out)
+      * Haiku first line     ~$0.0012 per first line (≈500 in / 200 out)
+      * Hunter verification  $0.002 per API call
+
+    These are order-of-magnitude token-cost estimates published by Anthropic
+    and Hunter; close enough for a pipeline-level COGS figure."""
     row = conn.execute("""
         SELECT
           (SELECT COUNT(*) FROM scores sc
              JOIN contacts c ON c.id = sc.contact_id
-            WHERE sc.score >= 55 AND c.email_verified = 1) AS ready,
-          (SELECT COUNT(*) FROM scores WHERE score >= 55) AS qualified,
-          (SELECT COUNT(*) FROM contacts WHERE email_source = 'hunter') AS hunter_calls
+            WHERE sc.score >= 55 AND c.email_verified = 1
+              AND COALESCE(c.is_placeholder,0) = 0) AS ready,
+          (SELECT COUNT(*) FROM scores WHERE score >= 55)                AS qualified,
+          (SELECT COUNT(*) FROM contacts WHERE email_source = 'hunter')  AS hunter_calls,
+          (SELECT COUNT(*) FROM scores
+             WHERE COALESCE(scored_by,'claude') != 'firmographic_only')  AS sonnet_calls,
+          (SELECT COUNT(*) FROM scores WHERE account_brief IS NOT NULL)  AS brief_calls,
+          (SELECT COUNT(*) FROM outreach_queue
+             WHERE first_line IS NOT NULL AND TRIM(first_line) != '')    AS first_line_calls
     """).fetchone()
-    ready   = row["ready"] or 0
-    qual    = row["qualified"] or 0
-    hunter  = row["hunter_calls"] or 0
-    cost    = (hunter * 0.002) / ready if ready else 0.0
-    return {"ready": ready, "qualified": qual, "hunter_calls": hunter,
-            "cost_per_lead": round(cost, 4)}
+    ready             = row["ready"] or 0
+    qualified         = row["qualified"] or 0
+    hunter_calls      = row["hunter_calls"] or 0
+    sonnet_calls      = row["sonnet_calls"] or 0
+    brief_calls       = row["brief_calls"] or 0
+    first_line_calls  = row["first_line_calls"] or 0
+
+    claude_sonnet_cost = sonnet_calls      * 0.0135
+    claude_brief_cost  = brief_calls       * 0.0024
+    claude_fl_cost     = first_line_calls  * 0.0012
+    hunter_cost        = hunter_calls      * 0.002
+    total_cost = claude_sonnet_cost + claude_brief_cost + claude_fl_cost + hunter_cost
+    cost_per_ready = (total_cost / ready) if ready else 0.0
+
+    return {
+        "ready":             ready,
+        "qualified":         qualified,
+        "hunter_calls":      hunter_calls,
+        "sonnet_calls":      sonnet_calls,
+        "brief_calls":       brief_calls,
+        "first_line_calls":  first_line_calls,
+        "cost_breakdown": {
+            "claude_sonnet_usd": round(claude_sonnet_cost, 2),
+            "claude_brief_usd":  round(claude_brief_cost, 2),
+            "claude_fl_usd":     round(claude_fl_cost, 2),
+            "hunter_usd":        round(hunter_cost, 2),
+            "total_usd":         round(total_cost, 2),
+        },
+        "total_cost_usd":  round(total_cost, 2),
+        "cost_per_lead":   round(cost_per_ready, 3),
+    }
 
 
 def build_bottleneck(funnel) -> dict:
-    """Find worst pass-through in the funnel and emit an actionable suggestion."""
+    """Find the largest CONTACT-level conversion gap.
+
+    Firm-level drops (SEC→ICP, ICP→Tier2, Tier2→Tier1) are deliberate caps
+    and curation steps — flagging them as 'bottlenecks' is misleading. Only
+    contacts_scored → ready is a real conversion we can influence through
+    enrichment quality and email coverage."""
     stages = funnel.get("stages", []) if isinstance(funnel, dict) else funnel
-    if len(stages) < 2:
-        return {"step": None, "rate": 0, "message": ""}
+    # Restrict to contact-unit steps
+    contact_stages = [s for s in stages if s.get("unit") == "contacts"]
+    if len(contact_stages) < 2:
+        return {"step": None, "rate": 0, "message": "",
+                "label": "Conversion Gap"}
     worst = None
-    for i in range(1, len(stages)):
-        prev, cur = stages[i-1]["count"], stages[i]["count"]
+    for i in range(1, len(contact_stages)):
+        prev, cur = contact_stages[i-1]["count"], contact_stages[i]["count"]
         if prev <= 0:
             continue
         rate = 100 * cur / prev
         if worst is None or rate < worst["rate"]:
-            worst = {"from": stages[i-1]["label"], "to": stages[i]["label"],
+            worst = {"from": contact_stages[i-1]["label"],
+                     "to":   contact_stages[i]["label"],
                      "rate": round(rate, 1)}
     if not worst:
-        return {"step": None, "rate": 0, "message": ""}
+        return {"step": None, "rate": 0, "message": "",
+                "label": "Conversion Gap"}
 
     suggestions = {
-        "Firms with signal":  "Run Exa press + Twitter collectors to attach signals to more firms.",
-        "Named contacts":     "Run the Exa team-page enricher on remaining firms.",
-        "Contacts scored":    "Re-run --score; some contacts may be blocked on missing firm metadata.",
-        "Queued for review":  "Run --queue to promote scored Strong/Good matches into the queue.",
-        "Approved to send":   "Review the pending queue — approvals are the final conversion.",
+        "Ready for outreach": "Focus enrichment on Hunter + team-page lookups; "
+                              "contacts scored ≥55 without verified email are the "
+                              "biggest lever for ready-rate.",
     }
+    worst["label"]   = "Largest Contact-level Conversion Gap"
     worst["message"] = (
-        f"{worst['from']} → {worst['to']} is the bottleneck at {worst['rate']}% pass-through. "
-        f"{suggestions.get(worst['to'], 'Investigate this step for drop-off.')}"
+        f"{worst['from']} → {worst['to']} converts at {worst['rate']}%. "
+        f"{suggestions.get(worst['to'], 'Inspect enrichment and scoring for this step.')}"
     )
     return worst
 

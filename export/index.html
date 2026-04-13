@@ -2048,7 +2048,9 @@
     state.panelQid = qid;
     state.focusedQid = qid;
     renderPanel();
-    document.getElementById('side-panel').classList.add('open');
+    const sp = document.getElementById('side-panel');
+    sp.classList.add('open');
+    sp.scrollTop = 0;  // always start at the panel header, not mid-scroll
     document.getElementById('panel-backdrop').classList.add('open');
     document.body.classList.add('panel-open');
     document.querySelectorAll('.trow.panel-active').forEach(r => r.classList.remove('panel-active'));
@@ -2200,14 +2202,32 @@
       return snip.length > 30 || !url.includes('linkedin.com');
     }).map(p => ({...p, snippet: stripNamePrefix(p.snippet || '')}));
 
+    // Recent_posts can include profile pages (silverlake.com/people/...). Tag
+    // those as PROFILE rather than POST so the chip + label are honest.
+    const taggedPosts = linkedinPostsAllowed.map(x => {
+      const u = (x.url || '').toLowerCase();
+      const isProfile = u.includes('/people/') || u.includes('linkedin.com/in/');
+      return {...x, _kind: isProfile ? 'PROFILE' : 'POST'};
+    });
     const items = r ? []
-      .concat(linkedinPostsAllowed.map(x => ({...x, _kind:'POST'})))
+      .concat(taggedPosts)
       .concat((r.speaking     || []).map(x => ({...x, _kind:'SPEAKING'})))
       .concat((r.press        || []).map(x => ({...x, _kind:'PRESS'})))
       : [];
-    items.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+    // Sort: LinkedIn posts → Twitter/X → everything else; date DESC within group.
+    const urlPriority = (u) => {
+      const x = (u || '').toLowerCase();
+      if (x.includes('linkedin.com/posts')) return 0;
+      if (x.includes('twitter.com/') || x.includes('x.com/')) return 1;
+      return 2;
+    };
+    items.sort((a,b) => {
+      const pa = urlPriority(a.url), pb = urlPriority(b.url);
+      if (pa !== pb) return pa - pb;
+      return (b.date || '').localeCompare(a.date || '');
+    });
     const top = items.slice(0, 4);
-    const kindColor = {POST:'pill--blue', SPEAKING:'pill--violet', PRESS:'pill--teal'};
+    const kindColor = {POST:'pill--blue', SPEAKING:'pill--violet', PRESS:'pill--teal', PROFILE:'pill--muted'};
 
     const lastLine = lastActive
       ? `<div style="color:var(--text-3);font-size:11px;letter-spacing:0.04em;margin-bottom:8px">Last active: ${esc(lastActive)}</div>`
@@ -2236,7 +2256,11 @@
 
     const rows = top.map(it => {
       const cls = classify(it.url);
-      const chip = `<span class="pill ${kindColor[it._kind] || 'pill--muted'}">${it._kind}</span>`;
+      // PROFILE chip carries the hostname inline so it reads "PROFILE · silverlake.com"
+      let host = '';
+      try { host = it.url ? new URL(it.url).hostname.replace(/^www\./,'') : ''; } catch(_){}
+      const chipText = it._kind === 'PROFILE' && host ? `${it._kind} · ${host}` : it._kind;
+      const chip = `<span class="pill ${kindColor[it._kind] || 'pill--muted'}">${esc(chipText)}</span>`;
       const iconHtml = cls.icon
         ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:2px;font-size:8px;font-weight:700;margin-right:6px;${cls.iconStyle}">${cls.icon}</span>`
         : '';
