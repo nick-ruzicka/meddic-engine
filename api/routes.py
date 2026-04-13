@@ -266,6 +266,38 @@ def flag():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# POST /activate — promote a Tier-2 firm to Tier 1
+# ─────────────────────────────────────────────────────────────────────────────
+
+@api_bp.route("/activate", methods=["POST"])
+@require_api_key
+def activate():
+    body = request.get_json(silent=True) or {}
+    firm_id = body.get("firm_id")
+    if not firm_id:
+        return jsonify({"error": "firm_id required"}), 400
+
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT id, tier FROM firms WHERE id = ?", (firm_id,)
+        ).fetchone()
+        if not row:
+            return jsonify({"error": "firm_id not found"}), 404
+        # TODO: a follow-up job should pick up newly-promoted firms and run
+        # hunter + exa + linkedin enrichment + Claude scoring on them.
+        conn.execute(
+            "UPDATE firms SET tier = 1, updated_at = datetime('now') WHERE id = ?",
+            (firm_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"ok": True, "firm_id": firm_id, "tier": 1})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # GET /stats
 # ─────────────────────────────────────────────────────────────────────────────
 

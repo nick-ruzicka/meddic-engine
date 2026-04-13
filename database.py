@@ -41,7 +41,7 @@ def init_db():
             name            TEXT NOT NULL,
             domain          TEXT,
             firm_type       TEXT,   -- pe | hedge_fund | investment_bank | credit | law_firm
-            tier            INTEGER,-- 1 | 2 | 3
+            tier            INTEGER DEFAULT 1, -- 1 active | 2 monitored | 3 cold
             aum_range       TEXT,   -- e.g. "$1B-$10B"
             geography       TEXT,   -- US | UK | Europe
             _status   TEXT DEFAULT 'prospect', -- customer | prospect | evaluating | rogo | build_own
@@ -162,6 +162,31 @@ def init_db():
             decided_at      TEXT DEFAULT (datetime('now'))
         )
     """)
+
+    # ── idempotent migrations ─────────────────────────────────────────────────
+    # Add firms.tier if missing (default 1 for backfill).
+    firm_cols = {row[1] for row in c.execute("PRAGMA table_info(firms)").fetchall()}
+    if "tier" not in firm_cols:
+        c.execute("ALTER TABLE firms ADD COLUMN tier INTEGER DEFAULT 1")
+    if "aum_reported" not in firm_cols:
+        c.execute("ALTER TABLE firms ADD COLUMN aum_reported REAL")
+    # Backfill any NULL tier to 1.
+    c.execute("UPDATE firms SET tier = 1 WHERE tier IS NULL")
+
+    # Add scores.account_brief (already present in prod DB) and scores.scored_by.
+    score_cols = {row[1] for row in c.execute("PRAGMA table_info(scores)").fetchall()}
+    if "account_brief" not in score_cols:
+        c.execute("ALTER TABLE scores ADD COLUMN account_brief TEXT")
+    if "scored_by" not in score_cols:
+        c.execute("ALTER TABLE scores ADD COLUMN scored_by TEXT DEFAULT 'claude'")
+
+    # Add contacts.is_placeholder so synthetic tier-2 firm rows can be excluded
+    # from outreach flows.
+    contact_cols = {row[1] for row in c.execute("PRAGMA table_info(contacts)").fetchall()}
+    if "is_placeholder" not in contact_cols:
+        c.execute("ALTER TABLE contacts ADD COLUMN is_placeholder INTEGER DEFAULT 0")
+    if "do_not_contact" not in contact_cols:
+        c.execute("ALTER TABLE contacts ADD COLUMN do_not_contact INTEGER DEFAULT 0")
 
     conn.commit()
     conn.close()

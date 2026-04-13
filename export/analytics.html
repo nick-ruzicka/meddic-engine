@@ -10,7 +10,7 @@
 <style>
   :root{
     --bg:#101010; --surface:#161616; --elevated:#1c1c1c; --overlay:#222;
-    --text:#fff; --text-2:rgba(255,255,255,0.68); --text-3:rgba(255,255,255,0.42);
+    --text:#fff; --text-2:rgba(255,255,255,0.72); --text-3:rgba(255,255,255,0.55);
     --border:rgba(255,255,255,0.10); --border-strong:rgba(255,255,255,0.20);
     --blue:#465BFF; --blue-dim:rgba(70,91,255,0.15); --blue-border:rgba(70,91,255,0.40);
     --green:#10b981; --amber:#f59e0b; --orange:#f97316; --red:#ef4444;
@@ -20,7 +20,7 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-    font-family:var(--font-ui);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
   a{color:inherit}
 
   header{position:sticky;top:0;z-index:20;background:rgba(16,16,16,0.92);backdrop-filter:blur(12px);
@@ -58,7 +58,12 @@
     background:var(--surface);border:1px solid var(--border);
     border-left:3px solid var(--accent,var(--blue));border-radius:2px;padding:16px 18px;
   }
-  .kpi.ready{--accent:var(--blue)}
+  .kpi.ready{
+    --accent:transparent;
+    border:2px solid transparent;
+    background:linear-gradient(var(--surface), var(--surface)) padding-box,
+               linear-gradient(135deg, #465BFF, #7B8FFF) border-box;
+  }
   .kpi.conf{--accent:var(--green)}
   .kpi.total{--accent:rgba(255,255,255,0.45)}
   .kpi.cost{--accent:var(--amber)}
@@ -164,6 +169,11 @@
   .state{padding:40px;text-align:center;color:var(--text-3)}
   footer{max-width:1280px;margin:0 auto;padding:24px 28px 40px;font-size:10px;
     letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);border-top:1px solid var(--border)}
+  /* prose-cap */ .reasoning, .brief-section p, .account-brief p, .brief-row .v { max-width: 68ch }
+
+  .funnel-row .dropoff-tag{font-size:11px;letter-spacing:0.05em;color:rgba(239,68,68,0.90);margin-top:3px;text-align:right;display:block}
+  .funnel-lede{margin-top:18px;padding:14px 18px;border:1px solid rgba(239,68,68,0.25);background:rgba(239,68,68,0.05);border-radius:2px;font-size:14px;color:var(--text-2);line-height:1.55}
+  .funnel-lede b{color:var(--text);font-weight:500}
 </style>
 </head>
 <body>
@@ -209,6 +219,24 @@
       <div class="sec-sub">Firms → signals → contacts → scored → queued → approved</div>
     </div>
     <div class="card"><div id="funnel" class="funnel"><div class="state">Loading…</div></div></div>
+  </section>
+
+  <!-- SECTION 2 — SCORE DISTRIBUTION (moved up per review) -->
+  <section>
+    <div class="sec-head">
+      <h2 class="sec-title">Score Distribution</h2>
+      <div class="sec-sub">Tier breakdown and average by firm type</div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div style="font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);margin-bottom:18px;font-weight:500">By Score Tier</div>
+        <div id="tiers"></div>
+      </div>
+      <div class="card">
+        <div style="font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);margin-bottom:18px;font-weight:500">Avg Score by Firm Type</div>
+        <div id="by-type"></div>
+      </div>
+    </div>
   </section>
 
   <!-- SECTION 3 — SIGNAL CONVERSION -->
@@ -287,24 +315,6 @@
     <div class="aum" id="aum-card"><div class="big">—</div><div class="sub">Loading…</div></div>
   </section>
 
-  <!-- SECTION 8 — SCORE DISTRIBUTION -->
-  <section>
-    <div class="sec-head">
-      <h2 class="sec-title">Score Distribution</h2>
-      <div class="sec-sub">Tier breakdown and average by firm type</div>
-    </div>
-    <div class="two-col">
-      <div class="card">
-        <div style="font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);margin-bottom:18px;font-weight:500">By Score Tier</div>
-        <div id="tiers"></div>
-      </div>
-      <div class="card">
-        <div style="font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);margin-bottom:18px;font-weight:500">Avg Score by Firm Type</div>
-        <div id="by-type"></div>
-      </div>
-    </div>
-  </section>
-
   <!-- SECTION 9 — BOTTLENECK -->
   <section>
     <div class="sec-head">
@@ -342,12 +352,16 @@
   // ── Hero ────────────────────────────────────────────
   function renderHero(d){
     const h = d.hero || {};
-    document.getElementById('h-ready').textContent = h.ready ?? 0;
+    const stats = d.stats || {};
+    const funnel = d.funnel || {};
+    // Canonical ready count — funnel.ready is the single source of truth.
+    const readyN = funnel.ready ?? stats.ready ?? h.ready ?? 0;
+    document.getElementById('h-ready').textContent = readyN;
     document.getElementById('h-sub').textContent =
-      `Scanned ${fmt(h.sec_total)} SEC-indexed firms, qualified ${fmt(h.sec_icp)} against ICP, `
-      + `narrowed to ${h.firms} active targets. ${fmt(h.contacts)} contacts scored — `
-      + `${h.qualified ?? 0} qualified, ${h.approved ?? 0} approved.`;
-    document.getElementById('k-ready').textContent = h.ready ?? 0;
+      `Scanned ${fmt(funnel.sec_indexed ?? h.sec_total)} SEC-indexed firms, qualified ${fmt(funnel.icp_qualified ?? h.sec_icp)} against ICP, `
+      + `narrowed to ${funnel.tier1_active ?? h.firms} active targets. ${fmt(funnel.contacts_scored ?? h.contacts)} contacts scored — `
+      + `${funnel.qualified ?? h.qualified ?? 0} qualified, ${h.approved ?? 0} approved.`;
+    document.getElementById('k-ready').textContent = readyN;
     document.getElementById('k-avg').innerHTML = `${Math.round(h.avg_score || 0)}<small>/100</small>`;
     document.getElementById('k-total').textContent = fmt(h.contacts);
     const cost = h.cost_per_lead || 0;
@@ -356,21 +370,44 @@
 
   // ── Funnel (Section 2) ─────────────────────────────
   function renderFunnel(d){
-    const stages = d.funnel || [];
+    // funnel is a flat dict with a .stages array; tolerate old list shape too.
+    const f = d.funnel || {};
+    const stages = Array.isArray(f) ? f : (f.stages || []);
     const max = Math.max(1, ...stages.map(s => s.count));
+    // Find the worst dropoff step
+    let worstIdx = -1, worstRate = 101;
+    for (let i = 1; i < stages.length; i++){
+      const prev = stages[i-1].count; if (!prev) continue;
+      const rate = (stages[i].count / prev) * 100;
+      if (rate < worstRate){ worstRate = rate; worstIdx = i; }
+    }
     document.getElementById('funnel').innerHTML = stages.map((s, i) => {
       const prev = i === 0 ? null : stages[i-1].count;
       const conv = prev ? Math.round((s.count / prev) * 100) : null;
       const pct = Math.max(10, (s.count / max) * 100);
+      const dropTag = (i === worstIdx) ? `<span class="dropoff-tag">← biggest dropoff</span>` : '';
       return `<div class="funnel-row">
         <div class="funnel-bar" style="width:${pct}%;background:${funnelColor(i, stages.length)}">
           <span class="count">${s.count}</span><span>${esc(s.label)}</span>
         </div>
-        <div class="funnel-conv">${conv != null
-          ? `<span class="v">${conv}%</span>conversion`
-          : '<span class="v">—</span>start'}</div>
+        <div class="funnel-conv">
+          ${conv != null ? `<span class="v">${conv}%</span>conversion` : '<span class="v">—</span>start'}
+          ${dropTag}
+        </div>
       </div>`;
     }).join('');
+    // Summary sentence under the funnel
+    const bn = d.bottleneck || {};
+    let msg = bn.message || '';
+    if (!msg && worstIdx > 0) {
+      const from = stages[worstIdx-1], to = stages[worstIdx];
+      const lost = from.count - to.count;
+      msg = `<b>${esc(to.label)}</b> is the binding constraint — ${lost} records (${Math.round(100 - worstRate)}%) drop out between <b>${esc(from.label)}</b> and <b>${esc(to.label)}</b>.`;
+    }
+    const wrap = document.getElementById('funnel').parentNode;
+    let lede = wrap.querySelector('.funnel-lede');
+    if (!lede) { lede = document.createElement('div'); lede.className = 'funnel-lede'; wrap.appendChild(lede); }
+    lede.innerHTML = msg;
   }
 
   // ── Signal Conversion (Section 3) ──────────────────

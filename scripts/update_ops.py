@@ -74,6 +74,7 @@ def build_recent_scores(conn) -> list[dict]:
           FROM scores s
           JOIN contacts c ON c.id = s.contact_id
           JOIN firms    f ON f.id = s.firm_id
+         WHERE COALESCE(s.scored_by,'claude') != 'firmographic_only'
          ORDER BY s.id DESC
          LIMIT 15
     """)
@@ -94,11 +95,18 @@ def build_recent_signals(conn) -> list[dict]:
 
 
 def build_enrichment(conn) -> dict:
-    total = conn.execute("SELECT COUNT(*) FROM contacts").fetchone()[0]
-    verified = conn.execute("SELECT COUNT(*) FROM contacts WHERE email_verified=1").fetchone()[0]
+    # Filter placeholder tier-2 contacts out of the email waterfall — they
+    # have no email source and would skew the hit-rate denominator.
+    total = conn.execute(
+        "SELECT COUNT(*) FROM contacts WHERE COALESCE(is_placeholder,0)=0"
+    ).fetchone()[0]
+    verified = conn.execute(
+        "SELECT COUNT(*) FROM contacts WHERE email_verified=1 AND COALESCE(is_placeholder,0)=0"
+    ).fetchone()[0]
     by_source = _rows(conn, """
         SELECT COALESCE(email_source,'(none)') AS source, COUNT(*) AS n
           FROM contacts
+         WHERE COALESCE(is_placeholder,0)=0
          GROUP BY email_source
          ORDER BY n DESC
     """)

@@ -49,12 +49,12 @@ def build_hero(conn) -> dict:
     s = dict(conn.execute("""
         SELECT
             (SELECT COUNT(*) FROM firms) AS firms,
-            (SELECT COUNT(*) FROM contacts) AS contacts,
-            (SELECT COUNT(*) FROM contacts WHERE email_verified=1) AS verified,
+            (SELECT COUNT(*) FROM contacts WHERE COALESCE(is_placeholder,0)=0) AS contacts,
+            (SELECT COUNT(*) FROM contacts WHERE email_verified=1 AND COALESCE(is_placeholder,0)=0) AS verified,
             (SELECT COUNT(*) FROM signals) AS signals,
-            (SELECT COUNT(*) FROM scores) AS scored,
-            (SELECT ROUND(AVG(score),1) FROM scores) AS avg_score,
-            (SELECT COUNT(*) FROM scores WHERE score >= 75) AS strong,
+            (SELECT COUNT(*) FROM scores WHERE COALESCE(scored_by,'claude') != 'firmographic_only') AS scored,
+            (SELECT ROUND(AVG(score),1) FROM scores WHERE COALESCE(scored_by,'claude') != 'firmographic_only') AS avg_score,
+            (SELECT COUNT(*) FROM scores WHERE score >= 75 AND COALESCE(scored_by,'claude') != 'firmographic_only') AS strong,
             (SELECT COUNT(*) FROM outreach_queue WHERE status='pending') AS pending,
             (SELECT COUNT(*) FROM outreach_queue WHERE status='approved') AS approved,
             (SELECT COUNT(*) FROM outreach_queue WHERE status='skipped') AS skipped
@@ -75,20 +75,33 @@ def build_hero(conn) -> dict:
         s["sec_total"] = 0
         s["sec_icp"]   = 0
 
+    # Tier breakdown
+    tier_row = conn.execute("""
+        SELECT
+          (SELECT COUNT(*) FROM firms WHERE tier=1) AS tier1,
+          (SELECT COUNT(*) FROM firms WHERE tier=2) AS tier2
+    """).fetchone()
+    s["tier1"] = tier_row["tier1"] or 0
+    s["tier2"] = tier_row["tier2"] or 0
+
     # Assemble the hero tagline
-    active = s["firms"]
+    active = s["tier1"]
+    monitored = s["tier2"]
     if s["sec_total"]:
         s["universe_line"] = (f"{s['sec_total']:,} SEC-INDEXED · "
                               f"{s['sec_icp']:,} ICP-QUALIFIED · "
-                              f"{active:,} ACTIVE TARGETS")
+                              f"{monitored} MONITORED · "
+                              f"{active} ACTIVE TARGETS")
     else:
         s["universe_line"] = f"{active:,} ACTIVE TARGETS"
     return s
 
 
 def build_score_histogram(conn) -> list[dict]:
-    scores = [r["score"] for r in conn.execute("SELECT score FROM scores").fetchall()
-              if r["score"] is not None]
+    # Exclude firmographic-only tier-2 scores — they aren't human-review candidates.
+    scores = [r["score"] for r in conn.execute(
+        "SELECT score FROM scores WHERE COALESCE(scored_by,'claude') != 'firmographic_only'"
+    ).fetchall() if r["score"] is not None]
     total = max(len(scores), 1)
     bands = []
     for key, lo, hi, label, color in BANDS:
@@ -101,7 +114,9 @@ def build_score_histogram(conn) -> list[dict]:
 
 def build_dimensions(conn) -> dict:
     rows = conn.execute("""SELECT icp_fit, ai_readiness, reachability, signal_freshness
-                           FROM scores WHERE score IS NOT NULL""").fetchall()
+                           FROM scores
+                           WHERE score IS NOT NULL
+                             AND COALESCE(scored_by,'claude') != 'firmographic_only'""").fetchall()
     out: dict = {}
     for key in ("icp_fit", "ai_readiness", "reachability", "signal_freshness"):
         vals = [r[key] for r in rows if r[key] is not None]
@@ -116,27 +131,72 @@ def build_dimensions(conn) -> dict:
     return out
 
 
-def build_funnel(conn) -> list[dict]:
-    stats = dict(conn.execute("""
-        SELECT
-            (SELECT COUNT(*) FROM firms) AS firms,
-            (SELECT COUNT(DISTINCT firm_id) FROM signals) AS firms_with_signal,
-            (SELECT COUNT(*) FROM contacts) AS contacts,
-            (SELECT COUNT(*) FROM scores) AS scored,
-            (SELECT COUNT(*) FROM outreach_queue) AS queued,
-            (SELECT COUNT(*) FROM outreach_queue WHERE status='approved') AS approved
-    """).fetchone())
-    stages = [
-        ("Firms in universe",        stats["firms"]),
-        ("Firms with signal",        stats["firms_with_signal"]),
-        ("Named contacts",           stats["contacts"]),
-        ("Contacts scored",          stats["scored"]),
-        ("Queued for review",        stats["queued"]),
-        ("Approved to send",         stats["approved"]),
+def build_funnel(conn) -> dict:
+    """Flat funnel dict — single source of truth for all pipeline counts.
+
+    Keys:
+      sec_indexed, icp_qualified, tier2_monitored, tier1_active,
+      contacts_scored, qualified, ready
+
+    Also returns `stages` — an ordered list derived from the flat dict for
+    the analytics.html funnel renderer. Labels/order live here.
+    """
+    try:
+        sec_indexed   = conn.execute("SELECT COUNT(*) FROM sec_universe").fetchone()[0]
+        icp_qualified = conn.execute("SELECT COUNT(*) FROM sec_universe WHERE icp_fit=1").fetchone()[0]
+    except Exception:
+        sec_indexed = icp_qualified = 0
+
+    tier1 = conn.execute("SELECT COUNT(*) FROM firms WHERE tier=1").fetchone()[0]
+    tier2 = conn.execute("SELECT COUNT(*) FROM firms WHERE tier=2").fetchone()[0]
+
+    contacts_scored = conn.execute("""
+        SELECT COUNT(DISTINCT sc.contact_id)
+          FROM scores sc
+          JOIN contacts c ON c.id = sc.contact_id
+         WHERE COALESCE(c.is_placeholder,0)=0
+    """).fetchone()[0]
+
+    qualified = conn.execute("""
+        SELECT COUNT(DISTINCT sc.contact_id)
+          FROM scores sc
+          JOIN contacts c ON c.id = sc.contact_id
+         WHERE sc.score >= 55 AND COALESCE(c.is_placeholder,0)=0
+    """).fetchone()[0]
+
+    ready = conn.execute("""
+        SELECT COUNT(DISTINCT sc.contact_id)
+          FROM scores sc
+          JOIN contacts c ON c.id = sc.contact_id
+         WHERE sc.score >= 55 AND c.email_verified = 1
+           AND COALESCE(c.is_placeholder,0)=0
+    """).fetchone()[0]
+
+    flat = {
+        "sec_indexed":     sec_indexed,
+        "icp_qualified":   icp_qualified,
+        "tier2_monitored": tier2,
+        "tier1_active":    tier1,
+        "contacts_scored": contacts_scored,
+        "qualified":       qualified,
+        "ready":           ready,
+    }
+
+    # Ordered stages for funnel rendering — labels/order live here.
+    stage_order = [
+        ("sec_indexed",     "SEC-indexed"),
+        ("icp_qualified",   "ICP-qualified"),
+        ("tier2_monitored", "Tier 2 monitored"),
+        ("tier1_active",    "Tier 1 active"),
+        ("ready",           "Ready for outreach"),
     ]
-    max_n = max((n for _, n in stages), default=1) or 1
-    return [{"label": l, "count": n, "pct": round(100 * n / max_n, 1)}
-            for l, n in stages]
+    max_n = max((flat[k] for k, _ in stage_order), default=1) or 1
+    flat["stages"] = [
+        {"key": k, "label": lbl, "count": flat[k],
+         "pct": round(100 * flat[k] / max_n, 1)}
+        for k, lbl in stage_order
+    ]
+    return flat
 
 
 def build_by_firm_type(conn) -> list[dict]:
@@ -145,8 +205,10 @@ def build_by_firm_type(conn) -> list[dict]:
                COUNT(s.id) AS scored, ROUND(AVG(s.score), 1) AS avg_score,
                SUM(CASE WHEN s.score >= 75 THEN 1 ELSE 0 END) AS strong
           FROM firms f
-     LEFT JOIN contacts c ON c.firm_id = f.id
+     LEFT JOIN contacts c ON c.firm_id = f.id AND COALESCE(c.is_placeholder,0)=0
      LEFT JOIN scores   s ON s.contact_id = c.id
+                         AND COALESCE(s.scored_by,'claude') != 'firmographic_only'
+         WHERE f.tier = 1
          GROUP BY f.firm_type
          ORDER BY avg_score DESC NULLS LAST
     """)
@@ -160,8 +222,10 @@ def build_by_buying_stage(conn) -> list[dict]:
                COUNT(s.id) AS scored,
                ROUND(AVG(s.score), 1) AS avg_score
           FROM firms f
-     LEFT JOIN contacts c ON c.firm_id = f.id
+     LEFT JOIN contacts c ON c.firm_id = f.id AND COALESCE(c.is_placeholder,0)=0
      LEFT JOIN scores   s ON s.contact_id = c.id
+                         AND COALESCE(s.scored_by,'claude') != 'firmographic_only'
+         WHERE f.tier = 1
          GROUP BY f.buying_stage
          ORDER BY avg_score DESC NULLS LAST
     """)
@@ -256,8 +320,10 @@ def build_competitor_landscape(conn) -> list[dict]:
                COUNT(DISTINCT f.id) AS firms,
                ROUND(AVG(s.score), 1) AS avg_score
           FROM firms f
-          LEFT JOIN contacts c ON c.firm_id = f.id
+          LEFT JOIN contacts c ON c.firm_id = f.id AND COALESCE(c.is_placeholder,0)=0
           LEFT JOIN scores   s ON s.contact_id = c.id
+                             AND COALESCE(s.scored_by,'claude') != 'firmographic_only'
+         WHERE f.tier = 1
          GROUP BY COALESCE(NULLIF(f.competitor,''), 'none')
     """)
     angles = {
@@ -282,6 +348,7 @@ def build_aum_coverage(conn) -> dict:
                    SUM(CASE WHEN aum_reported IS NOT NULL THEN 1 ELSE 0 END) AS firms_matched,
                    COUNT(*) AS firms_total
               FROM firms
+             WHERE tier = 1
         """).fetchone()
         total = row["total_aum"] or 0
         # Rough denominator: ~$50T of US institutional AUM is the buying universe
@@ -316,18 +383,19 @@ def build_ready_and_cost(conn) -> dict:
             "cost_per_lead": round(cost, 4)}
 
 
-def build_bottleneck(funnel: list[dict]) -> dict:
+def build_bottleneck(funnel) -> dict:
     """Find worst pass-through in the funnel and emit an actionable suggestion."""
-    if len(funnel) < 2:
+    stages = funnel.get("stages", []) if isinstance(funnel, dict) else funnel
+    if len(stages) < 2:
         return {"step": None, "rate": 0, "message": ""}
     worst = None
-    for i in range(1, len(funnel)):
-        prev, cur = funnel[i-1]["count"], funnel[i]["count"]
+    for i in range(1, len(stages)):
+        prev, cur = stages[i-1]["count"], stages[i]["count"]
         if prev <= 0:
             continue
         rate = 100 * cur / prev
         if worst is None or rate < worst["rate"]:
-            worst = {"from": funnel[i-1]["label"], "to": funnel[i]["label"],
+            worst = {"from": stages[i-1]["label"], "to": stages[i]["label"],
                      "rate": round(rate, 1)}
     if not worst:
         return {"step": None, "rate": 0, "message": ""}
@@ -365,9 +433,24 @@ def main() -> int:
         hero   = build_hero(conn)
         ready  = build_ready_and_cost(conn)
         hero.update(ready)
+        # Canonical: hero.ready, stats.ready, and funnel.ready must all agree.
+        hero["ready"]      = funnel["ready"]
+        hero["qualified"]  = funnel["qualified"]
+        stats = {
+            "ready":         funnel["ready"],
+            "qualified":     funnel["qualified"],
+            "contacts":      hero["contacts"],
+            "scored":        hero["scored"],
+            "strong":        hero["strong"],
+            "pending":       hero["pending"],
+            "approved":      hero["approved"],
+            "avg_score":     hero["avg_score"],
+            "cost_per_lead": hero.get("cost_per_lead", 0),
+        }
         payload = {
             "generated_at":        datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "hero":                hero,
+            "stats":               stats,
             "score_histogram":     build_score_histogram(conn),
             "dimensions":          build_dimensions(conn),
             "funnel":              funnel,

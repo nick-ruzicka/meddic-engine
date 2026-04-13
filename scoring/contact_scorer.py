@@ -63,7 +63,45 @@ def _build_account(firm: dict, signals: list[dict]) -> dict:
     }
 
 
+def _fetch_other_contacts(firm_id: int, exclude_contact_id: int) -> list[dict]:
+    """Return other contacts at the same firm (excluding this one and placeholders)."""
+    if not firm_id:
+        return []
+    try:
+        conn = get_db()
+        rows = conn.execute(
+            """SELECT id, name, title, role_type
+               FROM contacts
+               WHERE firm_id = ? AND id != ?
+                 AND COALESCE(is_placeholder, 0) = 0
+                 AND COALESCE(do_not_contact, 0) = 0
+               ORDER BY id ASC
+               LIMIT 8""",
+            (firm_id, exclude_contact_id or 0),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+    except Exception as e:
+        logger.debug(f"_fetch_other_contacts failed: {e}")
+        return []
+
+
+def _classify_role(title: str) -> str:
+    """Cheap heuristic — is this contact an economic buyer or technical champion?"""
+    t = (title or "").lower()
+    if any(k in t for k in ("cto", "chief technology", "head of ai", "chief ai",
+                            "head of data", "chief data", "head of engineering",
+                            "head of technology", "head of research technology")):
+        return "technical_champion"
+    if any(k in t for k in ("cio", "chief investment", "managing partner",
+                            "president", "chief executive", "ceo", "coo",
+                            "chief operating", "partner", "managing director")):
+        return "economic_buyer"
+    return "other"
+
+
 def _build_user_message(firm: dict, contact: dict, signals: list[dict]) -> str:
+    others = _fetch_other_contacts(firm.get("id", 0), contact.get("id", 0))
     parts = [
         "## Firm",
         f"- Name: {firm.get('name')}",
@@ -93,6 +131,15 @@ def _build_user_message(firm: dict, contact: dict, signals: list[dict]) -> str:
             f"- [{s.get('signal_type')}/{s.get('signal_subtype') or '—'}] "
             f"fresh={s.get('freshness_days', '?')}d stage={s.get('buying_stage') or '—'} "
             f"| {truncate(s.get('content') or '', 200)}"
+        )
+    if others:
+        parts += ["", f"## Other contacts at this firm ({len(others)})"]
+        for o in others:
+            parts.append(f"- {o.get('name')}, {o.get('title') or '—'}")
+        parts.append(
+            "\nScore and reason for THIS contact specifically — differentiate based on "
+            "title, seniority, and which workflow this person would own. Do NOT repeat "
+            "identical reasoning across Co-CIOs or peers at the same firm."
         )
     parts += [
         "",

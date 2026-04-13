@@ -14,8 +14,8 @@
     --elevated:#1c1c1c;
     --overlay:#222222;
     --text:#ffffff;
-    --text-2:rgba(255,255,255,0.60);
-    --text-3:rgba(255,255,255,0.35);
+    --text-2:rgba(255,255,255,0.72);
+    --text-3:rgba(255,255,255,0.55);
     --border:rgba(255,255,255,0.10);
     --border-strong:rgba(255,255,255,0.18);
     --divider:#1F1F1F;
@@ -39,7 +39,7 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-    font-family:var(--font-ui);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
   a{color:inherit}
   button,select,textarea,input{font-family:inherit;color:inherit}
 
@@ -69,6 +69,25 @@
   .nav-links .nav-sep{color:rgba(255,255,255,0.20);font-size:11px}
   .nav-right{display:flex;align-items:center;gap:14px}
   .nav-meta{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+
+  /* Signals-live indicator */
+  .signal-live{
+    margin-left:12px;padding-left:12px;border-left:1px solid var(--border);
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:10px;letter-spacing:0.10em;text-transform:uppercase;
+    color:var(--text-3);font-weight:500;
+  }
+  .signal-live .live-dot{
+    width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);
+    display:inline-block;flex-shrink:0;
+  }
+  .signal-live.live  .live-dot{background:var(--green);animation:live-pulse 2s infinite;
+    box-shadow:0 0 6px rgba(16,185,129,0.55)}
+  .signal-live.live  .live-txt{color:var(--green)}
+  .signal-live.warm  .live-dot{background:var(--amber)}
+  .signal-live.warm  .live-txt{color:#fbbf24}
+  .signal-live.stale .live-dot{background:rgba(255,255,255,0.30)}
+  @keyframes live-pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
   main{max-width:1280px;margin:0 auto;padding:32px 28px 64px}
 
@@ -324,7 +343,10 @@
   .tag.status-flagged{background:rgba(239,68,68,0.08);color:rgba(248,113,113,0.75);border-color:rgba(239,68,68,0.20)}
 
   /* ==== EXPAND ==== */
-  .expand{display:none;padding:0 16px 24px 68px;border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.01);max-height:400px;overflow-y:auto}
+  .expand{display:none;padding:20px 16px 24px 68px;border-bottom:1px solid rgba(255,255,255,0.06);
+    background:rgba(255,255,255,0.01);max-height:500px;overflow-y:auto;scroll-behavior:smooth}
+  .expand::-webkit-scrollbar{width:6px}
+  .expand::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:3px}
   .trow.open + .expand{display:block}
   .expand-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:6px;align-items:start}
   .box{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:2px;padding:14px 16px}
@@ -405,8 +427,8 @@
 
   /* ==== ACCOUNT INTELLIGENCE BRIEF ==== */
   .brief-box{
-    background:rgba(255,255,255,0.02);
-    border:1px solid rgba(255,255,255,0.08);
+    background:linear-gradient(135deg, rgba(70,91,255,0.06) 0%, rgba(107,127,255,0.03) 100%);
+    border:1px solid rgba(70,91,255,0.20);
     border-radius:2px;padding:16px;
   }
   .brief-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
@@ -528,6 +550,21 @@
     .expand-grid{grid-template-columns:1fr}
     .expand{padding-left:16px}
   }
+  /* prose-cap */ .reasoning, .brief-section p, .account-brief p, .brief-row .v { max-width: 68ch }
+
+  /* view-compact — single-row contacts, tighter rhythm */
+  .view-compact .trow{padding-top:8px;padding-bottom:8px;min-height:52px}
+  .view-compact .firm-tags{display:none}
+  .view-compact .contact-title{display:none}
+  .view-compact .avatar{width:28px;height:28px;font-size:11px}
+  .view-compact .firm-name{font-size:13.5px;line-height:1.25}
+  .view-compact .contact-name{font-size:13.5px;line-height:1.25}
+  .view-compact .trow.open{padding-bottom:0}
+  .view-compact .chev{opacity:0.5}
+  .view-compact .chev:hover{opacity:1}
+  /* expanded view — auto-open all rows, hide the chevron */
+  .view-expanded .chev{display:none}
+
 </style>
 </head>
 <body>
@@ -540,6 +577,9 @@
     <span class="name"></span>
     <span class="sub">Signal Engine</span>
     <span class="eyebrow">Outbound Intelligence</span>
+    <span class="signal-live" id="signal-live" title="Most recent signal">
+      <span class="live-dot"></span><span class="live-txt">—</span>
+    </span>
   </div>
   <nav class="nav-links">
     <a href="analytics.html">Analytics</a>
@@ -570,7 +610,7 @@
       <div class="hero-sub">Surfacing AI transformation signals across 20 target institutions</div>
     </div>
     <div class="hero-right">
-      <div class="hero-stat"><span class="n" id="h-firms">20</span><span class="l">Firms Monitored</span></div>
+      <div class="hero-stat"><span class="n" id="h-firms">20</span><span class="l">Tier 1 Active</span></div>
       <div class="hero-stat"><span class="n" id="h-signals">7</span><span class="l">Signals Live</span></div>
       <div class="hero-stat"><span class="n" id="h-strong">4</span><span class="l">Strong Matches</span></div>
     </div>
@@ -615,6 +655,19 @@
         <button data-v="35">35+</button>
       </div>
     </div>
+    <div style="display:flex;align-items:center;gap:4px"><span class="tlabel">Tier</span>
+      <div class="tabs" id="tab-tier">
+        <button data-v="all" class="active">All</button>
+        <button data-v="1">Tier 1</button>
+        <button data-v="2">Tier 2</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px"><span class="tlabel">View</span>
+      <div class="tabs" id="tab-view">
+        <button data-v="compact" class="active" title="Compact — 1 row each">≡ Compact</button>
+        <button data-v="expanded" title="Expanded — full cards">⊞ Expanded</button>
+      </div>
+    </div>
     <button class="btn-export" id="btn-export" disabled>Export Approved <span id="approved-count"></span></button>
   </div>
 
@@ -643,7 +696,7 @@
     : window.location.origin;
   const STATS_REFRESH_MS = 30000;
 
-  const state = { data:null, status:'all', minScore:0, search:'', expandedId:null };
+  const state = { data:null, status:'all', minScore:0, tier:'all', search:'', expandedId:null, view:'compact' };
   const el = {
     content: document.getElementById('content'),
     footer: document.getElementById('footer'),
@@ -659,7 +712,7 @@
 
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmtDate = d => { if(!d) return ''; try{return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric'})}catch{return d} };
-  const scoreColor = s => s>=75?'#465BFF': s>=55?'rgba(255,255,255,0.55)': s>=35?'rgba(255,255,255,0.30)':'rgba(255,255,255,0.12)';
+  const scoreColor = s => s>=75?'linear-gradient(135deg, #465BFF, #7B8FFF)': s>=55?'rgba(255,255,255,0.55)': s>=35?'rgba(255,255,255,0.30)':'rgba(255,255,255,0.12)';
   const scoreNumColor = s => s>=75?'#8b9fff': s>=55?'rgba(255,255,255,0.85)': s>=35?'rgba(255,255,255,0.55)':'rgba(255,255,255,0.35)';
   const initials = s => (s||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
   const prettyType = t => ({pe:'PE',hedge_fund:'Hedge Fund',investment_bank:'Inv. Bank',credit_fund:'Credit Fund'}[t] || (t||'').replace(/_/g,' '));
@@ -704,6 +757,7 @@
     return cs.filter(c =>
       (state.status === 'all' || c.status === state.status) &&
       (c.score >= state.minScore) &&
+      (state.tier === 'all' || String(c.tier || 1) === state.tier) &&
       (!q || (c.firm_name||'').toLowerCase().includes(q) || (c.contact_name||'').toLowerCase().includes(q))
     );
   }
@@ -744,8 +798,38 @@
     el.export.disabled = approved === 0;
   }
 
+  function tier2RowHTML(c){
+    const fid = c.firm_id;
+    return `
+    <div class="trow t2" data-firm="${fid}" style="opacity:0.75">
+      <div class="firm-cell">
+        <div class="avatar">${esc(initials(c.firm_name))}</div>
+        <div class="firm-info">
+          <div class="firm-name">${esc(c.firm_name)}</div>
+          <div class="firm-tags">
+            ${c.firm_type ? `<span class="tag type">${esc(prettyType(c.firm_type))}</span>` : ''}
+            <span class="tag">Tier 2</span>
+          </div>
+        </div>
+      </div>
+      <div class="contact-cell">
+        <div class="contact-name" style="color:var(--text-3)">—</div>
+        <div class="contact-title">${esc(c.title || 'No contact — firmographic only')}</div>
+      </div>
+      <div class="email-cell"><span class="em" style="color:var(--text-3)">—</span></div>
+      <div class="score-cell">
+        <span class="tag">ENRICHMENT NEEDED</span>
+      </div>
+      <div class="actions" onclick="event.stopPropagation()">
+        <button class="btn approve" data-act="activate" data-firm="${fid}">Activate →</button>
+      </div>
+      <div></div>
+    </div>`;
+  }
+
   function rowHTML(c){
-    const isOpen = state.expandedId === c.queue_id;
+    if (c.tier === 2) return tier2RowHTML(c);
+    const isOpen = state.expandedId === '__ALL__' || state.expandedId === c.queue_id;
     const disabled = c.status !== 'pending' ? 'disabled' : '';
     const rowCls = 'trow' + (c.status !== 'pending' ? ' decided' : '') + (isOpen ? ' open' : '');
     const statusTag = c.status !== 'pending' ? `<span class="tag status-${esc(c.status)}">${esc(c.status)}</span>` : '';
@@ -838,6 +922,11 @@
   }
 
   function render(){
+    document.getElementById('table-wrap').classList.toggle('view-compact', state.view === 'compact');
+    document.getElementById('table-wrap').classList.toggle('view-expanded', state.view === 'expanded');
+    // In expanded mode, auto-open every card (no chevron needed)
+    if (state.view === 'expanded') state.expandedId = '__ALL__';
+
     if (!state.data) return;
     renderStats();
     const rows = filtered();
@@ -852,7 +941,7 @@
   function renderHero(){
     const s = state.data?.stats || {};
     const set = (id, v) => { const e = document.getElementById(id); if (e && v != null) e.textContent = v; };
-    set('h-firms', s.total_firms);
+    set('h-firms', s.tier1_firms != null ? s.tier1_firms : s.total_firms);
     set('h-signals', s.total_signals);
     set('h-strong', s.strong_match);
   }
@@ -864,6 +953,31 @@
     const n = (state.data.contacts || []).length;
     el.footer.textContent = `Generated ${ts} · ${n} Contacts`;
     el.genMeta.textContent = state.data.generated_at ? `Updated ${new Date(state.data.generated_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}` : '';
+    renderSignalLive();
+  }
+
+  function renderSignalLive(){
+    const box = document.getElementById('signal-live');
+    if (!box) return;
+    const cs = state.data?.contacts || [];
+    let latest = 0;
+    for (const c of cs){
+      if (!c.signal_date) continue;
+      const t = new Date(c.signal_date).getTime();
+      if (!isNaN(t) && t > latest) latest = t;
+    }
+    box.classList.remove('live','warm','stale');
+    const txt = box.querySelector('.live-txt');
+    if (!latest){ box.classList.add('stale'); txt.textContent = 'No signals'; return; }
+    const hoursAgo = (Date.now() - latest) / 36e5;
+    if (hoursAgo < 24){
+      box.classList.add('live'); txt.textContent = 'Signals Live';
+    } else if (hoursAgo < 24 * 7){
+      box.classList.add('warm');
+      txt.textContent = hoursAgo < 48 ? `${Math.round(hoursAgo)}h ago` : `${Math.round(hoursAgo/24)}d ago`;
+    } else {
+      box.classList.add('stale'); txt.textContent = 'Stale';
+    }
   }
 
   const SKIP_REASONS = [
@@ -875,22 +989,66 @@
 
   function bindRows(){
     el.content.querySelectorAll('.trow').forEach(row => {
+      if (row.classList.contains('t2')) return; // tier-2 rows don't expand
       const qid = parseInt(row.dataset.qid, 10);
       row.addEventListener('click', e => {
         if (e.target.closest('[data-act], .actions, .skip-menu, button, textarea, select, a')) return;
         toggleExpand(qid);
       });
     });
-    // Wire every data-act button (both row-level and expand-level)
-    document.querySelectorAll('.trow [data-act], .expand [data-act]').forEach(btn => {
-      const qid = parseInt(btn.closest('[data-qid]').dataset.qid, 10);
+    // Wire tier-2 "Activate" buttons separately (no queue_id available).
+    document.querySelectorAll('.trow.t2 [data-act="activate"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const fid = parseInt(btn.dataset.firm, 10);
+        handleActivate(fid, btn);
+      });
+    });
+    // Wire every queued-row data-act button (both row-level and expand-level)
+    document.querySelectorAll('.trow:not(.t2) [data-act], .expand [data-act]').forEach(btn => {
+      const host = btn.closest('[data-qid]');
+      if (!host) return;
+      const qid = parseInt(host.dataset.qid, 10);
       btn.addEventListener('click', e => { e.stopPropagation(); handleAction(qid, btn.dataset.act, btn); });
     });
   }
 
+  async function handleActivate(firmId, btn){
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="mini-spin"></span> Activating…';
+    try {
+      await apiCall('/api/activate', {firm_id: firmId});
+      // Mark promoted locally — flip tier on the virtual row so it disappears
+      // from the Tier 2 view and re-renders once enrichment backfills.
+      const rec = (state.data?.contacts || []).find(x => x.firm_id === firmId && x.tier === 2);
+      if (rec) rec.tier = 1;
+      showToast('Activated — firm promoted to Tier 1 (enrichment queued)');
+      render();
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+      showToast('Activate failed: ' + err.message, true);
+    }
+  }
+
   function toggleExpand(qid){
+    const prevY = window.scrollY;
+    const rowBefore = document.querySelector(`.trow[data-qid="${qid}"]`);
+    const rowTopBefore = rowBefore ? rowBefore.getBoundingClientRect().top : 0;
     state.expandedId = state.expandedId === qid ? null : qid;
     render();
+    // After re-render: keep the clicked row anchored where it was.
+    // Only scroll if the row is now clipped by the sticky header (top) or off the bottom.
+    const row = document.querySelector(`.trow[data-qid="${qid}"]`);
+    if (!row) { window.scrollTo({top: prevY}); return; }
+    const headerH = 64;
+    const rect = row.getBoundingClientRect();
+    if (rect.top < headerH + 8 || rect.bottom > window.innerHeight - 40){
+      window.scrollTo({top: window.scrollY + (rect.top - rowTopBefore), behavior:'instant'});
+    } else {
+      window.scrollTo({top: prevY});
+    }
   }
 
   function showSkipMenu(qid, triggerBtn){
@@ -950,6 +1108,7 @@
       return;
     }
     if (act === 'generate'){ return generateFirstLine(qid, btn); }
+    if (act === 'gen_brief'){ return generateBrief(qid, btn); }
     if (c.status !== 'pending') return;
 
     const ta = document.querySelector(`.expand[data-qid="${qid}"] textarea.first-line`);
@@ -966,6 +1125,44 @@
       render();
     } catch(err){
       showToast('Action failed: ' + err.message, true);
+    }
+  }
+
+  function renderBrief(b){
+    if (!b) return '';
+    const rows = [
+      {cls:'why', k:'Why Now',          v:b.why_now},
+      {cls:'obj', k:'Likely Objection', v:b.objection},
+      {cls:'ang', k:'Your Angle',       v:b.angle},
+      {cls:'prf', k:'Proof Point',      v:b.proof_point},
+    ];
+    return rows.map(r => `
+      <div class="brief-row ${r.cls}">
+        <div class="k">${r.k}</div>
+        <div class="v">${esc(r.v || '—')}</div>
+      </div>`).join('');
+  }
+
+  async function generateBrief(qid, btn){
+    const c = state.data.contacts.find(x => x.queue_id === qid);
+    if (!c) return;
+    const box = document.querySelector(`.brief-box[data-qid="${qid}"]`);
+    const body = box?.querySelector('.brief-body');
+    const origLabel = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="mini-spin"></span> Generating…';
+    if (body) body.innerHTML = '<div class="brief-empty">Calling Claude Haiku — building Why Now, Objection, Angle, Proof Point…</div>';
+    try{
+      const r = await apiCall('/api/generate_brief', {queue_id: qid});
+      c.account_brief = r.brief;
+      if (body) body.innerHTML = renderBrief(r.brief);
+      btn.remove();
+      showToast(`Brief ready for ${c.contact_name}`);
+    } catch(err){
+      if (body) body.innerHTML = `<div class="brief-empty">Generation failed. Try again.</div>`;
+      btn.innerHTML = origLabel;
+      btn.disabled = false;
+      showToast('Brief generation failed: ' + err.message, true);
     }
   }
 
@@ -1007,8 +1204,10 @@
         render();
       });
     };
+    wire('tab-view', 'view');
     wire('tab-status', 'status');
     wire('tab-score', 'minScore', v => parseFloat(v));
+    wire('tab-tier', 'tier');
 
     el.search.addEventListener('input', e => { state.search = e.target.value; render(); });
     el.export.addEventListener('click', exportApproved);
@@ -1083,7 +1282,11 @@
       const row = document.querySelector(`.trow[data-qid="${qid}"]`);
       if (row){
         row.classList.add('kfocus');
-        row.scrollIntoView({block:'nearest', behavior:'smooth'});
+        // Only scroll if the row is outside the viewport (allowing for sticky header).
+        const rect = row.getBoundingClientRect();
+        if (rect.top < 72 || rect.bottom > window.innerHeight - 20){
+          row.scrollIntoView({block:'nearest', behavior:'smooth'});
+        }
       }
     }
   }

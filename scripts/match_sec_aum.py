@@ -69,28 +69,70 @@ def match(conn, firm_name: str, pattern: str | None) -> tuple[float | None, str 
 
 def main() -> int:
     conn = get_db()
-    firms = conn.execute("SELECT id, name FROM firms ORDER BY name").fetchall()
-    matched = unmatched = 0
+    # Scope: tier-1 firms only. For each firm:
+    #   1. If its name is in the hand-picked PATTERNS dict, match via LIKE.
+    #   2. Else if it has a crd_number already set, refresh AUM via that crd.
+    #   3. Else skip (do NOT wipe aum_reported — the row was populated some other way).
+    firms = conn.execute(
+        "SELECT id, name, crd_number, aum_reported FROM firms WHERE tier=1 ORDER BY name"
+    ).fetchall()
+    matched = unmatched = skipped = 0
     total = 0.0
-    print(f"{'FIRM':<30} {'SEC ENTITY':<48} {'AUM':>18}")
-    print("-" * 98)
+    print(f"{'FIRM':<32} {'SEC ENTITY / CRD LOOKUP':<50} {'AUM':>18}")
+    print("-" * 102)
     for f in firms:
         pattern = PATTERNS.get(f["name"])
-        aum, sec_name = match(conn, f["name"], pattern)
+        aum: float | None = None
+        src = ""
+
+        if pattern:
+            aum, src = match(conn, f["name"], pattern)
+            if not aum:
+                src = f"no match for {pattern!r}"
+        elif pattern is None and f["name"] in PATTERNS:
+            # Explicitly marked N/A (e.g. PJT, Houlihan Lokey)
+            src = "pattern=None (not in SEC ADV)"
+        elif f["crd_number"]:
+            row = conn.execute(
+                "SELECT firm_name, aum_reported FROM sec_universe WHERE crd_number=?",
+                (f["crd_number"],),
+            ).fetchone()
+            if row and row["aum_reported"]:
+                aum = float(row["aum_reported"])
+                src = f"crd={f['crd_number']} → {row['firm_name']}"
+            else:
+                src = f"crd={f['crd_number']} — no AUM in sec_universe"
+        else:
+            # No pattern, no crd — preserve whatever's there (likely a manual seed).
+            if f["aum_reported"]:
+                total += f["aum_reported"]
+                skipped += 1
+                print(f"{f['name'][:30]:<32} {'preserved (manual value)':<50} ${f['aum_reported']:>15,.0f}")
+            else:
+                print(f"{f['name'][:30]:<32} {'no pattern, no crd':<50} {'—':>18}")
+                skipped += 1
+            continue
+
         if aum:
             conn.execute("UPDATE firms SET aum_reported=? WHERE id=?", (aum, f["id"]))
-            print(f"{f['name']:<30} {sec_name[:46]:<48} ${aum:>15,.0f}")
+            print(f"{f['name'][:30]:<32} {src[:48]:<50} ${aum:>15,.0f}")
             total += aum
             matched += 1
         else:
-            conn.execute("UPDATE firms SET aum_reported=NULL WHERE id=?", (f["id"],))
-            reason = "pattern=None (not in SEC ADV)" if pattern is None else "no match"
-            print(f"{f['name']:<30} {reason:<48} {'—':>18}")
+            # Explicit miss (pattern set but nothing found, or pattern=None N/A).
+            # Only wipe if there's no manual value already (protect firms that were
+            # populated by the promote_firms script before patterns were added).
+            if not f["aum_reported"]:
+                conn.execute("UPDATE firms SET aum_reported=NULL WHERE id=?", (f["id"],))
+            else:
+                total += f["aum_reported"]
+            print(f"{f['name'][:30]:<32} {src[:48]:<50} {'—':>18}")
             unmatched += 1
     conn.commit()
     conn.close()
-    print("-" * 98)
-    print(f"{'TOTAL':<30} {matched}/{matched+unmatched} firms matched{'':<18} ${total:>15,.0f}")
+    print("-" * 102)
+    print(f"{'TOTAL':<32} matched={matched}, unmatched={unmatched}, preserved={skipped}"
+          f"{'':<9} ${total:>15,.0f}")
     return 0
 
 

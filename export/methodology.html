@@ -9,10 +9,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#101010; --surface:#161616; --elevated:#1c1c1c; --overlay:#222;
-    --text:#fff; --text-2:rgba(255,255,255,0.60); --text-3:rgba(255,255,255,0.35);
-    --border:rgba(255,255,255,0.10); --border-strong:rgba(255,255,255,0.18);
-    --blue:#465BFF; --blue-dim:rgba(70,91,255,0.15); --blue-border:rgba(70,91,255,0.40);
+    /* Sand theme — 's real tokens from .com/about */
+    --bg:#EEECDD;         /* --color-sand */
+    --surface:#DEDBD4;    /* --color-sand-tint — elevated sections */
+    --elevated:#DEDBD4;
+    --overlay:#FFFFFF;
+    --text:#101010;                   /* headings */
+    --text-2:#3D4046;                 /* --color-sand-grey — body copy */
+    --text-3:rgba(61,64,70,0.65);     /* soft-2 — labels, captions */
+    --border:#DBD9C8;                 /* --color-sand-tint-1 */
+    --border-strong:#C2C1B6;          /* --color-sand-tint-2 */
+    --blue:#465BFF; --blue-dim:rgba(70,91,255,0.10); --blue-border:rgba(70,91,255,0.40);
     --green:#10b981; --amber:#f59e0b; --orange:#f97316; --red:#ef4444; --violet:#7c3aed; --teal:#0d9488;
     --font-ui:'Inter',system-ui,-apple-system,sans-serif;
     --font-display:'Playfair Display',Georgia,serif;
@@ -20,11 +27,11 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-    font-family:var(--font-ui);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    font-family:var(--font-ui);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
   a{color:inherit}
 
-  header{position:sticky;top:0;z-index:20;background:rgba(16,16,16,0.92);backdrop-filter:blur(12px);
-    border-bottom:1px solid rgba(255,255,255,0.08);height:64px;padding:0 28px;
+  header{position:sticky;top:0;z-index:20;background:rgba(238,236,221,0.95);backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(0,0,0,0.08);height:64px;padding:0 28px;
     display:flex;align-items:center;gap:20px}
   .brand{display:flex;align-items:center;gap:12px}
   .brand .name{font-size:15px;font-weight:500}
@@ -36,14 +43,14 @@
     color:var(--text-3);text-decoration:none;transition:color 150ms}
   .nav-links a:hover{color:var(--text)}
   .nav-links a.active{color:var(--blue)}
-  .nav-links .nav-sep{color:rgba(255,255,255,0.20);font-size:11px}
+  .nav-links .nav-sep{color:rgba(0,0,0,0.25);font-size:11px}
 
   main{max-width:1080px;margin:0 auto;padding:40px 28px 96px;color:var(--text)}
   main section, main .card, main table{color:inherit}
   .hb-grid-bg{
     background-image:
-      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
     background-size: 40px 40px;
   }
   .page-header{
@@ -51,8 +58,8 @@
     margin-bottom:56px;padding:40px 32px 40px;border-bottom:1px solid var(--border);
     background-image:
       radial-gradient(ellipse 40% 60% at 90% 50%, rgba(70,91,255,0.06), transparent),
-      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
     background-size: auto, 40px 40px, 40px 40px;
   }
   .page-header::after{
@@ -70,7 +77,7 @@
     margin-top:24px;background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:14px 14px 18px;
   }
   .demo-video video{
-    width:100%;border-radius:2px;border:1px solid rgba(255,255,255,0.08);display:block;
+    width:100%;border-radius:2px;border:1px solid rgba(0,0,0,0.08);display:block;
   }
   .demo-video .cap{
     margin-top:12px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
@@ -80,25 +87,25 @@
   .page-eyebrow{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3);margin-bottom:16px}
   .page-title{font-family:var(--font-display);font-size:60px;font-weight:500;letter-spacing:0.02em;
     line-height:0.95;text-transform:uppercase;margin:0}
-  .page-sub{font-size:16px;color:var(--text-2);margin-top:16px;max-width:700px;line-height:1.6}
+  .page-sub{font-size:18px;color:var(--text-2);margin-top:20px;max-width:640px;line-height:1.55;font-weight:400}
 
   section{margin-bottom:64px}
   section + section{margin-top:56px}
-  .sec-eyebrow{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#EEECDD;margin-bottom:10px;font-weight:500}
+  .sec-eyebrow{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#465BFF;margin-bottom:10px;font-weight:500}
   .sec-title{font-family:var(--font-display);font-size:30px;font-weight:500;letter-spacing:0.015em;
     text-transform:uppercase;margin:0 0 12px;line-height:1.05}
-  .sec-body{font-size:14px;color:var(--text-2);margin-bottom:24px;max-width:640px;line-height:1.65}
+  .sec-body{font-size:16px;color:var(--text-2);margin-bottom:28px;max-width:640px;line-height:1.65}
 
   .card{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:24px 28px}
 
   /* Discovery funnel */
   .discovery{display:flex;align-items:stretch;gap:0}
   .d-step{
-    flex:1;background:var(--surface);border:1px solid rgba(238,236,221,0.15);
+    flex:1;background:var(--surface);border:1px solid var(--border);
     padding:22px 20px;position:relative;
     background-image:
-      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
     background-size: 40px 40px;
     background-color:var(--surface);
   }
@@ -107,17 +114,17 @@
     letter-spacing:-0.01em;color:var(--text);margin-bottom:10px;
   }
   .d-step .lbl{font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px}
-  .d-step .body{font-size:12px;color:var(--text-2);line-height:1.5}
+  .d-step .body{font-size:13px;color:var(--text-2);line-height:1.55}
   .d-connector{
     flex:0 0 28px;position:relative;align-self:stretch;
   }
   .d-connector::before{
     content:"";position:absolute;top:50%;left:0;right:0;height:1px;
-    background:rgba(255,255,255,0.15);
+    background:rgba(0,0,0,0.15);
   }
   .d-connector::after{
     content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-    width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.35);
+    width:4px;height:4px;border-radius:50%;background:rgba(0,0,0,0.35);
   }
   @media (max-width:900px){.discovery{flex-direction:column}.d-connector{display:none}}
 
@@ -131,13 +138,13 @@
   .sig-card.transform{--accent:var(--green)}
   .sig-card.competitor{--accent:var(--violet)}
   .sig-card .eyebrow{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;
-    color:#EEECDD;font-weight:500;margin-bottom:10px}
+    color:#465BFF;font-weight:500;margin-bottom:10px}
   .sig-card .t{font-family:var(--font-display);font-size:20px;font-weight:500;letter-spacing:0.01em;
     text-transform:uppercase;margin:0 0 10px}
-  .sig-card .desc{font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:14px}
+  .sig-card .desc{font-size:14.5px;color:var(--text-2);line-height:1.6;margin-bottom:16px}
   .sig-card .ex{
     font-size:12px;color:var(--text-3);font-style:italic;line-height:1.6;
-    padding:10px 12px;background:rgba(255,255,255,0.03);border-left:2px solid var(--border);
+    padding:10px 12px;background:rgba(0,0,0,0.03);border-left:2px solid var(--border);
     border-radius:0 2px 2px 0;
   }
   .sig-card .ex::before{content:"“"}
@@ -150,8 +157,8 @@
     border-left:3px solid var(--blue);border-radius:2px;margin-bottom:24px;
     color:var(--text-2);text-align:center;
     background-image:
-      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
     background-size: 40px 40px;
   }
   .formula b{color:var(--text)}
@@ -166,7 +173,7 @@
   }
   .dim-card .t{font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text);
     font-weight:500;margin-bottom:10px}
-  .dim-card .desc{font-size:12px;color:var(--text-2);line-height:1.55}
+  .dim-card .desc{font-size:13px;color:var(--text-2);line-height:1.55}
 
   /* Router diagram */
   .router{display:grid;grid-template-columns:200px 1fr;gap:16px 20px;align-items:center}
@@ -177,7 +184,7 @@
   .router .v{display:flex;flex-wrap:wrap;gap:6px}
   .router .pill{
     font-family:var(--font-mono);font-size:11px;letter-spacing:0.02em;
-    padding:4px 10px;background:rgba(255,255,255,0.05);
+    padding:4px 10px;background:rgba(0,0,0,0.05);
     border:1px solid var(--border);border-radius:2px;color:var(--text-2);
   }
   .router-note{margin-top:24px;padding:16px 20px;background:var(--elevated);
@@ -188,17 +195,17 @@
   .labels{width:100%;border-collapse:collapse;font-size:13px}
   .labels th{font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);
     text-align:left;font-weight:500;padding:12px 14px;border-bottom:1px solid var(--border)}
-  .labels td{padding:16px 14px;border-bottom:1px solid rgba(255,255,255,0.06)}
+  .labels td{padding:16px 14px;border-bottom:1px solid rgba(0,0,0,0.06)}
   .labels tr:last-child td{border-bottom:none}
   .labels .score-pill{
     display:inline-block;padding:4px 10px;border-radius:2px;
     font-family:var(--font-mono);font-size:12px;font-weight:500;
-    background:rgba(255,255,255,0.04);border:1px solid var(--border);
+    background:rgba(0,0,0,0.04);border:1px solid var(--border);
   }
-  .labels .score-pill.strong{background:rgba(16,185,129,0.12);color:#34d399;border-color:rgba(16,185,129,0.3)}
-  .labels .score-pill.good  {background:rgba(245,158,11,0.12);color:#fbbf24;border-color:rgba(245,158,11,0.3)}
-  .labels .score-pill.mod   {background:rgba(249,115,22,0.12);color:#fb923c;border-color:rgba(249,115,22,0.3)}
-  .labels .score-pill.weak  {background:rgba(239,68,68,0.12);color:#f87171;border-color:rgba(239,68,68,0.3)}
+  .labels .score-pill.strong{background:rgba(16,185,129,0.15);color:#047857;border-color:rgba(16,185,129,0.5)}
+  .labels .score-pill.good  {background:rgba(245,158,11,0.15);color:#b45309;border-color:rgba(245,158,11,0.5)}
+  .labels .score-pill.mod   {background:rgba(249,115,22,0.15);color:#c2410c;border-color:rgba(249,115,22,0.5)}
+  .labels .score-pill.weak  {background:rgba(239,68,68,0.15);color:#b91c1c;border-color:rgba(239,68,68,0.5)}
   .labels .name{color:var(--text);font-weight:500}
   .labels .action{color:var(--text-2);font-style:italic}
 
@@ -230,21 +237,21 @@
   <div class="page-header">
     <div class="page-eyebrow">Methodology</div>
     <h1 class="page-title">Every Score Has a Reason.</h1>
-    <div class="page-sub">The system behind the scores — how 20 target institutions become your outreach queue.</div>
+    <div class="page-sub">The system behind the scores — how <span id="m-tier1-sub">20</span> target institutions become your outreach queue.</div>
   </div>
 
   <section>
     <div class="sec-eyebrow">Step 1 · Discovery</div>
-    <h2 class="sec-title">We start with your target universe</h2>
-    <div class="sec-body">A curated list of financial institutions becomes the search space. Every downstream step operates inside that boundary — no cold prospecting into unknown firms.</div>
+    <h2 class="sec-title">From <span id="m-icp-title">7,115</span> ICP firms to <span id="m-tier1-title">20</span> named accounts</h2>
+    <div class="sec-body">We start with <span id="m-icp-qualified">7,115</span> ICP-qualified firms from SEC filings. The top <span id="m-tier2">500</span> by AUM enter Tier 2 monitoring — firmographic scoring only, no contact enrichment. When a Tier 2 firm triggers a signal, it promotes to Tier 1 for full enrichment and contact scoring. The <span id="m-tier1">20</span> Tier 1 firms are hand-curated top-tier institutions with named contacts, verified emails, and full account briefs.</div>
     <div class="discovery">
-      <div class="d-step"><div class="n" id="d-firms">20</div><div class="lbl">Target Firms</div><div class="body">PE, credit, hedge funds, investment banks — named accounts only.</div></div>
+      <div class="d-step"><div class="n" id="meth-icp">7,115</div><div class="lbl">ICP Qualified</div><div class="body">Filtered from <span id="m-sec-indexed">16,639</span> SEC-registered investment advisers.</div></div>
       <div class="d-connector" aria-hidden="true"></div>
-      <div class="d-step"><div class="n" id="d-signals">—</div><div class="lbl">Signals Collected</div><div class="body">Twitter · LinkedIn · Press · Hiring — continuous monitoring.</div></div>
+      <div class="d-step"><div class="n" id="meth-tier2">500</div><div class="lbl">Tier 2 Monitored</div><div class="body">Top-AUM firms, firmographic-only score. No cost.</div></div>
       <div class="d-connector" aria-hidden="true"></div>
-      <div class="d-step"><div class="n" id="d-scored">—</div><div class="lbl">Contacts Scored</div><div class="body">Each contact scored against ICP via Claude + skill router.</div></div>
+      <div class="d-step"><div class="n" id="meth-tier1">20</div><div class="lbl">Tier 1 Active</div><div class="body">Named contacts, verified emails, full Claude scoring.</div></div>
       <div class="d-connector" aria-hidden="true"></div>
-      <div class="d-step"><div class="n" id="d-queued">—</div><div class="lbl">Queued</div><div class="body">Only Strong and Good matches surface for review.</div></div>
+      <div class="d-step"><div class="n" id="meth-ready">111</div><div class="lbl">Ready to Send</div><div class="body">Strong + Good matches with verified email.</div></div>
     </div>
   </section>
 
@@ -337,24 +344,47 @@
 <script>
 (() => {
   const esc = s => String(s==null?'':s);
+  const setNum = (id, v) => {
+    if (v == null || Number.isNaN(v)) return;
+    const e = document.getElementById(id);
+    if (e) e.textContent = Number(v).toLocaleString();
+  };
   async function load(){
+    let generated_at = null, contactCount = null;
+    // Primary source: analytics_data.json for discovery funnel numbers
     try{
-      const r = await fetch('contacts_data.json', {cache:'no-store'});
-      if (!r.ok) throw new Error('HTTP '+r.status);
-      const data = await r.json();
-      const cs = data.contacts || [], s = data.stats || {};
-      const scored = cs.filter(c => c.score > 0).length;
-      const queued = cs.filter(c => c.score >= 55).length;
-      const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-      set('d-firms',   s.total_firms   ?? 20);
-      set('d-signals', s.total_signals ?? 0);
-      set('d-scored',  scored);
-      set('d-queued',  queued);
-      const ts = data.generated_at ? new Date(data.generated_at).toLocaleString() : '—';
-      document.getElementById('footer').textContent = `Generated ${ts} · ${cs.length} Contacts`;
-    } catch(err){
-      document.getElementById('footer').textContent = `Failed to load: ${esc(err.message)}`;
-    }
+      const r = await fetch('analytics_data.json', {cache:'no-store'});
+      if (r.ok){
+        const d = await r.json();
+        const f = d.funnel || {};
+        setNum('meth-icp',   f.icp_qualified);
+        setNum('meth-tier2', f.tier2_monitored);
+        setNum('meth-tier1', f.tier1_active);
+        setNum('meth-ready', f.ready);
+        setNum('m-icp-qualified', f.icp_qualified);
+        setNum('m-sec-indexed',   f.sec_indexed);
+        setNum('m-tier2',         f.tier2_monitored);
+        setNum('m-tier1',         f.tier1_active);
+        setNum('m-tier1-sub',     f.tier1_active);
+        setNum('m-tier1-title',   f.tier1_active);
+        setNum('m-icp-title',     f.icp_qualified);
+        generated_at = d.generated_at || generated_at;
+      }
+    } catch(err){ /* graceful degrade — placeholders remain */ }
+    // Secondary: contacts_data.json for the footer contact count
+    try{
+      const r2 = await fetch('contacts_data.json', {cache:'no-store'});
+      if (r2.ok){
+        const data = await r2.json();
+        contactCount = (data.contacts || []).length;
+        generated_at = data.generated_at || generated_at;
+      }
+    } catch(err){ /* ignore */ }
+    const ts = generated_at ? new Date(generated_at).toLocaleString() : '—';
+    const foot = document.getElementById('footer');
+    if (foot) foot.textContent = contactCount != null
+      ? `Generated ${ts} · ${contactCount} Contacts`
+      : `Generated ${ts}`;
   }
   load();
 })();

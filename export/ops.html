@@ -10,7 +10,7 @@
 <style>
   :root{
     --bg:#101010; --surface:#161616; --elevated:#1c1c1c; --overlay:#222;
-    --text:#fff; --text-2:rgba(255,255,255,0.60); --text-3:rgba(255,255,255,0.35);
+    --text:#fff; --text-2:rgba(255,255,255,0.72); --text-3:rgba(255,255,255,0.55);
     --border:rgba(255,255,255,0.10); --border-strong:rgba(255,255,255,0.18);
     --blue:#465BFF; --blue-dim:rgba(70,91,255,0.15); --blue-border:rgba(70,91,255,0.40);
     --green:#10b981; --amber:#f59e0b; --orange:#f97316; --red:#ef4444; --violet:#7c3aed; --teal:#0d9488;
@@ -20,7 +20,7 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-    font-family:var(--font-ui);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
   a{color:inherit}
 
   header{position:sticky;top:0;z-index:20;background:rgba(16,16,16,0.92);backdrop-filter:blur(12px);
@@ -102,6 +102,20 @@
   footer{max-width:1280px;margin:0 auto;padding:24px 28px 40px;
     font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
     border-top:1px solid var(--border)}
+  /* prose-cap */ .reasoning, .brief-section p, .account-brief p, .brief-row .v { max-width: 68ch }
+
+  /* ops: per-card update timestamp */
+  .sec-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px}
+  .sec-head .sec-title{margin:0}
+  .sec-head .sec-upd{font-family:var(--font-mono);font-size:11px;color:var(--text-3);letter-spacing:0.02em}
+  .card-label{text-transform:none;font-size:13px;letter-spacing:0;color:rgba(255,255,255,0.72);font-weight:500}
+  /* pipeline cadence */
+  .cadence{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .cad-row{padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:2px}
+  .cad-row .lbl{font-size:11px;color:var(--text-3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px}
+  .cad-row .val{font-family:var(--font-display);font-size:26px;color:var(--text);font-weight:500;line-height:1.1}
+  .cad-row .sub{font-size:11.5px;color:var(--text-3);margin-top:4px;font-family:var(--font-mono)}
+  .err-row{padding:10px 14px;border-left:2px solid var(--red);background:rgba(239,68,68,0.05);margin-bottom:8px;font-family:var(--font-mono);font-size:11.5px;color:var(--text-2);border-radius:0 2px 2px 0}
 </style>
 </head>
 <body>
@@ -131,7 +145,7 @@
   </div>
 
   <section>
-    <h2 class="sec-title">Contact Waterfall</h2>
+    <div class="sec-head"><h2 class="sec-title">Contact waterfall</h2><div class="sec-upd" id="upd-waterfall">—</div></div>
     <div class="sec-sub" id="waterfall-sub">Where contacts come from</div>
     <div class="card"><div id="waterfall"><div class="state">Loading…</div></div>
       <div class="summary" id="waterfall-summary"></div>
@@ -139,24 +153,27 @@
   </section>
 
   <section>
-    <h2 class="sec-title">Fallthrough Analysis</h2>
+    <div class="sec-head"><h2 class="sec-title">Fallthrough analysis</h2><div class="sec-upd" id="upd-fallthrough">—</div></div>
     <div class="sec-sub">Why contacts miss the queue (threshold 50)</div>
     <div class="card"><div id="fallthrough"></div></div>
   </section>
 
   <section>
-    <h2 class="sec-title">Buying Stage Breakdown</h2>
-    <div class="sec-sub">Deploying firms get priority outreach</div>
-    <div class="card"><div id="stages"></div></div>
+    <div class="sec-head">
+      <h2 class="sec-title">Pipeline cadence</h2>
+      <div class="sec-upd" id="upd-cadence">—</div>
+    </div>
+    <div class="sec-sub">What the pipeline did last run.</div>
+    <div class="card"><div id="cadence" class="cadence"><div class="state">Loading…</div></div></div>
   </section>
 
   <section>
-    <h2 class="sec-title">Firm Type Performance</h2>
-    <div class="sec-sub">Which segments score highest</div>
-    <div class="card"><table id="firm-table">
-      <thead><tr><th>Firm Type</th><th>Firms</th><th>Contacts</th><th>Avg Score</th><th>Email Rate</th><th>Top Contact</th></tr></thead>
-      <tbody></tbody>
-    </table></div>
+    <div class="sec-head">
+      <h2 class="sec-title">Parse errors</h2>
+      <div class="sec-upd" id="upd-errors">—</div>
+    </div>
+    <div class="sec-sub">Claude responses the scorer couldn't parse.</div>
+    <div class="card"><div id="parse-errors"><div class="state">Loading…</div></div></div>
   </section>
 </main>
 
@@ -314,7 +331,37 @@
       renderWaterfall(data); renderFallthrough(data); renderStages(data); renderFirmTable(data);
       const ts = data.generated_at ? new Date(data.generated_at).toLocaleString() : '—';
       document.getElementById('footer').textContent = `Generated ${ts} · ${(data.contacts||[]).length} Contacts`;
-    } catch(err){
+    
+      // Ops-only: per-card timestamps + cadence + parse errors from ops_data.json
+      try{
+        const rx = await fetch('ops_data.json', {cache:'no-store'});
+        if (rx.ok){
+          const od = await rx.json();
+          const ts = od.generated_at ? new Date(od.generated_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
+          ['upd-waterfall','upd-fallthrough','upd-cadence','upd-errors'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.textContent = 'Updated ' + ts;
+          });
+          const h = od.health || {}, rc = h.row_counts || {}, e = od.enrichment || {};
+          const lastDay = (od.pipeline_cadence || [])[0] || {};
+          const cadenceEl = document.getElementById('cadence');
+          if (cadenceEl){
+            cadenceEl.innerHTML = [
+              {lbl:'Signals collected', val:rc.signals ?? 0, sub:'total in DB'},
+              {lbl:'Contacts enriched', val:e.verified ?? 0, sub:(e.hit_rate_pct||0) + '% hit rate'},
+              {lbl:'Scoring runs (today)', val:lastDay.n ?? 0, sub:'avg ' + (lastDay.avg_score ?? '—')},
+              {lbl:'Parse errors', val:(od.parse_errors||[]).length, sub:(od.parse_errors||[]).length ? 'see below' : 'clean'},
+            ].map(c => `<div class="cad-row"><div class="lbl">${esc(c.lbl)}</div><div class="val">${esc(String(c.val))}</div><div class="sub">${esc(c.sub)}</div></div>`).join('');
+          }
+          const peEl = document.getElementById('parse-errors');
+          if (peEl){
+            const errs = od.parse_errors || [];
+            peEl.innerHTML = errs.length
+              ? errs.slice(-5).map(er => `<div class="err-row">${esc((er.raw || JSON.stringify(er)).slice(0,260))}</div>`).join('')
+              : '<div style="color:var(--text-3);font-size:13px">No parse errors in the last run.</div>';
+          }
+        }
+      } catch(_){ /* ops data is optional */ }
+} catch(err){
       document.getElementById('waterfall').innerHTML = `<div class="state">Failed to load data: ${esc(err.message)}</div>`;
     }
   }
