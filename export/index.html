@@ -693,6 +693,15 @@
   .firm-contacts .trow .firm-cell > *{display:none !important}
   /* Chevron column collapses to zero width in grouped mode */
   .firm-contacts .trow .chev{display:none}
+  /* Tier-2 rows share the firm-contacts wrapper but have no per-firm header,
+     so each row must show its own firm avatar + name. */
+  .firm-contacts .trow.t2{
+    grid-template-columns: minmax(280px,2.1fr) minmax(220px,1.6fr) minmax(260px,1.8fr) 140px 220px 28px !important;
+    padding-left: 18px !important;
+  }
+  .firm-contacts .trow.t2 .firm-cell{padding:0 12px 0 0 !important}
+  .firm-contacts .trow.t2 .firm-cell > *{display:revert !important}
+  .firm-contacts .trow.t2 .firm-info{display:flex;flex-direction:column;min-width:0}
   /* Chevron in compact mode: repurpose for "open panel" affordance */
   .view-compact .trow .chev::before{content:"›";font-size:16px}
   .view-compact .trow{cursor:pointer}
