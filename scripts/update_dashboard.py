@@ -83,7 +83,7 @@ def _stats(conn) -> dict:
               LEFT JOIN contacts c ON c.id = s.contact_id
              WHERE f.tier = 1
                AND s.signal_date IS NOT NULL
-               AND s.signal_date >= datetime('now', '-48 hours')
+               AND s.signal_date >= datetime('now', '-7 days')
                AND COALESCE(s.source_url,'') NOT LIKE '%.com%'
                AND COALESCE(s.source_url,'') NOT LIKE '%sec.gov/Archives%'
                AND LENGTH(COALESCE(s.content,'')) >= 30
