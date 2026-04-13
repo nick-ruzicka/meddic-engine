@@ -93,7 +93,7 @@ Before each scoring call a deterministic router picks the prompt sections that a
 
 ## Demo
 
-Loom walkthrough: *to be recorded*
+Loom walkthrough: [link]
 
 ## Docs
 
