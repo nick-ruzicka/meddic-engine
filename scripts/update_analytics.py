@@ -30,6 +30,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
 from database import get_db
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from metrics import canonical_stats
 
 OUTPUT = os.path.join(ROOT, "export", "analytics_data.json")
 
@@ -429,24 +431,50 @@ def build_router_usage(conn) -> list[dict]:
 def main() -> int:
     conn = get_db()
     try:
+        canon  = canonical_stats(conn)
         funnel = build_funnel(conn)
         hero   = build_hero(conn)
         ready  = build_ready_and_cost(conn)
         hero.update(ready)
-        # Canonical: hero.ready, stats.ready, and funnel.ready must all agree.
-        hero["ready"]      = funnel["ready"]
-        hero["qualified"]  = funnel["qualified"]
-        stats = {
-            "ready":         funnel["ready"],
-            "qualified":     funnel["qualified"],
-            "contacts":      hero["contacts"],
+
+        # Canonical wins for every overlapping metric — hero, stats, and
+        # funnel all read the same numbers as dashboard + ops.
+        hero["ready"]         = canon["ready"]
+        hero["qualified"]     = canon["ready"]   # legacy alias
+        hero["strong"]        = canon["strong_match"]
+        hero["contacts"]      = canon["total_contacts"]
+        hero["verified"]      = canon["verified"]
+        hero["pending"]       = canon["queue_pending"]
+        hero["avg_score"]     = canon["avg_score"]
+        hero["sec_total"]     = canon["sec_indexed"]
+        hero["sec_icp"]       = canon["sec_icp"]
+        hero["tier1"]         = canon["tier1_firms"]
+        hero["tier2"]         = canon["tier2_firms"]
+        funnel["ready"]       = canon["ready"]
+        funnel["qualified"]   = canon["ready"]
+        for stage in funnel.get("stages", []):
+            if stage["key"] == "ready":
+                stage["count"] = canon["ready"]
+            elif stage["key"] == "tier1_active":
+                stage["count"] = canon["tier1_firms"]
+            elif stage["key"] == "tier2_monitored":
+                stage["count"] = canon["tier2_firms"]
+            elif stage["key"] == "sec_indexed":
+                stage["count"] = canon["sec_indexed"]
+            elif stage["key"] == "icp_qualified":
+                stage["count"] = canon["sec_icp"]
+
+        stats = dict(canon)
+        # Legacy aliases the analytics.html template still reads
+        stats.update({
+            "qualified":     canon["ready"],
+            "contacts":      canon["total_contacts"],
             "scored":        hero["scored"],
-            "strong":        hero["strong"],
-            "pending":       hero["pending"],
+            "strong":        canon["strong_match"],
+            "pending":       canon["queue_pending"],
             "approved":      hero["approved"],
-            "avg_score":     hero["avg_score"],
             "cost_per_lead": hero.get("cost_per_lead", 0),
-        }
+        })
         payload = {
             "generated_at":        datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "hero":                hero,

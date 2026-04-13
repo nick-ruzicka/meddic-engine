@@ -19,12 +19,14 @@ from __future__ import annotations
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta as _timedelta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
 from database import get_db, DB_PATH
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from metrics import canonical_stats
 
 OUTPUT = os.path.join(ROOT, "export", "ops_data.json")
 PARSE_ERRORS = os.path.join(ROOT, "logs", "parse_errors.jsonl")
@@ -184,6 +186,95 @@ def build_fallthrough(conn) -> dict:
     }
 
 
+def build_source_health(conn, days: int = 14) -> dict:
+    """Per-collector daily signal volume for the last N days. Returns a
+    matrix: each source has a list of N ints (oldest → newest)."""
+    rows = _rows(conn, f"""
+        SELECT signal_type,
+               DATE(COALESCE(signal_date, created_at)) AS day,
+               COUNT(*) AS n
+          FROM signals
+         WHERE DATE(COALESCE(signal_date, created_at)) >= DATE('now', '-{days-1} days')
+         GROUP BY signal_type, day
+    """)
+    today = datetime.now(timezone.utc).date()
+    day_keys = [(today - _timedelta(days=days-1-i)).isoformat() for i in range(days)]
+    # bucket by type
+    per_type: dict[str, dict[str, int]] = {}
+    for r in rows:
+        t = r["signal_type"] or "unknown"
+        per_type.setdefault(t, {})[r["day"]] = r["n"]
+
+    # Ensure known sources always show up, even with zero activity
+    for t in ("press", "twitter", "linkedin", "hiring", "exa"):
+        per_type.setdefault(t, {})
+
+    out = []
+    for t, daymap in per_type.items():
+        series = [daymap.get(d, 0) for d in day_keys]
+        total = sum(series)
+        last_nonzero = next((days-1-i for i, v in enumerate(reversed(series)) if v > 0), None)
+        last_active = day_keys[last_nonzero] if last_nonzero is not None else None
+        out.append({
+            "signal_type": t,
+            "series":      series,
+            "days":        day_keys,
+            "total":       total,
+            "last_active": last_active,
+            "status":      ("active"   if (series[-1] or series[-2] or series[-3] or 0) > 0
+                            else "stale" if total > 0
+                            else "silent"),
+        })
+    out.sort(key=lambda x: (-x["total"], x["signal_type"]))
+    return {"days": days, "sources": out}
+
+
+def build_firm_velocity(conn, days: int = 14, limit: int = 10) -> dict:
+    """Top tier-1 firms by signal volume over the last N days, each with
+    a daily series for a sparkline."""
+    top = _rows(conn, f"""
+        SELECT f.id AS firm_id, f.name AS firm, f.buying_stage AS stage,
+               COUNT(s.id) AS total
+          FROM firms f
+          JOIN signals s ON s.firm_id = f.id
+         WHERE f.tier = 1
+           AND DATE(COALESCE(s.signal_date, s.created_at)) >= DATE('now', '-{days-1} days')
+         GROUP BY f.id
+         ORDER BY total DESC
+         LIMIT ?
+    """, (limit,))
+    if not top:
+        return {"days": days, "firms": []}
+
+    today = datetime.now(timezone.utc).date()
+    day_keys = [(today - _timedelta(days=days-1-i)).isoformat() for i in range(days)]
+    firm_ids = [r["firm_id"] for r in top]
+    rows = _rows(conn, f"""
+        SELECT firm_id,
+               DATE(COALESCE(signal_date, created_at)) AS day,
+               COUNT(*) AS n
+          FROM signals
+         WHERE firm_id IN ({','.join('?'*len(firm_ids))})
+           AND DATE(COALESCE(signal_date, created_at)) >= DATE('now', '-{days-1} days')
+         GROUP BY firm_id, day
+    """, firm_ids)
+    per_firm: dict[int, dict[str, int]] = {}
+    for r in rows:
+        per_firm.setdefault(r["firm_id"], {})[r["day"]] = r["n"]
+
+    firms = []
+    for t in top:
+        daymap = per_firm.get(t["firm_id"], {})
+        series = [daymap.get(d, 0) for d in day_keys]
+        firms.append({
+            "firm":   t["firm"],
+            "stage":  t["stage"] or "",
+            "total":  t["total"],
+            "series": series,
+        })
+    return {"days": days, "firms": firms, "day_keys": day_keys}
+
+
 def build_pipeline_cadence(conn) -> list[dict]:
     """Scored-per-day for the last 14 days."""
     return _rows(conn, """
@@ -202,6 +293,7 @@ def main() -> int:
     try:
         payload = {
             "generated_at":      datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "stats":             canonical_stats(conn),
             "health":            build_health(conn),
             "api_keys":          build_api_keys(),
             "enrichment":        build_enrichment(conn),
@@ -210,6 +302,8 @@ def main() -> int:
             "parse_errors":      build_parse_errors(),
             "pipeline_cadence":  build_pipeline_cadence(conn),
             "fallthrough":       build_fallthrough(conn),
+            "source_health":     build_source_health(conn),
+            "firm_velocity":     build_firm_velocity(conn),
         }
     finally:
         conn.close()

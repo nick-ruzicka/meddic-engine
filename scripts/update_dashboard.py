@@ -24,6 +24,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
 from database import get_db
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from metrics import canonical_stats
 
 OUTPUT = os.path.join(ROOT, "export", "contacts_data.json")
 
@@ -100,28 +102,27 @@ def _stats(conn) -> dict:
     latest_row = conn.execute("SELECT MAX(signal_date) FROM signals").fetchone()
     latest_signal = latest_row[0] if latest_row else None
 
-    return {
-        "latest_signal":  latest_signal,
-        "email_sources":  email_sources,
+    # Page-specific (not in canonical): legacy keys + presentation extras
+    page_specific = {
+        "latest_signal":   latest_signal,
+        "email_sources":   email_sources,
         "recent_triggers": recent_triggers,
-        "total_firms":    active,
-        "tier1":          tier1,
-        "tier2":          tier2,
-        "tier1_firms":    tier1,
-        "tier2_firms":    tier2,
+        "total_firms":     active,
+        "tier1":           tier1,
+        "tier2":           tier2,
         "total_monitored": tier1 + tier2,
-        "total_contacts": one("SELECT COUNT(*) FROM contacts WHERE COALESCE(is_placeholder,0)=0"),
-        "total_signals":  one("SELECT COUNT(*) FROM signals"),
-        "pending":    one("SELECT COUNT(*) FROM outreach_queue WHERE status=?", ("pending",)),
-        "approved":   one("SELECT COUNT(*) FROM outreach_queue WHERE status=?", ("approved",)),
-        "skipped":    one("SELECT COUNT(*) FROM outreach_queue WHERE status=?", ("skipped",)),
-        "flagged":    one("SELECT COUNT(*) FROM outreach_queue WHERE status=?", ("flagged",)),
-        "strong_match": one("SELECT COUNT(*) FROM scores WHERE score >= 75"),
-        "good_match":   one("SELECT COUNT(*) FROM scores WHERE score >= 55 AND score < 75"),
-        "sec_total":    sec_total,
-        "sec_icp":      sec_icp,
+        "approved":  one("SELECT COUNT(*) FROM outreach_queue WHERE status=?", ("approved",)),
+        "skipped":   one("SELECT COUNT(*) FROM outreach_queue WHERE status=?", ("skipped",)),
+        "flagged":   one("SELECT COUNT(*) FROM outreach_queue WHERE status=?", ("flagged",)),
+        "good_match": one("SELECT COUNT(*) FROM scores WHERE score >= 55 AND score < 75"),
+        "sec_total":     sec_total,   # legacy alias for canonical sec_indexed
         "universe_line": universe_line,
+        # legacy alias for canonical queue_pending — kept so HTML keeps rendering
+        "pending":       one("SELECT COUNT(*) FROM outreach_queue WHERE status=?", ("pending",)),
     }
+    # Canonical keys overwrite any overlap → all pages stay in sync.
+    page_specific.update(canonical_stats(conn))
+    return page_specific
 
 
 def _contacts(conn) -> list[dict]:

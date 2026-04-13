@@ -145,10 +145,15 @@ def discover_team_members(domain: str, firm_hint: str = "") -> list[dict]:
         if not text:
             continue
         logger.info(f"exa: extracting from {getattr(r, 'url', '?')[:60]} ({len(text)} chars)")
+        # LinkedIn URLs might appear in the raw text Exa returned
+        li_urls = _extract_linkedin_urls(text)
         members = _claude_extract(text)
         for m in members:
             m["source"] = "exa_team_page"
             m["source_url"] = getattr(r, "url", "") or ""
+            li = _match_linkedin(m["name"], li_urls)
+            if li:
+                m["linkedin_url"] = li
         all_candidates.extend(members)
 
     return _dedupe_by_name(all_candidates)
@@ -175,11 +180,67 @@ def discover_from_url(url: str, source: str = "team_page_direct") -> list[dict]:
     except ImportError:
         text = re.sub(r"<[^>]+>", " ", r.text)
 
+    # Pull LinkedIn URLs from the raw HTML *before* we strip markup
+    li_urls = _extract_linkedin_urls(r.text)
+
     members = _claude_extract(text)
     for m in members:
         m["source"] = source
         m["source_url"] = url
+        li = _match_linkedin(m["name"], li_urls)
+        if li:
+            m["linkedin_url"] = li
     return _dedupe_by_name(members)
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LinkedIn URL extraction — scan raw HTML for linkedin.com/in/<slug>, match
+# candidates to slugs by first+last name token overlap.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_LINKEDIN_RE = re.compile(
+    r"https?://(?:[a-z]{2,3}\.)?linkedin\.com/in/[A-Za-z0-9\-\._~%]+/?",
+    re.IGNORECASE,
+)
+
+def _extract_linkedin_urls(html: str) -> list[str]:
+    """All LinkedIn profile URLs present in the HTML, deduped, trailing slash stripped."""
+    if not html:
+        return []
+    seen: set[str] = set()
+    urls: list[str] = []
+    for m in _LINKEDIN_RE.finditer(html):
+        u = m.group(0).rstrip("/").split("?")[0]
+        key = u.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        urls.append(u)
+    return urls
+
+
+def _name_tokens(name: str) -> list[str]:
+    """Lowercase alpha tokens ≥3 chars from a name; 'Brian P. Maury' → ['brian','maury']."""
+    return [t for t in re.findall(r"[A-Za-z]{3,}", name or "") if t.lower() not in ("van","von","del","the","dr","mr","mrs","ms")]
+
+
+def _match_linkedin(name: str, urls: list[str]) -> Optional[str]:
+    """Pick the LinkedIn URL whose slug best overlaps with the person's name tokens.
+    Requires at least 2 name tokens present to claim a match (avoids false positives)."""
+    toks = [t.lower() for t in _name_tokens(name)]
+    if len(toks) < 2:
+        return None
+    best = None
+    best_score = 0
+    for u in urls:
+        slug = u.lower().split("/in/")[-1].rstrip("/").replace("-", " ").replace("_", " ")
+        # Score = number of name tokens found in slug
+        score = sum(1 for t in toks if t in slug)
+        if score >= 2 and score > best_score:
+            best = u
+            best_score = score
+    return best
 
 
 def _dedupe_by_name(candidates: list[dict]) -> list[dict]:
@@ -245,11 +306,12 @@ def enrich_firm(conn, firm_id: int, candidates: Optional[list[dict]] = None,
         conn.execute(
             """INSERT INTO contacts
                (firm_id, name, title, email, email_verified, email_source,
-                notes, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))""",
+                linkedin_url, notes, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))""",
             (firm_id, c["name"], c.get("title", ""),
              email or None, verified,
              c.get("source", source_label) if verified else source_label,
+             c.get("linkedin_url") or None,
              f"Discovered via {c.get('source', source_label)} "
              f"({c.get('source_url','')})"),
         )
