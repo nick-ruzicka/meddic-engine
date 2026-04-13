@@ -222,6 +222,12 @@ def brief(queue_id: int):
 """
 
 
+# Shared stylesheet — single source of truth for design tokens
+@dashboard_bp.route("/shared.css", methods=["GET"])
+def shared_css():
+    return send_from_directory(EXPORT, "shared.css", mimetype="text/css")
+
+
 # JSON data files fetched by the pages
 @dashboard_bp.route("/<path:filename>.json", methods=["GET"])
 def data(filename: str):

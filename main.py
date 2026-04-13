@@ -15,6 +15,7 @@ Flags:
 from __future__ import annotations
 
 import argparse
+import fcntl
 import importlib
 import json
 import logging
@@ -437,6 +438,15 @@ def main() -> int:
     parser.add_argument("--threshold", type=float, default=55.0)
     parser.add_argument("--verbose", "-v", action="store_true")
     args = parser.parse_args()
+
+    # Single-writer lock — block concurrent pipeline runs on the same DB
+    _pipeline_lock = open('/tmp/_pipeline.lock', 'w')
+    try:
+        fcntl.flock(_pipeline_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        console.print("[yellow]Another pipeline is already running. Exiting.[/yellow]")
+        return 0
+
 
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,

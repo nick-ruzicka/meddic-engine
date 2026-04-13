@@ -38,8 +38,8 @@ from skill_router import build_scoring_prompt  # from config/
 
 logger = logging.getLogger(__name__)
 
-ANTHROPIC_MODEL = "claude-sonnet-4-6"
-BRIEF_MODEL     = "claude-haiku-4-5-20251001"
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_SCORING_MODEL", "claude-sonnet-4-6")
+BRIEF_MODEL     = os.getenv("ANTHROPIC_BRIEF_MODEL", "claude-haiku-4-5-20251001")
 PARSE_ERROR_LOG = os.path.join(_HERE, "..", "logs", "parse_errors.jsonl")
 MAX_TOKENS = 600
 TEMPERATURE = 0
@@ -278,20 +278,51 @@ def _log_parse_error(raw_text: str) -> None:
         logger.debug(f"could not write parse_errors.jsonl: {e}")
 
 
+def _retryable_anthropic_errors():
+    """Tuple of anthropic exception classes worth retrying. Imported lazily so
+    the SDK is only required when scoring is actually run."""
+    import anthropic
+    return (
+        anthropic.APIStatusError,
+        anthropic.APITimeoutError,
+        anthropic.APIConnectionError,
+    )
+
+
+def _call_claude_with_retry(client, **kwargs):
+    """Wrap client.messages.create with exponential backoff on transient errors.
+    3 attempts, 2s→30s backoff. Permanent errors (auth, bad request) raise immediately."""
+    from tenacity import (
+        retry, stop_after_attempt, wait_exponential,
+        retry_if_exception_type, before_sleep_log,
+    )
+
+    @retry(
+        retry=retry_if_exception_type(_retryable_anthropic_errors()),
+        wait=wait_exponential(multiplier=1, min=2, max=30),
+        stop=stop_after_attempt(3),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True,
+    )
+    def _call():
+        return client.messages.create(**kwargs)
+    return _call()
+
+
 def _call_claude(system_prompt: str, user_message: str) -> str:
     import anthropic
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         raise RuntimeError("ANTHROPIC_API_KEY not set")
     client = anthropic.Anthropic(api_key=api_key)
-    resp = client.messages.create(
+    resp = _call_claude_with_retry(
+        client,
         model=ANTHROPIC_MODEL,
         max_tokens=MAX_TOKENS,
         temperature=TEMPERATURE,
         system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
     )
-    # SDK returns list of content blocks; concatenate text blocks
     return "".join(getattr(b, "text", "") for b in resp.content)
 
 
@@ -426,7 +457,8 @@ You are producing a MEDDIC-framed account brief. Return ONLY valid JSON, no mark
     try:
         import anthropic
         client = anthropic.Anthropic(api_key=api_key)
-        resp = client.messages.create(
+        resp = _call_claude_with_retry(
+            client,
             model=BRIEF_MODEL, max_tokens=700, temperature=0.3,
             system=_BRIEF_SYSTEM,
             messages=[{"role": "user", "content": user}],

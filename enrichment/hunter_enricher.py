@@ -27,12 +27,15 @@ from __future__ import annotations
 import logging
 import os
 import time
+from datetime import datetime, timedelta
 
 import requests
 from dotenv import load_dotenv
 
 from database import get_db
 from utils.helpers import load_config, now_iso
+
+CACHE_TTL_DAYS = 30
 
 load_dotenv()
 
@@ -53,10 +56,60 @@ def _api_key() -> str | None:
 # Finder + Verifier
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _cache_get(name: str, domain: str) -> dict | None:
+    """Return cached find_email result if fresh (< CACHE_TTL_DAYS), else None."""
+    try:
+        conn = get_db()
+        row = conn.execute(
+            "SELECT email, score, verified, source, cached_at "
+            "FROM hunter_cache WHERE name_domain = ?",
+            (f"{name.lower()}|{domain.lower()}",),
+        ).fetchone()
+        conn.close()
+    except Exception as e:
+        logger.debug(f"hunter cache read failed: {e}")
+        return None
+    if not row:
+        return None
+    try:
+        age = (datetime.now() - datetime.fromisoformat(row["cached_at"])).days
+    except Exception:
+        return None
+    if age >= CACHE_TTL_DAYS:
+        return None
+    return {"email": row["email"], "score": row["score"] or 0,
+            "verified": bool(row["verified"]),
+            "source": row["source"] or "hunter_finder"}
+
+
+def _cache_put(name: str, domain: str, result: dict) -> None:
+    try:
+        conn = get_db()
+        conn.execute(
+            "INSERT OR REPLACE INTO hunter_cache "
+            "(name_domain, email, score, verified, source, cached_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (f"{name.lower()}|{domain.lower()}", result.get("email"),
+             int(result.get("score") or 0),
+             1 if result.get("verified") else 0,
+             result.get("source") or "hunter_finder",
+             datetime.now().isoformat()),
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.debug(f"hunter cache write failed: {e}")
+
+
 def find_email(name: str, domain: str) -> dict:
     key = _api_key()
     if not key or not name or not domain:
         return dict(_EMPTY_FINDER)
+
+    cached = _cache_get(name, domain)
+    if cached is not None:
+        logger.debug(f"hunter cache hit: {name} @ {domain}")
+        return cached
 
     try:
         r = requests.get(
@@ -75,12 +128,14 @@ def find_email(name: str, domain: str) -> dict:
     email = data.get("email")
     score = int(data.get("score") or 0)
     status = (data.get("verification") or {}).get("status") or ""
-    return {
+    result = {
         "email": email,
         "score": score,
         "verified": status == "valid",
         "source": "hunter_finder",
     }
+    _cache_put(name, domain, result)
+    return result
 
 
 def verify_email(email: str) -> dict:

@@ -213,6 +213,53 @@
   .sig-chip.twitter{background:rgba(194,90,30,0.11);color:var(--orange);border-color:rgba(194,90,30,0.32)}
   .sig-chip.linkedin{background:rgba(70,91,255,0.10);color:var(--blue);border-color:rgba(70,91,255,0.28)}
 
+  /* ── Source health ── */
+  .src-row{display:grid;grid-template-columns:120px 70px 1fr 70px 90px;gap:14px;align-items:center;
+    padding:13px 0;border-bottom:1px solid var(--border-soft)}
+  .src-row:last-child{border-bottom:none}
+  .src-row .nm{font-size:11px;letter-spacing:0.10em;text-transform:uppercase;color:var(--ink);font-weight:500}
+  .src-row .status{display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+  .src-row .status .dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+  .src-row.stale  .status .dot{background:var(--amber)}
+  .src-row.silent .status .dot{background:var(--red)}
+  .src-row.stale  .status{color:var(--amber)}
+  .src-row.silent .status{color:var(--red)}
+  .src-row .spark{height:32px;width:100%}
+  .src-row .total{font-family:var(--font-mono);font-size:13px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+  .src-row .last{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-3);text-align:right}
+
+  /* ── Enrichment timing ── */
+  .et-hero{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px;
+    padding-bottom:18px;border-bottom:1px solid var(--border-soft)}
+  .et-hero .stat .k{font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:6px}
+  .et-hero .stat .v{font-family:var(--font-display);font-size:30px;color:var(--ink);letter-spacing:-0.01em;line-height:1;font-variant-numeric:tabular-nums}
+  .et-hero .stat .v small{font-size:13px;color:var(--ink-3);margin-left:4px;font-family:var(--font-ui);font-weight:400}
+  .et-hero .stat .sub{margin-top:4px;font-size:11px;color:var(--ink-3);font-family:var(--font-mono)}
+  .et-row{display:grid;grid-template-columns:110px 1fr 60px 60px;gap:14px;align-items:center;
+    padding:10px 0;border-bottom:1px solid var(--border-soft)}
+  .et-row:last-child{border-bottom:none}
+  .et-row .nm{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);font-weight:500}
+  .et-row .bar{height:6px;background:rgba(139,111,78,0.10);border-radius:2px;overflow:hidden;position:relative}
+  .et-row .bar .fill{height:100%;background:linear-gradient(90deg, var(--umber), var(--umber-light));border-radius:2px}
+  .et-row .v{font-family:var(--font-mono);font-size:12px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+  .et-row .v em{font-style:normal;color:var(--ink-3);font-size:10px;display:block;margin-top:1px}
+  .et-note{margin-top:14px;padding:10px 14px;background:var(--umber-glow);border-left:2px solid var(--umber);
+    border-radius:2px;font-size:11.5px;color:var(--ink-2);line-height:1.55}
+
+  /* ── Firm velocity ── */
+  .fv-row{display:grid;grid-template-columns:1.4fr 90px 1fr 50px;gap:16px;align-items:center;
+    padding:12px 0;border-bottom:1px solid var(--border-soft)}
+  .fv-row:last-child{border-bottom:none}
+  .fv-row .nm{font-size:13px;color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fv-row .stage{font-size:9.5px;letter-spacing:0.10em;text-transform:uppercase;color:var(--ink-3);
+    padding:3px 7px;border:1px solid var(--border);border-radius:2px;background:rgba(255,255,255,0.3);
+    display:inline-block;font-weight:500}
+  .fv-row .stage.deploying{color:var(--green);border-color:rgba(79,122,59,0.4);background:rgba(79,122,59,0.08)}
+  .fv-row .stage.evaluating{color:var(--amber);border-color:rgba(176,125,26,0.4);background:rgba(176,125,26,0.08)}
+  .fv-row .stage.exploring{color:var(--orange);border-color:rgba(194,90,30,0.4);background:rgba(194,90,30,0.08)}
+  .fv-row .spark{height:30px;width:100%}
+  .fv-row .total{font-family:var(--font-mono);font-size:13px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+
   /* ── Parse errors ── */
   .err-row{padding:11px 15px;border-left:3px solid var(--red);
     background:rgba(168,50,28,0.05);margin-bottom:8px;font-family:var(--font-mono);
@@ -350,6 +397,44 @@
         <thead><tr><th>Type</th><th>Firm</th><th style="text-align:right">Age</th></tr></thead>
         <tbody><tr><td colspan="3" class="state">Loading…</td></tr></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ROW 4: Signal source health + firm velocity -->
+  <div class="sec-head">
+    <h2 class="sec-title">Collector telemetry</h2>
+    <span class="sec-sub">14-day source activity · which tier-1 firms are generating heat</span>
+  </div>
+  <div class="bento">
+    <div class="tile t-span-3 fade-in d1">
+      <div class="tile-hd">
+        <span class="lbl">Signal source health</span>
+        <span class="hint">Last 14 days</span>
+      </div>
+      <div id="source-health"><div class="state">Loading…</div></div>
+    </div>
+
+    <div class="tile t-span-3 fade-in d2">
+      <div class="tile-hd">
+        <span class="lbl">Firm velocity</span>
+        <span class="hint">Top tier-1 · signals / day</span>
+      </div>
+      <div id="firm-velocity"><div class="state">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- ROW 5: Enrichment timing -->
+  <div class="sec-head">
+    <h2 class="sec-title">Enrichment timing</h2>
+    <span class="sec-sub">How long it takes a contact row to acquire a verified email</span>
+  </div>
+  <div class="bento">
+    <div class="tile t-span-6 fade-in">
+      <div class="tile-hd">
+        <span class="lbl">Time to verified email</span>
+        <span class="hint">Tier-1 contacts · per source</span>
+      </div>
+      <div id="enrichment-timing"><div class="state">Loading…</div></div>
     </div>
   </div>
 
@@ -583,6 +668,123 @@
       </tr>`).join('') : `<tr><td colspan="3" class="state">No recent signals</td></tr>`;
   }
 
+  // ── Sparkline helper ────────────────────────────────
+  function sparkBars(series, w=160, h=30, color='#8B6F4E'){
+    const max = Math.max(1, ...series);
+    const n = series.length;
+    const barW = w / n;
+    const gap = 1.2;
+    const bars = series.map((v, i) => {
+      const bh = Math.max(v > 0 ? 2 : 0, (v / max) * (h - 2));
+      const x = i * barW;
+      const y = h - bh;
+      const opacity = v === 0 ? 0.18 : 1;
+      return `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${(barW - gap).toFixed(2)}" height="${bh.toFixed(2)}" fill="${color}" opacity="${opacity}" rx="0.8"/>`;
+    }).join('');
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${bars}</svg>`;
+  }
+
+  // ── Source health ───────────────────────────────────
+  function renderSourceHealth(od){
+    const el = document.getElementById('source-health');
+    if (!el) return;
+    const data = od.source_health || {};
+    const sources = data.sources || [];
+    if (!sources.length){ el.innerHTML = `<div class="state">No signal activity</div>`; return; }
+    const fmtDay = iso => iso ? new Date(iso).toLocaleDateString([], {month:'short', day:'numeric'}) : '—';
+    const colors = {press:'#B07D1A', twitter:'#C25A1E', hiring:'#4F7A3B', linkedin:'#465BFF', exa:'#8B6F4E', unknown:'#B5A889'};
+    el.innerHTML = sources.map(s => {
+      const color = colors[s.signal_type] || '#8B6F4E';
+      const statusLbl = s.status === 'active' ? 'active' : s.status === 'stale' ? 'stale' : 'silent';
+      return `<div class="src-row ${s.status}">
+        <div class="nm">${esc(s.signal_type)}</div>
+        <div class="status"><span class="dot"></span>${esc(statusLbl)}</div>
+        <div>${sparkBars(s.series, 180, 32, color)}</div>
+        <div class="total">${s.total}</div>
+        <div class="last">${esc(fmtDay(s.last_active))}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Firm velocity ───────────────────────────────────
+  function renderFirmVelocity(od){
+    const el = document.getElementById('firm-velocity');
+    if (!el) return;
+    const data = od.firm_velocity || {};
+    const firms = data.firms || [];
+    if (!firms.length){
+      el.innerHTML = `<div class="state">No recent signals on tier-1 firms.<br/>Run <code style="background:rgba(77,67,52,0.08);padding:1px 5px;border-radius:2px;font-family:var(--font-mono)">main.py --collect</code> to populate.</div>`;
+      return;
+    }
+    el.innerHTML = firms.map(f => {
+      const stage = (f.stage || '').toLowerCase();
+      return `<div class="fv-row">
+        <div class="nm">${esc(f.firm)}</div>
+        <div><span class="stage ${esc(stage)}">${esc(f.stage || '—')}</span></div>
+        <div>${sparkBars(f.series, 160, 30, '#5B4129')}</div>
+        <div class="total">${f.total}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Enrichment timing ───────────────────────────────
+  function humanSeconds(s){
+    if (!s || s < 1) return 'instant';
+    if (s < 60) return `${Math.round(s)}s`;
+    if (s < 3600) return `${Math.round(s/60)}m`;
+    if (s < 86400) return `${(s/3600).toFixed(1)}h`;
+    return `${(s/86400).toFixed(1)}d`;
+  }
+  function prettySource(s){
+    return ({exa_team_page:'Exa Team', team_page_direct:'Direct Scrape', hunter:'Hunter', pattern:'Pattern', linkedin:'LinkedIn', manual:'Manual'}[s] || s.replace(/_/g,' '));
+  }
+  function renderEnrichmentTiming(od){
+    const el = document.getElementById('enrichment-timing');
+    if (!el) return;
+    const t = od.enrichment_timing || {};
+    const sources = (t.sources || []).filter(s => (s.measured + s.same_write) > 0);
+    if (!sources.length){ el.innerHTML = `<div class="state">No verified tier-1 contacts yet</div>`; return; }
+
+    // Fastest measured source for the hero stat
+    const measured = sources.filter(s => s.measured > 0).sort((a,b) => a.median_s - b.median_s);
+    const fastest = measured[0];
+    const slowest = measured[measured.length - 1];
+
+    const maxMedian = Math.max(1, ...sources.map(s => s.median_s));
+    const hero = `
+      <div class="et-hero">
+        <div class="stat">
+          <div class="k">Fastest source median</div>
+          <div class="v">${fastest ? humanSeconds(fastest.median_s) : '—'}<small>${fastest ? esc(prettySource(fastest.source)) : ''}</small></div>
+          <div class="sub">p90 ${fastest ? humanSeconds(fastest.p90_s) : '—'} · n=${fastest ? fastest.measured : 0}</div>
+        </div>
+        <div class="stat">
+          <div class="k">Verified contacts</div>
+          <div class="v">${fmt(t.total_verified || 0)}</div>
+          <div class="sub">${fmt(t.same_write || 0)} same-write · ${fmt(t.measured || 0)} measured</div>
+        </div>
+      </div>`;
+
+    const rows = sources.map(s => {
+      const fillPct = s.median_s > 0 ? Math.max(3, (s.median_s / maxMedian) * 100) : 0;
+      const label = s.measured > 0 ? humanSeconds(s.median_s) : 'same-write';
+      const sub = s.measured > 0
+        ? `<em>p90 ${humanSeconds(s.p90_s)}</em>`
+        : `<em>${s.same_write} written instant</em>`;
+      return `<div class="et-row">
+        <div class="nm">${esc(prettySource(s.source))}</div>
+        <div class="bar">${fillPct > 0 ? `<div class="fill" style="width:${fillPct}%"></div>` : ''}</div>
+        <div class="v">${label}${sub}</div>
+        <div class="v">${s.measured + s.same_write}<em>contacts</em></div>
+      </div>`;
+    }).join('');
+
+    const note = `<div class="et-note">
+      <b>Methodology:</b> Elapsed wall-clock between <code style="font-family:var(--font-mono)">created_at</code> and the update that set <code style="font-family:var(--font-mono)">email_verified=1</code>. Rows enriched in the same DB write (e.g. the Exa collector resolves email during firm scrape) show as <em>same-write</em> — latency is real but not measurable from timestamps. Medians reflect the enrichment workflow cadence, not per-call API latency.
+    </div>`;
+    el.innerHTML = hero + rows + note;
+  }
+
   // ── Parse errors ────────────────────────────────────
   function renderParseErrors(od){
     const el = document.getElementById('parse-errors');
@@ -613,6 +815,9 @@
       renderCadence(od);
       renderRecentScores(od);
       renderRecentSignals(od);
+      renderSourceHealth(od);
+      renderFirmVelocity(od);
+      renderEnrichmentTiming(od);
       renderParseErrors(od);
       const ts = od.generated_at ? new Date(od.generated_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
       ['upd-waterfall','upd-fallthrough','upd-cadence','upd-errors'].forEach(id => {

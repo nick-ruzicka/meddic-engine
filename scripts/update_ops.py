@@ -186,6 +186,65 @@ def build_fallthrough(conn) -> dict:
     }
 
 
+def build_enrichment_timing(conn) -> dict:
+    """Time between contact row creation and the update that set a
+    verified email — a wall-clock proxy for enrichment latency. Tier-1
+    non-placeholder contacts only. Rows where updated_at == created_at
+    (enriched in the same write) are reported separately as 'same_write'
+    since elapsed time is meaningless for them."""
+    rows = conn.execute("""
+        SELECT COALESCE(NULLIF(c.email_source,''), 'unknown') AS source,
+               (julianday(c.updated_at) - julianday(c.created_at)) * 86400.0 AS gap_s
+          FROM contacts c
+          JOIN firms f ON f.id = c.firm_id
+         WHERE f.tier = 1
+           AND COALESCE(c.is_placeholder, 0) = 0
+           AND c.email_verified = 1
+           AND c.email IS NOT NULL AND c.email <> ''
+    """).fetchall()
+
+    by_source: dict[str, list[float]] = {}
+    same_write: dict[str, int] = {}
+    for r in rows:
+        src = r["source"]
+        gap = r["gap_s"] or 0.0
+        if gap < 1.0:
+            same_write[src] = same_write.get(src, 0) + 1
+        else:
+            by_source.setdefault(src, []).append(gap)
+
+    def _quantile(xs: list[float], q: float) -> float:
+        if not xs: return 0.0
+        s = sorted(xs)
+        i = min(len(s) - 1, int(len(s) * q))
+        return float(s[i])
+
+    sources = []
+    for src in set(list(by_source.keys()) + list(same_write.keys())):
+        vals = by_source.get(src, [])
+        sources.append({
+            "source":     src,
+            "measured":   len(vals),
+            "same_write": same_write.get(src, 0),
+            "median_s":   round(_quantile(vals, 0.50), 1),
+            "p90_s":      round(_quantile(vals, 0.90), 1),
+            "avg_s":      round(sum(vals) / len(vals), 1) if vals else 0.0,
+        })
+    sources.sort(key=lambda x: -(x["measured"] + x["same_write"]))
+
+    all_vals: list[float] = [v for xs in by_source.values() for v in xs]
+    total_same = sum(same_write.values())
+    return {
+        "total_verified":      sum(len(v) for v in by_source.values()) + total_same,
+        "measured":            len(all_vals),
+        "same_write":          total_same,
+        "median_s":             round(_quantile(all_vals, 0.50), 1),
+        "p90_s":                round(_quantile(all_vals, 0.90), 1),
+        "avg_s":                round(sum(all_vals)/len(all_vals), 1) if all_vals else 0.0,
+        "sources":              sources,
+    }
+
+
 def build_source_health(conn, days: int = 14) -> dict:
     """Per-collector daily signal volume for the last N days. Returns a
     matrix: each source has a list of N ints (oldest → newest)."""
@@ -304,6 +363,7 @@ def main() -> int:
             "fallthrough":       build_fallthrough(conn),
             "source_health":     build_source_health(conn),
             "firm_velocity":     build_firm_velocity(conn),
+            "enrichment_timing": build_enrichment_timing(conn),
         }
     finally:
         conn.close()

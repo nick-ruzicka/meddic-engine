@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared.css">
 <style>
   :root{
     /* Warm sand palette — editorial, layered */
@@ -188,6 +189,10 @@
   .legend-row .k{color:var(--ink-2)}
   .legend-row .v{font-family:var(--font-mono);font-size:11.5px;color:var(--ink);font-variant-numeric:tabular-nums}
   .legend-row .v em{font-style:normal;color:var(--ink-3);margin-left:4px}
+  a.legend-link{text-decoration:none;color:inherit;padding:4px 6px;margin:-4px -6px;border-radius:2px;
+    transition:background 140ms, transform 140ms}
+  a.legend-link:hover{background:var(--umber-glow);transform:translateX(2px)}
+  a.legend-link:hover .k{color:var(--umber-deep)}
 
   /* ── Firm-type vertical bars ── */
   .vbars{display:flex;align-items:flex-end;justify-content:space-around;height:180px;gap:14px;padding:0 4px;margin-top:8px}
@@ -624,12 +629,18 @@
       color: TIER_COLORS[b.key] || '#B5A889', range:b.range, pct:b.pct
     }));
     drawDonut('donut-tiers', segs, {n: total, l:'scored'});
+    const tierHref = k => ({
+      strong:   'index.html?min_score=75',
+      good:     'index.html?min_score=55&max_score=74',
+      moderate: 'index.html?min_score=35&max_score=54',
+      weak:     'index.html?max_score=34',
+    }[k] || 'index.html');
     document.getElementById('tiers-legend').innerHTML = segs.map(s => `
-      <div class="legend-row">
+      <a class="legend-row legend-link" href="${tierHref(s.key)}" title="Filter contacts to ${esc(s.label)}">
         <div class="dot" style="background:${s.color}"></div>
         <div class="k">${esc(s.label)}</div>
         <div class="v">${s.value}<em>${s.pct}%</em></div>
-      </div>`).join('');
+      </a>`).join('');
   }
 
   // ── Buying Stage Donut ──────────────────────────────
@@ -713,7 +724,11 @@
 
   // ── Competitor landscape cards ──────────────────────
   function renderCompetitors(d){
-    const rows = d.competitor_landscape || [];
+    const rows = (d.competitor_landscape || []).slice().sort((a,b) => {
+      if (a.competitor === 'none') return 1;
+      if (b.competitor === 'none') return -1;
+      return (b.firms || 0) - (a.firms || 0);
+    });
     const el = document.getElementById('comp-grid');
     el.innerHTML = rows.length ? rows.map(r => `
       <div class="comp-card">

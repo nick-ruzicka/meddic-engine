@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared.css">
 <style>
   :root{
     --bg:#101010;
@@ -412,14 +413,17 @@
 
   /* ==== TOAST ==== */
   .toast{
-    position:fixed;bottom:24px;right:24px;z-index:50;
-    background:var(--elevated);border:1px solid var(--border-strong);border-radius:2px;
-    padding:12px 18px;font-size:12px;letter-spacing:0.04em;
-    transform:translateY(12px);opacity:0;pointer-events:none;
-    transition:transform 200ms ease-out, opacity 200ms ease-out;
+    position:fixed;bottom:24px;right:24px;z-index:999;
+    background:#161616;border:1px solid rgba(255,255,255,0.12);
+    border-left:3px solid #10b981;
+    color:var(--text-2);font-size:13px;letter-spacing:0.02em;
+    padding:10px 16px;border-radius:2px;
+    transform:translateY(8px);opacity:0;pointer-events:none;
+    transition:transform 200ms ease, opacity 200ms ease;
+    font-family:var(--font-ui);
   }
   .toast.show{transform:translateY(0);opacity:1}
-  .toast.error{border-color:var(--red-border);color:#f87171}
+  .toast.error{border-left-color:var(--red);color:#f87171}
 
   footer{
     max-width:100%;margin:0;padding:24px 40px 40px;
@@ -952,7 +956,15 @@
     : window.location.origin;
   const STATS_REFRESH_MS = 30000;
 
-  const state = { data:null, status:'all', minScore:0, tier:'all', search:'', expandedId:null, view:'compact', panelQid:null, collapsedFirms:new Set(), focusedQid:null };
+  // URL-driven filter state — analytics.html deep-links with ?min_score=&max_score=
+  const _qp = new URLSearchParams(location.search);
+  const _qpMin = parseFloat(_qp.get('min_score'));
+  const _qpMax = parseFloat(_qp.get('max_score'));
+  const state = {
+    data:null, status:'all',
+    minScore: Number.isFinite(_qpMin) ? _qpMin : 0,
+    maxScore: Number.isFinite(_qpMax) ? _qpMax : 100,
+    tier:'all', search:'', expandedId:null, view:'compact', panelQid:null, collapsedFirms:new Set(), focusedQid:null };
   const el = {
     content: document.getElementById('content'),
     footer: document.getElementById('footer'),
@@ -1401,13 +1413,20 @@
     else if (act === 'flag'){ path = '/api/flag'; }
     else return;
 
+    // Loading state — prevents double-fire + shows feedback
+    const origTxt = btn?.textContent;
+    if (btn){
+      btn.disabled = true;
+      btn.textContent = act === 'approve' ? 'Approving…' : 'Flagging…';
+    }
     try{
       await apiCall(path, body);
       c.status = act === 'approve' ? 'approved' : 'flagged';
       if (act === 'approve') c.first_line = body.first_line;
-      showToast(`${act[0].toUpperCase()+act.slice(1)}d ${c.contact_name}`);
+      showToast(`${act[0].toUpperCase()+act.slice(1)}d ${c.contact_name} ✓`);
       render();
     } catch(err){
+      if (btn){ btn.disabled = false; btn.textContent = origTxt; }
       showToast('Action failed: ' + err.message, true);
     }
   }

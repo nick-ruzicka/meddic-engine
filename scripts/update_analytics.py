@@ -152,25 +152,32 @@ def build_funnel(conn) -> dict:
     tier1 = conn.execute("SELECT COUNT(*) FROM firms WHERE tier=1").fetchone()[0]
     tier2 = conn.execute("SELECT COUNT(*) FROM firms WHERE tier=2").fetchone()[0]
 
+    # Tier-1 filter on every downstream funnel step — bottleneck otherwise
+    # conflates tier-2 firmographic scoring (placeholders) with real pipeline.
     contacts_scored = conn.execute("""
         SELECT COUNT(DISTINCT sc.contact_id)
           FROM scores sc
           JOIN contacts c ON c.id = sc.contact_id
-         WHERE COALESCE(c.is_placeholder,0)=0
+          JOIN firms    f ON f.id = c.firm_id
+         WHERE f.tier = 1 AND COALESCE(c.is_placeholder,0)=0
     """).fetchone()[0]
 
     qualified = conn.execute("""
         SELECT COUNT(DISTINCT sc.contact_id)
           FROM scores sc
           JOIN contacts c ON c.id = sc.contact_id
-         WHERE sc.score >= 55 AND COALESCE(c.is_placeholder,0)=0
+          JOIN firms    f ON f.id = c.firm_id
+         WHERE f.tier = 1 AND sc.score >= 55
+           AND COALESCE(c.is_placeholder,0)=0
     """).fetchone()[0]
 
     ready = conn.execute("""
         SELECT COUNT(DISTINCT sc.contact_id)
           FROM scores sc
           JOIN contacts c ON c.id = sc.contact_id
-         WHERE sc.score >= 55 AND c.email_verified = 1
+          JOIN firms    f ON f.id = c.firm_id
+         WHERE f.tier = 1 AND sc.score >= 55
+           AND c.email_verified = 1
            AND COALESCE(c.is_placeholder,0)=0
     """).fetchone()[0]
 

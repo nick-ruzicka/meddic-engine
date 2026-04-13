@@ -162,6 +162,23 @@ def init_db():
             decided_at      TEXT DEFAULT (datetime('now'))
         )
     """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS hunter_cache (
+            name_domain     TEXT PRIMARY KEY,   -- "name|domain", lowercase
+            email           TEXT,
+            score           INTEGER,
+            verified        INTEGER,
+            source          TEXT,
+            cached_at       TEXT
+        )
+    """)
+    for idx_sql in (
+        "CREATE INDEX IF NOT EXISTS idx_signals_date      ON signals(signal_date)",
+        "CREATE INDEX IF NOT EXISTS idx_contacts_verified ON contacts(email_verified)",
+        "CREATE INDEX IF NOT EXISTS idx_scores_score      ON scores(score)",
+        "CREATE INDEX IF NOT EXISTS idx_firms_tier        ON firms(tier)",
+    ):
+        c.execute(idx_sql)
 
     # ── idempotent migrations ─────────────────────────────────────────────────
     # Add firms.tier if missing (default 1 for backfill).
