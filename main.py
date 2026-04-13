@@ -183,7 +183,12 @@ def _insert_signal(conn, sig: dict) -> bool:
             dt = datetime.fromisoformat(str(sig_date).replace("Z", "+00:00"))
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
-            cutoff = datetime.now(timezone.utc) - timedelta(days=MAX_SIGNAL_AGE_DAYS)
+            now = datetime.now(timezone.utc)
+            if dt > now:
+                # Clamp future-dated signals (publisher metadata bugs) to now.
+                dt = now
+                sig["signal_date"] = dt.isoformat(timespec="seconds")
+            cutoff = now - timedelta(days=MAX_SIGNAL_AGE_DAYS)
             if dt < cutoff:
                 logger.debug(f"skip signal — older than {MAX_SIGNAL_AGE_DAYS}d: {sig_date}")
                 return False

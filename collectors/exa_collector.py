@@ -30,6 +30,22 @@ START_DATE_DEFAULT = "2025-07-01"
 NUM_RESULTS_PER_FIRM  = 3
 NUM_RESULTS_PER_QUERY = 5
 
+BLACKLIST_PATTERNS = (
+    "cookie", "table of contents", "united states securities",
+    "accept all", "privacy policy", "terms of service",
+    "sign in to view", "log in to", "please sign in",
+    "join to see", "agree & join", "agree &amp; join",
+)
+
+
+def is_garbage(text: str) -> bool:
+    """True if the signal body is boilerplate/login-wall/cookie-banner noise."""
+    if not text or len(text.strip()) < 30:
+        return True
+    lo = text.lower()
+    return any(p in lo for p in BLACKLIST_PATTERNS)
+
+
 INDUSTRY_QUERIES = [
     "private equity firm deploying AI due diligence 2025 2026",
     "investment bank artificial intelligence workflow automation",
@@ -86,6 +102,8 @@ def _to_signal(result, firms: list[dict]) -> Optional[dict]:
     title = getattr(result, "title", "") or ""
     body  = _extract_text(result)
     hay   = f"{title}\n{body}"
+    if is_garbage(hay):
+        return None
     firm_id = _resolve_firm(hay, firms)
     published = getattr(result, "published_date", None)
     return {
