@@ -1,0 +1,193 @@
+# config.yaml
+# MEDDIC Engine — client configuration
+# All behavior driven from here. Change ICP, signals, weights without touching code.
+
+client: 
+version: "1.0"
+
+# ── ICP Definition ────────────────────────────────────────────────────────────
+icp:
+  firm_types:
+    - pe
+    - hedge_fund
+    - investment_bank
+    - credit
+  geographies:
+    - US
+    - UK
+    - Europe
+  exclude:
+    - consumer_finance
+    - retail_banking
+    - insurance
+    - early_stage_startup
+
+# ── Scoring Weights ───────────────────────────────────────────────────────────
+# Must sum to 1.0. Adjust after first campaign based on response rate data.
+scoring_weights:
+  icp_fit: 0.30
+  ai_readiness: 0.25
+  reachability: 0.25
+  signal_freshness: 0.20
+
+# ── Score Thresholds ──────────────────────────────────────────────────────────
+thresholds:
+  strong_match: 75
+  good_match: 55
+  moderate_match: 35
+
+# ── Twitter Signal Collection ─────────────────────────────────────────────────
+twitter:
+  # Accounts to monitor continuously
+  monitored_accounts:
+    - BoringBiz_
+    - FundamentEdge
+    - BuysideAIreview
+    - hgr_la
+    - Restructuring__
+    - dnlkwk
+    - ZoeZouYi
+    - aporia9n
+
+  # Keywords for broad finance AI signal search
+  keywords:
+    pain:
+      - "data room"
+      - "due diligence hours"
+      - "analyst bandwidth"
+      - "reading VDR"
+      - "CIM analysis"
+      - "IC memo"
+      - "manual diligence"
+      - "drowning in documents"
+      - "sifting through 10-K"
+    evaluation:
+      - "evaluating LLMs"
+      - "piloting AI"
+      - "testing "
+      - "testing AlphaSense"
+      - "testing Rogo"
+      - "AI for due diligence"
+      - "AI for deal workflow"
+    transformation:
+      - "AI transformation"
+      - "AI-first"
+      - "deploying AI across"
+      - "firm-wide AI"
+    competitor_frustration:
+      - "AlphaSense expensive"
+      - "AlphaSense pricing"
+      - "Bloomberg slow"
+      - "Bloomberg interface"
+      - "Rogo limitation"
+
+  # Finance-specific context filters (must appear in bio or recent tweets)
+  firm_context_filters:
+    - private equity
+    - hedge fund
+    - investment bank
+    - asset manager
+    - private credit
+    - PE firm
+    - M&A
+    - due diligence
+
+# ── LinkedIn Signal Collection ────────────────────────────────────────────────
+linkedin:
+  # Search queries for Apify LinkedIn post scraper
+  search_queries:
+    - "AI transformation finance"
+    - "AI due diligence private equity"
+    - "LLM investment banking workflow"
+    - "AI analyst productivity hedge fund"
+    - "document analysis AI asset manager"
+    - "VDR automation AI"
+    - "IC memo AI"
+
+  # Keywords to match in post content
+  keywords:
+    - AI transformation
+    - artificial intelligence workflow
+    - due diligence automation
+    - analyst productivity
+    - document review AI
+    - LLM finance
+    - data room AI
+    - investment research AI
+
+  # Target firm domains for Apify company post scraper
+  target_domains:
+    - blackstone.com
+    - apolloglobal.com
+    - aresmgmt.com
+    - silverlake.com
+    - vistaequitypartners.com
+    - warburgpincus.com
+    - brookfield.com
+    - moelis.com
+    - evercore.com
+    - pjtpartners.com
+    - hl.com
+    - williamblair.com
+    - pipersandler.com
+    - rwbaird.com
+    - llrpartners.com
+    - genstar.com
+
+# ── Exa Press Signal Collection ──────────────────────────────────────────────
+exa:
+  # Semantic queries for financial press
+  queries:
+    - "asset manager AI tool deployment due diligence 2025"
+    - "private equity firm AI workflow automation"
+    - "investment bank AI research productivity"
+    - "hedge fund AI transformation announcement"
+    - "AlphaSense customer dissatisfied switch"
+    - "financial institution AI pilot production deployment"
+    - "Head of AI hired asset manager private equity"
+
+  # Source domains to prioritize
+  preferred_domains:
+    - institutionalinvestor.com
+    - pionline.com
+    - ft.com
+    - bloomberg.com
+    - wsj.com
+    - reuters.com
+    - techcrunch.com
+    - axios.com
+
+  # Max results per query
+  max_results: 5
+  # Only results from last N days
+  recency_days: 90
+
+# ── Hunter.io Contact Enrichment ─────────────────────────────────────────────
+hunter:
+  # Max contacts to enrich per run
+  batch_size: 50
+  # Minimum confidence score to accept (0-100)
+  min_confidence: 70
+
+# ── Decision Maker Titles ─────────────────────────────────────────────────────
+# Used by LinkedIn and Hunter to find the right contacts
+target_titles:
+  executive_sponsor:
+    - Chief Technology Officer
+    - CTO
+    - Head of AI
+    - Chief AI Officer
+    - Chief Information Officer
+    - CIO
+    - Chief Data Officer
+    - Head of Research Technology
+    - Managing Director Technology
+  technical_champion:
+    - Director of AI
+    - Director of Research Technology
+    - Head of Data and AI
+    - VP Technology
+    - AI Lead
+    - Technology Leader
+    - Head of Machine Learning
+    - Research Technology Manager

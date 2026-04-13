@@ -1,0 +1,21 @@
+.env
+data/.db
+data/.db-shm
+data/.db-wal
+data/sec_adv/cache/
+data/sec_adv/*.csv
+data/sec_adv/suggestions.jsonl
+export/contacts_data.json
+export/analytics_data.json
+export/ops_data.json
+logs/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+
+# External reference codebase — not ours to commit
+chariot-reference/
+
+# Claude Code internal state
+.claude/

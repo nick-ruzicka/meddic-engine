@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Analytics · MEDDIC Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#101010; --surface:#161616; --elevated:#1c1c1c; --overlay:#222;
+    --text:#fff; --text-2:rgba(255,255,255,0.68); --text-3:rgba(255,255,255,0.42);
+    --border:rgba(255,255,255,0.10); --border-strong:rgba(255,255,255,0.20);
+    --blue:#465BFF; --blue-dim:rgba(70,91,255,0.15); --blue-border:rgba(70,91,255,0.40);
+    --green:#10b981; --amber:#f59e0b; --orange:#f97316; --red:#ef4444;
+    --font-ui:'Inter',system-ui,-apple-system,sans-serif;
+    --font-display:'Playfair Display',Georgia,serif;
+    --font-mono:'SF Mono','Fira Code',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:var(--font-ui);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+
+  header{position:sticky;top:0;z-index:20;background:rgba(16,16,16,0.92);backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(255,255,255,0.08);height:64px;padding:0 28px;
+    display:flex;align-items:center;gap:20px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .name{font-size:15px;font-weight:500}
+  .brand .sub{color:var(--text-3);font-size:13px;margin-left:2px}
+  .brand .eyebrow{margin-left:14px;padding-left:14px;border-left:1px solid var(--border);
+    font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3)}
+  .nav-links{display:flex;align-items:center;gap:10px;margin-left:auto}
+  .nav-links a{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--text-3);text-decoration:none;transition:color 150ms}
+  .nav-links a:hover{color:var(--text)}
+  .nav-links a.active{color:var(--blue)}
+  .nav-links .nav-sep{color:rgba(255,255,255,0.20);font-size:11px}
+
+  main{max-width:1280px;margin:0 auto;padding:40px 28px 80px;color:var(--text)}
+
+  /* ===== HERO (Section 1) ===== */
+  .hero{
+    display:grid;grid-template-columns:1.6fr 1fr;gap:40px;
+    padding:32px 0 48px;margin-bottom:48px;border-bottom:1px solid var(--border);
+  }
+  .hero-eyebrow{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3);margin-bottom:18px}
+  .hero-title{
+    font-family:var(--font-display);font-size:64px;font-weight:500;
+    letter-spacing:-0.01em;line-height:1.02;margin:0;
+  }
+  .hero-title b{color:var(--blue);font-weight:500}
+  .hero-sub{margin-top:18px;font-size:15px;color:var(--text-2);line-height:1.6;max-width:620px}
+  .kpi-stack{display:flex;flex-direction:column;gap:10px}
+  .kpi{
+    display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+    background:var(--surface);border:1px solid var(--border);
+    border-left:3px solid var(--accent,var(--blue));border-radius:2px;padding:16px 18px;
+  }
+  .kpi.ready{--accent:var(--blue)}
+  .kpi.conf{--accent:var(--green)}
+  .kpi.total{--accent:rgba(255,255,255,0.45)}
+  .kpi.cost{--accent:var(--amber)}
+  .kpi .lbl{font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);font-weight:500}
+  .kpi .val{font-family:var(--font-display);font-size:30px;font-weight:500;
+    line-height:1;letter-spacing:-0.01em;color:var(--text);font-variant-numeric:tabular-nums}
+  .kpi .val small{font-size:14px;color:var(--text-3);margin-left:4px}
+  @media (max-width:900px){.hero{grid-template-columns:1fr}}
+
+  /* ===== SECTION CHROME ===== */
+  section{margin-bottom:48px}
+  .sec-head{margin-bottom:18px}
+  .sec-title{font-family:var(--font-display);font-size:22px;font-weight:500;
+    letter-spacing:0.02em;text-transform:uppercase;margin:0 0 6px;line-height:1.1}
+  .sec-sub{font-size:12px;color:var(--text-3);letter-spacing:0.06em;text-transform:uppercase}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:24px 28px}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media (max-width:900px){.two-col{grid-template-columns:1fr}}
+
+  /* ===== FUNNEL ===== */
+  .funnel{display:flex;flex-direction:column;gap:10px}
+  .funnel-row{display:grid;grid-template-columns:1fr 120px;gap:16px;align-items:center}
+  .funnel-bar{
+    height:52px;border-radius:2px;min-width:max-content;white-space:nowrap;
+    display:flex;align-items:center;padding:0 18px;color:#fff;
+    font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;
+  }
+  .funnel-bar .count{font-family:var(--font-display);font-size:22px;font-weight:500;
+    letter-spacing:-0.01em;margin-right:12px;color:#fff}
+  .funnel-conv{font-family:var(--font-mono);font-size:11px;color:var(--text-3);text-align:right}
+  .funnel-conv .v{color:var(--text);font-size:14px;display:block}
+
+  /* ===== SIGNAL CONVERSION TABLE ===== */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);
+    text-align:left;font-weight:500;padding:12px 14px;border-bottom:1px solid var(--border)}
+  td{padding:14px;border-bottom:1px solid rgba(255,255,255,0.06);color:var(--text-2)}
+  td.num{font-family:var(--font-mono);text-align:right;color:var(--text)}
+  tr:last-child td{border-bottom:none}
+  tr.best td{background:rgba(70,91,255,0.07)}
+  tr.best td.num{color:var(--blue)}
+  tr.zero td{color:var(--text-3);font-style:italic}
+  .callout{
+    margin-top:16px;padding:14px 18px;
+    background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.28);
+    border-left:3px solid var(--amber);border-radius:2px;
+    font-size:13px;color:var(--text-2);line-height:1.55;
+  }
+  .callout.alert{background:rgba(245,158,11,0.09);border-color:rgba(245,158,11,0.35)}
+
+  /* ===== ICP FIT VS INTENT ===== */
+  .big-stat{padding:28px;background:var(--surface);border:1px solid var(--border);border-radius:2px}
+  .big-stat .lbl{font-size:11px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);margin-bottom:14px}
+  .big-stat .val{font-family:var(--font-display);font-size:72px;font-weight:500;line-height:1;letter-spacing:-0.01em;color:var(--text)}
+  .big-stat .val small{font-size:22px;color:var(--text-3);margin-left:4px}
+  .big-stat .desc{margin-top:10px;font-size:12px;color:var(--text-3);letter-spacing:0.04em}
+  .axis-compare{
+    margin-top:20px;padding:20px 24px;background:var(--surface);border:1px solid var(--border);border-radius:2px;
+  }
+  .axis-row{display:grid;grid-template-columns:140px 1fr 48px;gap:12px;align-items:center;margin-bottom:12px}
+  .axis-row:last-child{margin-bottom:0}
+  .axis-row .k{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);font-weight:500}
+  .axis-row .t{height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden}
+  .axis-row .t > div{height:100%;border-radius:3px;transition:width 500ms}
+  .axis-row .v{font-family:var(--font-mono);font-size:13px;text-align:right;color:var(--text)}
+  .interp{
+    margin-top:18px;padding:16px 20px;background:var(--elevated);
+    border:1px solid var(--border);border-left:2px solid var(--blue);border-radius:2px;
+    font-size:13px;color:var(--text-2);font-style:italic;line-height:1.6;
+  }
+
+  /* ===== H-BAR (buying stage, score dist) ===== */
+  .hbar{display:grid;grid-template-columns:170px 1fr 160px;gap:14px;align-items:center;margin-bottom:12px}
+  .hbar:last-child{margin-bottom:0}
+  .hbar .lbl{font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-2)}
+  .hbar .track{height:8px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden}
+  .hbar .track > div{height:100%;border-radius:3px;transition:width 500ms}
+  .hbar .meta{font-family:var(--font-mono);font-size:12px;color:var(--text-2);text-align:right}
+  .hbar .meta b{color:var(--text);font-weight:500}
+
+  /* ===== AUM ===== */
+  .aum{padding:40px 32px;background:var(--surface);border:1px solid var(--border);border-radius:2px;text-align:center}
+  .aum .big{font-family:var(--font-display);font-size:88px;font-weight:500;letter-spacing:-0.02em;line-height:1;color:var(--text)}
+  .aum .big small{font-size:28px;color:var(--text-3);margin-left:4px}
+  .aum .sub{margin-top:14px;font-size:13px;color:var(--text-2);letter-spacing:0.02em}
+  .aum.empty .big{color:var(--text-3);font-size:22px;letter-spacing:0.08em;text-transform:uppercase;font-family:var(--font-ui);font-weight:500}
+
+  /* ===== BOTTLENECK ===== */
+  .bottleneck{
+    padding:20px 24px;background:rgba(245,158,11,0.08);
+    border:1px solid rgba(245,158,11,0.32);border-left:3px solid var(--amber);border-radius:2px;
+    display:flex;align-items:flex-start;gap:14px;
+  }
+  .bottleneck .ic{
+    flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+    background:rgba(245,158,11,0.18);border:1px solid rgba(245,158,11,0.4);border-radius:2px;
+    color:#fbbf24;font-family:var(--font-display);font-weight:500;font-size:15px;
+  }
+  .bottleneck .body{flex:1}
+  .bottleneck .lbl{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#fbbf24;margin-bottom:6px;font-weight:500}
+  .bottleneck .msg{font-size:14px;color:var(--text);line-height:1.55}
+
+  .state{padding:40px;text-align:center;color:var(--text-3)}
+  footer{max-width:1280px;margin:0 auto;padding:24px 28px 40px;font-size:10px;
+    letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path fill="#F5F5F5" d="M2 2h2v2H2V2Zm3 2h3V2H5v2Zm4-2v2h5V2H9ZM2 8h2V5H2v3Zm3 0h3V5H5v3Zm4 0h5V5H9v3Zm-7 6h2V9H2v5Zm3 0h3V9H5v5Zm4 0h5V9H9v5Z"/>
+    </svg>
+    <span class="name"></span>
+    <span class="sub">Signal Engine</span>
+    <span class="eyebrow">Analytics</span>
+  </div>
+  <nav class="nav-links">
+    <a href="analytics.html" class="active">Analytics</a><span class="nav-sep">·</span>
+    <a href="ops.html">Pipeline Ops</a><span class="nav-sep">·</span>
+    <a href="methodology.html">Methodology</a><span class="nav-sep">·</span>
+    <a href="index.html">← Contacts</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- SECTION 1 — HERO -->
+  <section class="hero">
+    <div>
+      <div class="hero-eyebrow">Pipeline Analytics</div>
+      <h1 class="hero-title"><b id="h-ready">—</b> ready for outreach.</h1>
+      <div class="hero-sub" id="h-sub">Loading pipeline state…</div>
+    </div>
+    <div class="kpi-stack">
+      <div class="kpi ready"><div><div class="lbl">Ready for Outreach</div></div><div class="val" id="k-ready">—</div></div>
+      <div class="kpi conf"><div><div class="lbl">Avg Confidence</div></div><div class="val" id="k-avg">—<small>/100</small></div></div>
+      <div class="kpi total"><div><div class="lbl">Total Contacts</div></div><div class="val" id="k-total">—</div></div>
+      <div class="kpi cost"><div><div class="lbl">Cost Per Lead</div></div><div class="val" id="k-cost">—</div></div>
+    </div>
+  </section>
+
+  <!-- SECTION 2 — PIPELINE FUNNEL -->
+  <section>
+    <div class="sec-head">
+      <h2 class="sec-title">Pipeline Funnel</h2>
+      <div class="sec-sub">Firms → signals → contacts → scored → queued → approved</div>
+    </div>
+    <div class="card"><div id="funnel" class="funnel"><div class="state">Loading…</div></div></div>
+  </section>
+
+  <!-- SECTION 3 — SIGNAL CONVERSION -->
+  <section>
+    <div class="sec-head">
+      <h2 class="sec-title">Signal Conversion Rate</h2>
+      <div class="sec-sub">Which signal types yield qualified (55+) contacts</div>
+    </div>
+    <div class="card">
+      <table id="signal-conv">
+        <thead><tr><th>Signal Type</th><th style="text-align:right">Contacts</th>
+          <th style="text-align:right">Qualified (55+)</th><th style="text-align:right">Rate</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div id="signal-callouts"></div>
+    </div>
+  </section>
+
+  <!-- SECTION 4 — ICP FIT VS INTENT -->
+  <section>
+    <div class="sec-head">
+      <h2 class="sec-title">ICP Fit vs Intent</h2>
+      <div class="sec-sub">Structural fit compared with buying signals</div>
+    </div>
+    <div class="two-col">
+      <div class="big-stat">
+        <div class="lbl">Avg ICP Fit</div>
+        <div class="val"><span id="avg-icp">—</span><small>/100</small></div>
+        <div class="desc">Structural firm fit</div>
+      </div>
+      <div class="big-stat">
+        <div class="lbl">Avg AI Readiness</div>
+        <div class="val"><span id="avg-ai">—</span><small>/100</small></div>
+        <div class="desc">Active buying signals</div>
+      </div>
+    </div>
+    <div class="axis-compare">
+      <div class="axis-row"><div class="k">ICP Fit</div>
+        <div class="t"><div id="axis-icp" style="width:0;background:var(--blue)"></div></div>
+        <div class="v" id="axis-icp-v">—</div></div>
+      <div class="axis-row"><div class="k">AI Readiness</div>
+        <div class="t"><div id="axis-ai" style="width:0;background:var(--green)"></div></div>
+        <div class="v" id="axis-ai-v">—</div></div>
+    </div>
+    <div class="interp" id="interp">—</div>
+  </section>
+
+  <!-- SECTION 5 — BUYING STAGE -->
+  <section>
+    <div class="sec-head">
+      <h2 class="sec-title">Buying Stage Breakdown</h2>
+      <div class="sec-sub">Deploying firms are in active vendor selection — outreach urgency: high</div>
+    </div>
+    <div class="card"><div id="stages"></div></div>
+  </section>
+
+  <!-- SECTION 6 — COMPETITOR LANDSCAPE -->
+  <section>
+    <div class="sec-head">
+      <h2 class="sec-title">Competitor Landscape</h2>
+      <div class="sec-sub">Positioning per incumbent tool</div>
+    </div>
+    <div class="card"><table id="competitor-table">
+      <thead><tr><th>Competitor</th><th style="text-align:right">Firms Tagged</th>
+        <th style="text-align:right">Avg Score</th><th>Angle</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </section>
+
+  <!-- SECTION 7 — AUM COVERAGE -->
+  <section>
+    <div class="sec-head">
+      <h2 class="sec-title">AUM Coverage</h2>
+      <div class="sec-sub">Total institutional assets represented in pipeline</div>
+    </div>
+    <div class="aum" id="aum-card"><div class="big">—</div><div class="sub">Loading…</div></div>
+  </section>
+
+  <!-- SECTION 8 — SCORE DISTRIBUTION -->
+  <section>
+    <div class="sec-head">
+      <h2 class="sec-title">Score Distribution</h2>
+      <div class="sec-sub">Tier breakdown and average by firm type</div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div style="font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);margin-bottom:18px;font-weight:500">By Score Tier</div>
+        <div id="tiers"></div>
+      </div>
+      <div class="card">
+        <div style="font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);margin-bottom:18px;font-weight:500">Avg Score by Firm Type</div>
+        <div id="by-type"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 9 — BOTTLENECK -->
+  <section>
+    <div class="sec-head">
+      <h2 class="sec-title">Pipeline Bottleneck</h2>
+      <div class="sec-sub">The step with the worst pass-through rate</div>
+    </div>
+    <div id="bottleneck-wrap"></div>
+  </section>
+
+</main>
+
+<footer id="footer">Loading…</footer>
+
+<script>
+(() => {
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmt = n => (n||0).toLocaleString();
+  const prettyType = t => ({pe:'Private Equity',hedge_fund:'Hedge Fund',investment_bank:'Investment Bank',credit_fund:'Credit Fund',credit:'Credit Fund'}[t] || (t||'unknown').replace(/_/g,' '));
+  const prettyComp = t => ({alphasense:'AlphaSense',rogo:'Rogo',bloomberg:'Bloomberg',stack_ai:'Stack AI',none:'None (cold)'}[t] || (t||'unknown').replace(/_/g,' '));
+  const stageMeta = {
+    deploying:  {lbl:'Deploying',  color:'var(--green)', note:'active vendor selection'},
+    evaluating: {lbl:'Evaluating', color:'var(--amber)', note:'pilot phase'},
+    exploring:  {lbl:'Exploring',  color:'var(--orange)',note:'early research'},
+    unknown:    {lbl:'Unknown',    color:'rgba(255,255,255,0.25)', note:'stage unconfirmed'},
+  };
+
+  // Grey-scale → blue funnel endpoint
+  function funnelColor(i, n){
+    if (i === n - 1) return '#465BFF';
+    const steps = [0.22, 0.30, 0.40, 0.52, 0.64];
+    const v = steps[Math.min(i, steps.length - 1)];
+    return `rgba(255,255,255,${v})`;
+  }
+
+  // ── Hero ────────────────────────────────────────────
+  function renderHero(d){
+    const h = d.hero || {};
+    document.getElementById('h-ready').textContent = h.ready ?? 0;
+    document.getElementById('h-sub').textContent =
+      `Scanned ${fmt(h.sec_total)} SEC-indexed firms, qualified ${fmt(h.sec_icp)} against ICP, `
+      + `narrowed to ${h.firms} active targets. ${fmt(h.contacts)} contacts scored — `
+      + `${h.qualified ?? 0} qualified, ${h.approved ?? 0} approved.`;
+    document.getElementById('k-ready').textContent = h.ready ?? 0;
+    document.getElementById('k-avg').innerHTML = `${Math.round(h.avg_score || 0)}<small>/100</small>`;
+    document.getElementById('k-total').textContent = fmt(h.contacts);
+    const cost = h.cost_per_lead || 0;
+    document.getElementById('k-cost').textContent = cost > 0 ? `$${cost.toFixed(4)}` : '$0.00';
+  }
+
+  // ── Funnel (Section 2) ─────────────────────────────
+  function renderFunnel(d){
+    const stages = d.funnel || [];
+    const max = Math.max(1, ...stages.map(s => s.count));
+    document.getElementById('funnel').innerHTML = stages.map((s, i) => {
+      const prev = i === 0 ? null : stages[i-1].count;
+      const conv = prev ? Math.round((s.count / prev) * 100) : null;
+      const pct = Math.max(10, (s.count / max) * 100);
+      return `<div class="funnel-row">
+        <div class="funnel-bar" style="width:${pct}%;background:${funnelColor(i, stages.length)}">
+          <span class="count">${s.count}</span><span>${esc(s.label)}</span>
+        </div>
+        <div class="funnel-conv">${conv != null
+          ? `<span class="v">${conv}%</span>conversion`
+          : '<span class="v">—</span>start'}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Signal Conversion (Section 3) ──────────────────
+  function renderSignalConv(d){
+    const rows = d.signal_conversion || [];
+    const withData = rows.filter(r => r.contacts > 0);
+    const best = withData.reduce((a, b) => (a && a.rate > b.rate) ? a : b, null);
+    const tb = document.querySelector('#signal-conv tbody');
+    tb.innerHTML = rows.map(r => {
+      const cls = [];
+      if (best && r === best) cls.push('best');
+      if (r.contacts === 0)   cls.push('zero');
+      return `<tr class="${cls.join(' ')}">
+        <td style="text-transform:uppercase;letter-spacing:0.06em;font-size:11px">${esc(r.signal_type)}</td>
+        <td class="num">${r.contacts}</td>
+        <td class="num">${r.qualified}</td>
+        <td class="num">${r.rate.toFixed(1)}%</td>
+      </tr>`;
+    }).join('');
+
+    const zero = rows.filter(r => r.contacts === 0 && r.signal_type !== 'none');
+    const wrap = document.getElementById('signal-callouts');
+    wrap.innerHTML = zero.map(r =>
+      `<div class="callout">${esc(r.signal_type)} signals not yet collected — run <code>--collect</code> to activate this source.</div>`
+    ).join('');
+  }
+
+  // ── ICP Fit vs Intent (Section 4) ──────────────
+  function renderIntent(d){
+    const dims = d.dimensions || {};
+    const icp = Math.round((dims.icp_fit || {}).avg || 0);
+    const ai  = Math.round((dims.ai_readiness || {}).avg || 0);
+    document.getElementById('avg-icp').textContent = icp;
+    document.getElementById('avg-ai').textContent  = ai;
+    document.getElementById('axis-icp').style.width   = icp + '%';
+    document.getElementById('axis-ai').style.width    = ai + '%';
+    document.getElementById('axis-icp-v').textContent = icp;
+    document.getElementById('axis-ai-v').textContent  = ai;
+    let msg;
+    if (icp - ai >= 10){
+      msg = 'Strong ICP fit, weak buying signals. Run Exa and Twitter collectors to surface more intent signals.';
+    } else if (ai - icp >= 10){
+      msg = 'High intent signals, moderate ICP fit. Consider expanding to adjacent firm types.';
+    } else {
+      msg = 'ICP fit and buying signals are balanced. Focus on contact enrichment to lift READY count.';
+    }
+    document.getElementById('interp').textContent = msg;
+  }
+
+  // ── Buying Stage (Section 5) ───────────────────────
+  function renderStages(d){
+    const stages = d.by_buying_stage || [];
+    const order = ['deploying','evaluating','exploring','unknown'];
+    const rows = stages.slice().sort((a,b) => order.indexOf(a.stage) - order.indexOf(b.stage));
+    const max = Math.max(1, ...rows.map(r => r.firms || 0));
+    document.getElementById('stages').innerHTML = rows.map(r => {
+      const m = stageMeta[r.stage] || {lbl:r.stage, color:'rgba(255,255,255,0.30)', note:''};
+      return `<div class="hbar">
+        <div class="lbl">${m.lbl}</div>
+        <div class="track"><div style="width:${((r.firms||0)/max)*100}%;background:${m.color}"></div></div>
+        <div class="meta"><b>${r.firms||0} firms</b> · avg ${Math.round(r.avg_score||0)}</div>
+      </div>`;
+    }).join('') || '<div class="state">No stage data</div>';
+  }
+
+  // ── Competitor Landscape (Section 6) ───────────────
+  function renderCompetitors(d){
+    const rows = d.competitor_landscape || [];
+    document.querySelector('#competitor-table tbody').innerHTML = rows.map(r => `
+      <tr>
+        <td style="color:var(--text);font-weight:500">${esc(prettyComp(r.competitor))}</td>
+        <td class="num">${r.firms}</td>
+        <td class="num">${Math.round(r.avg_score || 0)}</td>
+        <td style="font-size:12px;font-style:italic">${esc(r.angle)}</td>
+      </tr>`).join('') || `<tr><td colspan="4" class="state">No competitor data</td></tr>`;
+  }
+
+  // ── AUM (Section 7) ────────────────────────────────
+  function renderAum(d){
+    const a = d.aum_coverage || {};
+    const el = document.getElementById('aum-card');
+    if (!a.total_aum){
+      el.classList.add('empty');
+      el.innerHTML = `<div class="big">AUM data pending</div>
+        <div class="sub">${a.firms_matched||0} of ${a.firms_total||0} active firms matched to SEC ADV universe.
+        Run <code>--sec-enrich</code> to attach AUM totals.</div>`;
+      return;
+    }
+    const t = a.display_trillions;
+    el.classList.remove('empty');
+    el.innerHTML = `<div class="big">$${t.toFixed(2)}<small>T</small></div>
+      <div class="sub">${a.firms_matched} firms representing ${a.share_pct.toFixed(1)}% of institutional AI buying power in the market.</div>`;
+  }
+
+  // ── Score Distribution (Section 8) ─────────────────
+  function renderTiers(d){
+    const bands = d.score_histogram || [];
+    const total = bands.reduce((a,b) => a + b.count, 0) || 1;
+    const colors = {strong:'#465BFF', good:'rgba(255,255,255,0.55)',
+                    moderate:'rgba(255,255,255,0.35)', weak:'rgba(239,68,68,0.60)'};
+    document.getElementById('tiers').innerHTML = bands.map(b => `
+      <div class="hbar">
+        <div class="lbl">${esc(b.label)} (${esc(b.range)})</div>
+        <div class="track"><div style="width:${(b.count/total)*100}%;background:${colors[b.key]||'rgba(255,255,255,0.4)'}"></div></div>
+        <div class="meta"><b>${b.count}</b> · ${b.pct}%</div>
+      </div>`).join('');
+  }
+
+  function renderByType(d){
+    const rows = (d.by_firm_type || []).filter(r => r.avg_score);
+    rows.sort((a,b) => (b.avg_score||0) - (a.avg_score||0));
+    const c = s => s>=75?'var(--blue)': s>=55?'rgba(255,255,255,0.55)': s>=35?'rgba(255,255,255,0.35)':'rgba(239,68,68,0.60)';
+    document.getElementById('by-type').innerHTML = rows.map(r => `
+      <div class="hbar">
+        <div class="lbl">${esc(prettyType(r.firm_type))}</div>
+        <div class="track"><div style="width:${r.avg_score}%;background:${c(r.avg_score)}"></div></div>
+        <div class="meta"><b>${r.firms} firms</b> · ${Math.round(r.avg_score)}</div>
+      </div>`).join('') || '<div class="state">No scored contacts</div>';
+  }
+
+  // ── Bottleneck (Section 9) ─────────────────────────
+  function renderBottleneck(d){
+    const b = d.bottleneck || {};
+    const wrap = document.getElementById('bottleneck-wrap');
+    if (!b || !b.message){
+      wrap.innerHTML = `<div class="state">Pipeline too short to compute bottleneck</div>`;
+      return;
+    }
+    wrap.innerHTML = `<div class="bottleneck">
+      <div class="ic">!</div>
+      <div class="body">
+        <div class="lbl">Bottleneck · ${b.rate}% pass-through</div>
+        <div class="msg">${esc(b.message)}</div>
+      </div>
+    </div>`;
+  }
+
+  async function load(){
+    try{
+      const r = await fetch('analytics_data.json', {cache:'no-store'});
+      if (!r.ok) throw new Error('HTTP '+r.status);
+      const d = await r.json();
+      renderHero(d);
+      renderFunnel(d);
+      renderSignalConv(d);
+      renderIntent(d);
+      renderStages(d);
+      renderCompetitors(d);
+      renderAum(d);
+      renderTiers(d);
+      renderByType(d);
+      renderBottleneck(d);
+      const ts = d.generated_at ? new Date(d.generated_at).toLocaleString() : '—';
+      document.getElementById('footer').textContent = `Generated ${ts}`;
+    } catch(err){
+      document.getElementById('funnel').innerHTML = `<div class="state">Failed to load analytics_data.json — ${esc(err.message)}</div>`;
+    }
+  }
+  load();
+})();
+</script>
+</body>
+</html>

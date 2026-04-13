@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Methodology · MEDDIC Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#101010; --surface:#161616; --elevated:#1c1c1c; --overlay:#222;
+    --text:#fff; --text-2:rgba(255,255,255,0.60); --text-3:rgba(255,255,255,0.35);
+    --border:rgba(255,255,255,0.10); --border-strong:rgba(255,255,255,0.18);
+    --blue:#465BFF; --blue-dim:rgba(70,91,255,0.15); --blue-border:rgba(70,91,255,0.40);
+    --green:#10b981; --amber:#f59e0b; --orange:#f97316; --red:#ef4444; --violet:#7c3aed; --teal:#0d9488;
+    --font-ui:'Inter',system-ui,-apple-system,sans-serif;
+    --font-display:'Playfair Display',Georgia,serif;
+    --font-mono:'SF Mono','Fira Code',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:var(--font-ui);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+
+  header{position:sticky;top:0;z-index:20;background:rgba(16,16,16,0.92);backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(255,255,255,0.08);height:64px;padding:0 28px;
+    display:flex;align-items:center;gap:20px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .name{font-size:15px;font-weight:500}
+  .brand .sub{color:var(--text-3);font-size:13px;margin-left:2px}
+  .brand .eyebrow{margin-left:14px;padding-left:14px;border-left:1px solid var(--border);
+    font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3)}
+  .nav-links{display:flex;align-items:center;gap:10px;margin-left:auto}
+  .nav-links a{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--text-3);text-decoration:none;transition:color 150ms}
+  .nav-links a:hover{color:var(--text)}
+  .nav-links a.active{color:var(--blue)}
+  .nav-links .nav-sep{color:rgba(255,255,255,0.20);font-size:11px}
+
+  main{max-width:1080px;margin:0 auto;padding:40px 28px 96px;color:var(--text)}
+  main section, main .card, main table{color:inherit}
+  .hb-grid-bg{
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .page-header{
+    position:relative;overflow:hidden;
+    margin-bottom:56px;padding:40px 32px 40px;border-bottom:1px solid var(--border);
+    background-image:
+      radial-gradient(ellipse 40% 60% at 90% 50%, rgba(70,91,255,0.06), transparent),
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: auto, 40px 40px, 40px 40px;
+  }
+  .page-header::after{
+    content:"";position:absolute;inset:0;left:50%;z-index:0;pointer-events:none;
+    background-image:url('https://images.ctfassets.net/bn476u6z5acg/3VwfZEkmoTOENMFolM5udx/ca23ae84ce9dc2873e5c12f741060e98/finance.jpeg');
+    background-size:cover;background-position:center right;background-repeat:no-repeat;
+    opacity:0.08;
+    mask-image:linear-gradient(to right, transparent 0%, #000 30%, #000 100%);
+    -webkit-mask-image:linear-gradient(to right, transparent 0%, #000 30%, #000 100%);
+  }
+  .page-header > *{position:relative;z-index:1}
+
+  /* Product demo video block */
+  .demo-video{
+    margin-top:24px;background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:14px 14px 18px;
+  }
+  .demo-video video{
+    width:100%;border-radius:2px;border:1px solid rgba(255,255,255,0.08);display:block;
+  }
+  .demo-video .cap{
+    margin-top:12px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--text-3);text-align:center;
+  }
+  .demo-video .cap b{color:var(--text-2);font-weight:500}
+  .page-eyebrow{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3);margin-bottom:16px}
+  .page-title{font-family:var(--font-display);font-size:60px;font-weight:500;letter-spacing:0.02em;
+    line-height:0.95;text-transform:uppercase;margin:0}
+  .page-sub{font-size:16px;color:var(--text-2);margin-top:16px;max-width:700px;line-height:1.6}
+
+  section{margin-bottom:64px}
+  section + section{margin-top:56px}
+  .sec-eyebrow{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#EEECDD;margin-bottom:10px;font-weight:500}
+  .sec-title{font-family:var(--font-display);font-size:30px;font-weight:500;letter-spacing:0.015em;
+    text-transform:uppercase;margin:0 0 12px;line-height:1.05}
+  .sec-body{font-size:14px;color:var(--text-2);margin-bottom:24px;max-width:640px;line-height:1.65}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:24px 28px}
+
+  /* Discovery funnel */
+  .discovery{display:flex;align-items:stretch;gap:0}
+  .d-step{
+    flex:1;background:var(--surface);border:1px solid rgba(238,236,221,0.15);
+    padding:22px 20px;position:relative;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-color:var(--surface);
+  }
+  .d-step .n{
+    font-family:var(--font-display);font-size:48px;font-weight:500;line-height:1;
+    letter-spacing:-0.01em;color:var(--text);margin-bottom:10px;
+  }
+  .d-step .lbl{font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px}
+  .d-step .body{font-size:12px;color:var(--text-2);line-height:1.5}
+  .d-connector{
+    flex:0 0 28px;position:relative;align-self:stretch;
+  }
+  .d-connector::before{
+    content:"";position:absolute;top:50%;left:0;right:0;height:1px;
+    background:rgba(255,255,255,0.15);
+  }
+  .d-connector::after{
+    content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.35);
+  }
+  @media (max-width:900px){.discovery{flex-direction:column}.d-connector{display:none}}
+
+  /* Signal cards */
+  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:800px){.sig-grid{grid-template-columns:1fr}}
+  .sig-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent,var(--blue));
+    border-radius:2px;padding:22px 24px}
+  .sig-card.pain{--accent:var(--red)}
+  .sig-card.eval{--accent:var(--amber)}
+  .sig-card.transform{--accent:var(--green)}
+  .sig-card.competitor{--accent:var(--violet)}
+  .sig-card .eyebrow{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;
+    color:#EEECDD;font-weight:500;margin-bottom:10px}
+  .sig-card .t{font-family:var(--font-display);font-size:20px;font-weight:500;letter-spacing:0.01em;
+    text-transform:uppercase;margin:0 0 10px}
+  .sig-card .desc{font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:14px}
+  .sig-card .ex{
+    font-size:12px;color:var(--text-3);font-style:italic;line-height:1.6;
+    padding:10px 12px;background:rgba(255,255,255,0.03);border-left:2px solid var(--border);
+    border-radius:0 2px 2px 0;
+  }
+  .sig-card .ex::before{content:"“"}
+  .sig-card .ex::after{content:"”"}
+
+  /* Formula */
+  .formula{
+    font-family:var(--font-display);font-size:22px;font-weight:500;letter-spacing:0.01em;
+    padding:28px 32px;background-color:var(--elevated);border:1px solid var(--border);
+    border-left:3px solid var(--blue);border-radius:2px;margin-bottom:24px;
+    color:var(--text-2);text-align:center;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .formula b{color:var(--text)}
+  .dim-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media (max-width:900px){.dim-grid{grid-template-columns:1fr 1fr}}
+  .dim-card{background:var(--surface);border:1px solid var(--border);padding:20px;position:relative;border-radius:2px}
+  .dim-card .wt{
+    position:absolute;top:14px;right:14px;
+    font-family:var(--font-mono);font-size:11px;font-weight:500;
+    padding:3px 8px;border-radius:2px;background:rgba(70,91,255,0.14);color:#a7b2ff;
+    border:1px solid var(--blue-border);
+  }
+  .dim-card .t{font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text);
+    font-weight:500;margin-bottom:10px}
+  .dim-card .desc{font-size:12px;color:var(--text-2);line-height:1.55}
+
+  /* Router diagram */
+  .router{display:grid;grid-template-columns:200px 1fr;gap:16px 20px;align-items:center}
+  @media (max-width:720px){.router{grid-template-columns:1fr}}
+  .router .k{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+    padding:10px 0;border-right:1px solid var(--border);padding-right:16px;font-weight:500}
+  @media (max-width:720px){.router .k{border-right:none;border-bottom:1px solid var(--border);padding-bottom:6px}}
+  .router .v{display:flex;flex-wrap:wrap;gap:6px}
+  .router .pill{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:0.02em;
+    padding:4px 10px;background:rgba(255,255,255,0.05);
+    border:1px solid var(--border);border-radius:2px;color:var(--text-2);
+  }
+  .router-note{margin-top:24px;padding:16px 20px;background:var(--elevated);
+    border:1px solid var(--border);border-left:2px solid var(--blue);border-radius:2px;
+    font-size:13px;color:var(--text-2);font-style:italic;line-height:1.6}
+
+  /* Labels table */
+  .labels{width:100%;border-collapse:collapse;font-size:13px}
+  .labels th{font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);
+    text-align:left;font-weight:500;padding:12px 14px;border-bottom:1px solid var(--border)}
+  .labels td{padding:16px 14px;border-bottom:1px solid rgba(255,255,255,0.06)}
+  .labels tr:last-child td{border-bottom:none}
+  .labels .score-pill{
+    display:inline-block;padding:4px 10px;border-radius:2px;
+    font-family:var(--font-mono);font-size:12px;font-weight:500;
+    background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  }
+  .labels .score-pill.strong{background:rgba(16,185,129,0.12);color:#34d399;border-color:rgba(16,185,129,0.3)}
+  .labels .score-pill.good  {background:rgba(245,158,11,0.12);color:#fbbf24;border-color:rgba(245,158,11,0.3)}
+  .labels .score-pill.mod   {background:rgba(249,115,22,0.12);color:#fb923c;border-color:rgba(249,115,22,0.3)}
+  .labels .score-pill.weak  {background:rgba(239,68,68,0.12);color:#f87171;border-color:rgba(239,68,68,0.3)}
+  .labels .name{color:var(--text);font-weight:500}
+  .labels .action{color:var(--text-2);font-style:italic}
+
+  footer{max-width:1080px;margin:0 auto;padding:24px 28px 40px;
+    font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+    border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path fill="#F5F5F5" d="M2 2h2v2H2V2Zm3 2h3V2H5v2Zm4-2v2h5V2H9ZM2 8h2V5H2v3Zm3 0h3V5H5v3Zm4 0h5V5H9v3Zm-7 6h2V9H2v5Zm3 0h3V9H5v5Zm4 0h5V9H9v5Z"/>
+    </svg>
+    <span class="name"></span>
+    <span class="sub">Signal Engine</span>
+    <span class="eyebrow">Methodology</span>
+  </div>
+  <nav class="nav-links">
+    <a href="analytics.html">Analytics</a><span class="nav-sep">·</span>
+    <a href="ops.html">Pipeline Ops</a><span class="nav-sep">·</span>
+    <a href="methodology.html" class="active">Methodology</a><span class="nav-sep">·</span>
+    <a href="index.html">← Contacts</a>
+  </nav>
+</header>
+
+<main>
+  <div class="page-header">
+    <div class="page-eyebrow">Methodology</div>
+    <h1 class="page-title">Every Score Has a Reason.</h1>
+    <div class="page-sub">The system behind the scores — how 20 target institutions become your outreach queue.</div>
+  </div>
+
+  <section>
+    <div class="sec-eyebrow">Step 1 · Discovery</div>
+    <h2 class="sec-title">We start with your target universe</h2>
+    <div class="sec-body">A curated list of financial institutions becomes the search space. Every downstream step operates inside that boundary — no cold prospecting into unknown firms.</div>
+    <div class="discovery">
+      <div class="d-step"><div class="n" id="d-firms">20</div><div class="lbl">Target Firms</div><div class="body">PE, credit, hedge funds, investment banks — named accounts only.</div></div>
+      <div class="d-connector" aria-hidden="true"></div>
+      <div class="d-step"><div class="n" id="d-signals">—</div><div class="lbl">Signals Collected</div><div class="body">Twitter · LinkedIn · Press · Hiring — continuous monitoring.</div></div>
+      <div class="d-connector" aria-hidden="true"></div>
+      <div class="d-step"><div class="n" id="d-scored">—</div><div class="lbl">Contacts Scored</div><div class="body">Each contact scored against ICP via Claude + skill router.</div></div>
+      <div class="d-connector" aria-hidden="true"></div>
+      <div class="d-step"><div class="n" id="d-queued">—</div><div class="lbl">Queued</div><div class="body">Only Strong and Good matches surface for review.</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-eyebrow">Step 2 · Signal Collection</div>
+    <h2 class="sec-title">What we look for</h2>
+    <div class="sec-body">Four categories of signal, each scored for recency and relevance. The system watches for evidence that a firm is actively transforming — not just capable of it.</div>
+    <div class="sig-grid">
+      <div class="sig-card pain">
+        <div class="eyebrow">Pain</div>
+        <h3 class="t">AlphaSense Frustration</h3>
+        <div class="desc">Pricing complaints, workflow friction, RAG failures on long documents — signals that the incumbent isn't doing the job.</div>
+        <div class="ex">We're paying AlphaSense a fortune and still can't get a clean answer across the full CIM. Spending half my time re-asking the same question.</div>
+      </div>
+      <div class="sig-card eval">
+        <div class="eyebrow">Evaluation</div>
+        <h3 class="t">Piloting & RFPs</h3>
+        <div class="desc">Testing language, vendor comparisons, pilot programs. These firms are in-market now — the window is open.</div>
+        <div class="ex">Kicking off vendor eval for deal-team AI in Q2. Shortlist includes , AlphaSense, Rogo. Compliance review starts next week.</div>
+      </div>
+      <div class="sig-card transform">
+        <div class="eyebrow">Transformation</div>
+        <h3 class="t">AI-First Announcements</h3>
+        <div class="desc">Firm-wide AI mandates, dedicated Head of AI hires, portfolio-wide deployment plans. The buying decision is already made.</div>
+        <div class="ex">Thrilled to announce our portfolio-wide AI rollout — building the deal team of the future with production infrastructure live this quarter.</div>
+      </div>
+      <div class="sig-card competitor">
+        <div class="eyebrow">Competitor</div>
+        <h3 class="t">Displacement Openings</h3>
+        <div class="desc">Dissatisfaction with AlphaSense, Bloomberg, or Rogo. Price, depth, or workflow — each is a distinct sales story.</div>
+        <div class="ex">Rogo is fine for quick Q&amp;A but breaks on multi-doc synthesis. We need something that actually reads the full data room.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-eyebrow">Step 3 · Scoring</div>
+    <h2 class="sec-title">How we score each contact</h2>
+    <div class="sec-body">A weighted composite across four dimensions. Every dimension is scored 0-100 by Claude given the firm, contact, and signal context.</div>
+    <div class="formula">Score = <b>0.30</b>·ICP + <b>0.25</b>·AI + <b>0.25</b>·Reach + <b>0.20</b>·Fresh</div>
+    <div class="dim-grid">
+      <div class="dim-card"><span class="wt">30%</span><div class="t">ICP Fit</div>
+        <div class="desc">Firm type, AUM tier, workflow fit. Tier 1 megafunds score highest.</div></div>
+      <div class="dim-card"><span class="wt">25%</span><div class="t">AI Readiness</div>
+        <div class="desc">Buying stage, AI hiring, published AI strategy. Evidence the firm is moving.</div></div>
+      <div class="dim-card"><span class="wt">25%</span><div class="t">Reachability</div>
+        <div class="desc">Verified email, named decision-maker, title match. No generic inboxes.</div></div>
+      <div class="dim-card"><span class="wt">20%</span><div class="t">Signal Freshness</div>
+        <div class="desc">Days since most recent signal. Last 30 days score strongly; older decays.</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-eyebrow">Step 4 · Skill Router</div>
+    <h2 class="sec-title">How the AI adapts per firm</h2>
+    <div class="sec-body">Before scoring, a deterministic router selects which skill sections to load into Claude's prompt. A PE firm sees different scoring rules than an investment bank; a firm with known objections sees compliance-weighted language.</div>
+    <div class="card">
+      <div class="router">
+        <div class="k">Firm Type →</div>
+        <div class="v"><span class="pill">icp_pe</span><span class="pill">icp_ib</span><span class="pill">icp_credit</span><span class="pill">icp_hf</span></div>
+        <div class="k">Competitor Flag →</div>
+        <div class="v"><span class="pill">displacement_alphasense</span><span class="pill">displacement_rogo</span><span class="pill">displacement_bloomberg</span></div>
+        <div class="k">Buying Stage →</div>
+        <div class="v"><span class="pill">language_deploying</span><span class="pill">language_evaluating</span><span class="pill">language_exploring</span></div>
+        <div class="k">Signal Types →</div>
+        <div class="v"><span class="pill">signals_press</span><span class="pill">signals_hiring</span><span class="pill">signals_twitter</span><span class="pill">signals_linkedin</span></div>
+      </div>
+      <div class="router-note">Claude only sees the sections relevant to each firm — keeping prompts precise and scoring consistent across hundreds of runs.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-eyebrow">Step 5 · Labels</div>
+    <h2 class="sec-title">Score thresholds</h2>
+    <div class="sec-body">The composite score maps to a decision bucket. Only Strong and Good matches move to the review queue.</div>
+    <div class="card"><table class="labels">
+      <thead><tr><th>Score</th><th>Label</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td><span class="score-pill strong">75+</span></td><td class="name">Strong Match</td><td class="action">Approve for outreach</td></tr>
+        <tr><td><span class="score-pill good">55-74</span></td><td class="name">Good Match</td><td class="action">Review and enrich</td></tr>
+        <tr><td><span class="score-pill mod">35-54</span></td><td class="name">Moderate</td><td class="action">Collect more signals first</td></tr>
+        <tr><td><span class="score-pill weak">&lt;35</span></td><td class="name">Weak</td><td class="action">Deprioritize this cycle</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+</main>
+
+<footer id="footer">Loading…</footer>
+
+<script>
+(() => {
+  const esc = s => String(s==null?'':s);
+  async function load(){
+    try{
+      const r = await fetch('contacts_data.json', {cache:'no-store'});
+      if (!r.ok) throw new Error('HTTP '+r.status);
+      const data = await r.json();
+      const cs = data.contacts || [], s = data.stats || {};
+      const scored = cs.filter(c => c.score > 0).length;
+      const queued = cs.filter(c => c.score >= 55).length;
+      const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+      set('d-firms',   s.total_firms   ?? 20);
+      set('d-signals', s.total_signals ?? 0);
+      set('d-scored',  scored);
+      set('d-queued',  queued);
+      const ts = data.generated_at ? new Date(data.generated_at).toLocaleString() : '—';
+      document.getElementById('footer').textContent = `Generated ${ts} · ${cs.length} Contacts`;
+    } catch(err){
+      document.getElementById('footer').textContent = `Failed to load: ${esc(err.message)}`;
+    }
+  }
+  load();
+})();
+</script>
+</body>
+</html>
