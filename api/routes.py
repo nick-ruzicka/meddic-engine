@@ -23,7 +23,7 @@ import re
 import subprocess
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from functools import wraps
 
 from flask import Blueprint, jsonify, request
@@ -380,6 +380,99 @@ def stats():
 
 _VOICE_SKILL_PATH = os.path.join(ROOT, "config", "skills", "voice", "outreach_voice_.md")
 HAIKU_MODEL = "claude-haiku-4-5-20251001"
+
+# Daily brief — server-side cache, 30-min TTL
+_brief_cache: dict = {"brief": None, "generated_at": None, "signal_count": 0}
+BRIEF_TTL_SECONDS = 1800
+
+
+@api_bp.route("/daily-brief", methods=["GET"])
+@require_api_key
+def daily_brief():
+    now = datetime.now(timezone.utc)
+    cached_at = _brief_cache.get("_at")
+    if cached_at and now - cached_at < timedelta(seconds=BRIEF_TTL_SECONDS):
+        return jsonify({
+            "brief": _brief_cache["brief"],
+            "signal_count": _brief_cache["signal_count"],
+            "generated_at": _brief_cache["generated_at"],
+            "cached": True,
+        })
+
+    conn = get_db()
+    try:
+        rows = conn.execute("""
+            SELECT s.signal_type, s.content, s.signal_date,
+                   f.name AS firm_name,
+                   c.name AS contact_name, c.title AS contact_title
+              FROM signals s
+              JOIN firms f ON s.firm_id = f.id
+         LEFT JOIN contacts c ON s.contact_id = c.id
+             WHERE f.tier = 1
+               AND s.signal_date >= datetime('now', '-48 hours')
+               AND length(s.content) > 40
+               AND s.content NOT LIKE '%UNITED STATES%'
+               AND s.content NOT LIKE '%Table of Contents%'
+          ORDER BY s.signal_date DESC
+             LIMIT 15
+        """).fetchall()
+    finally:
+        conn.close()
+
+    if not rows:
+        result = {"brief": None, "signal_count": 0, "generated_at": now.isoformat()}
+        _brief_cache.update(result)
+        _brief_cache["_at"] = now
+        return jsonify(result)
+
+    signal_text = ""
+    for s in rows:
+        contact = (
+            f" (re: {s['contact_name']}, {s['contact_title'] or 'unknown title'})"
+            if s["contact_name"] else ""
+        )
+        signal_text += f"- [{(s['signal_type'] or 'signal').upper()}] {s['firm_name']}{contact}: {(s['content'] or '')[:150]}\n"
+
+    prompt = (
+        "You are a sales intelligence analyst for , an AI platform for "
+        "PE/IB/hedge funds.\n\n"
+        f"Signals from the last 48h across tier-1 target accounts:\n\n{signal_text}\n"
+        "Write a 100-word sales brief for a  AE. The panel it displays in "
+        "is narrow (320px) so keep lines short.\n\n"
+        "Format:\n"
+        "- 1 sentence: overall picture this week\n"
+        "- 2-3 bullets: accounts to prioritize TODAY + specific reason + recommended angle (use \u2192)\n"
+        "- 1 sentence: any patterns or watch-outs\n\n"
+        "Rules: name firms and contacts specifically. No generic phrases. "
+        "Sound like a sharp analyst."
+    )
+
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        return jsonify({"brief": None, "error": "ANTHROPIC_API_KEY not set",
+                        "signal_count": len(rows)}), 500
+
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+        resp = client.messages.create(
+            model=HAIKU_MODEL,
+            max_tokens=300,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        brief_text = "".join(getattr(b, "text", "") for b in resp.content).strip()
+    except Exception as e:
+        logger.exception("daily_brief generation failed")
+        return jsonify({"brief": None, "error": str(e), "signal_count": len(rows)}), 502
+
+    result = {
+        "brief": brief_text,
+        "signal_count": len(rows),
+        "generated_at": now.isoformat(),
+    }
+    _brief_cache.update(result)
+    _brief_cache["_at"] = now
+    return jsonify(result)
 
 
 def _load_voice_skill() -> str:

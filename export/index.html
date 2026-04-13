@@ -71,6 +71,14 @@
   .nav-links .nav-sep{color:rgba(255,255,255,0.20);font-size:11px}
   .nav-right{display:flex;align-items:center;gap:18px}
   .alerts-wrap{padding:0 4px}
+  /* AI daily brief inside alerts panel */
+  .brief-section{padding:14px 16px;background:linear-gradient(135deg,#0D1425 0%,#0A0A0A 100%);border-bottom:1px solid #2A2A2A;min-height:60px}
+  .brief-section .brief-header{display:flex;justify-content:space-between;align-items:baseline}
+  .brief-section .brief-label{font-size:9px;letter-spacing:2px;color:#465BFF;font-weight:700;text-transform:uppercase}
+  .brief-section .brief-count{font-size:9px;color:#444}
+  .brief-section .brief-body{margin-top:10px;font-size:11px;color:#aaa;line-height:1.65}
+  .brief-section .brief-loading{font-size:10px;color:#333;font-style:italic;padding:8px 0}
+  .brief-section .brief-error{font-size:10px;color:#555}
   .nav-meta{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
 
   /* Signals-live indicator */
@@ -928,6 +936,9 @@
         <div style="padding:10px 14px;border-bottom:1px solid var(--border);
              font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);font-weight:600">
           Latest Triggers · Tier 1 · last 48h
+        </div>
+        <div id="brief-section" class="brief-section">
+          <div class="brief-loading">✦ Generating brief…</div>
         </div>
         <div id="alerts-list" style="max-height:480px;overflow-y:auto"></div>
       </div>
@@ -1977,6 +1988,47 @@
     });
   }
 
+  function renderBriefSection(brief, signalCount){
+    const el = document.getElementById('brief-section');
+    if (!el) return;
+    if (!brief){
+      el.innerHTML = '<div class="brief-error">No tier-1 signals in last 48h</div>';
+      return;
+    }
+    const safe = esc(brief).replace(/\n/g, '<br>');
+    el.innerHTML = `
+      <div class="brief-header">
+        <span class="brief-label">✦ AI Brief</span>
+        <span class="brief-count">${signalCount} signals</span>
+      </div>
+      <div class="brief-body">${safe}</div>`;
+  }
+
+  async function loadDailyBrief(){
+    const el = document.getElementById('brief-section');
+    if (!el) return;
+    try {
+      const cached = JSON.parse(localStorage.getItem('_brief_cache') || 'null');
+      if (cached && (Date.now() - cached.timestamp) < 1800000){
+        renderBriefSection(cached.brief, cached.signal_count);
+        return;
+      }
+    } catch(_){}
+    el.innerHTML = '<div class="brief-loading">✦ Generating brief…</div>';
+    try {
+      const r = await fetch(API_BASE + '/api/daily-brief', {headers:{'X-API-Key':API_KEY}});
+      const data = await r.json();
+      renderBriefSection(data.brief, data.signal_count || 0);
+      if (data.brief){
+        localStorage.setItem('_brief_cache', JSON.stringify({
+          brief: data.brief, signal_count: data.signal_count, timestamp: Date.now(),
+        }));
+      }
+    } catch(err){
+      el.innerHTML = '<div class="brief-error">Brief unavailable</div>';
+    }
+  }
+
   function bindAlerts(){
     const btn = document.getElementById('btn-alerts');
     const panel = document.getElementById('alerts-panel');
@@ -1991,6 +2043,7 @@
         const maxDate = triggers.reduce((m, t) => (t.signal_date || '') > m ? (t.signal_date || '') : m, '');
         if (maxDate) localStorage.setItem('alerts_last_seen', maxDate);
         renderAlerts();
+        loadDailyBrief();
       }
     });
     document.addEventListener('click', e => {
