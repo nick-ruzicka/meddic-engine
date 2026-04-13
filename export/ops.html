@@ -6,132 +6,230 @@
 <title>Pipeline Ops · MEDDIC Engine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#101010; --surface:#161616; --elevated:#1c1c1c; --overlay:#222;
-    --text:#fff; --text-2:rgba(255,255,255,0.72); --text-3:rgba(255,255,255,0.55);
-    --border:rgba(255,255,255,0.10); --border-strong:rgba(255,255,255,0.18);
-    --blue:#465BFF; --blue-dim:rgba(70,91,255,0.15); --blue-border:rgba(70,91,255,0.40);
-    --green:#10b981; --amber:#f59e0b; --orange:#f97316; --red:#ef4444; --violet:#7c3aed; --teal:#0d9488;
+    /* Warm sand — shared with analytics */
+    --bg:#F2EFE1;
+    --bg-deep:#EAE4CF;
+    --surface:#E8E3D0;
+    --surface-2:#DED5B8;
+    --surface-3:#D0C4A2;
+    --ink:#1E1A14;
+    --ink-2:#4D4334;
+    --ink-3:rgba(77,67,52,0.60);
+    --ink-4:rgba(77,67,52,0.32);
+    --border:#D4CAAE;
+    --border-soft:#DFD6BB;
+    --umber:#8B6F4E;
+    --umber-deep:#5B4129;
+    --umber-light:#C4A77A;
+    --umber-glow:rgba(139,111,78,0.12);
+    --blue:#465BFF;
+    --blue-soft:rgba(70,91,255,0.12);
+    --green:#4F7A3B;
+    --amber:#B07D1A;
+    --orange:#C25A1E;
+    --red:#A8321C;
     --font-ui:'Inter',system-ui,-apple-system,sans-serif;
     --font-display:'Playfair Display',Georgia,serif;
     --font-mono:'SF Mono','Fira Code',ui-monospace,Menlo,monospace;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-    font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(ellipse 60% 40% at 20% 0%, rgba(196,167,122,0.22), transparent 70%),
+      radial-gradient(ellipse 40% 30% at 95% 10%, rgba(139,111,78,0.08), transparent 70%);
+    background-attachment:fixed;
+  }
   a{color:inherit}
 
-  header{position:sticky;top:0;z-index:20;background:rgba(16,16,16,0.92);backdrop-filter:blur(12px);
-    border-bottom:1px solid rgba(255,255,255,0.08);height:64px;padding:0 28px;
+  /* ── Header ── */
+  header{position:sticky;top:0;z-index:20;
+    background:rgba(242,239,225,0.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border-soft);height:64px;padding:0 32px;
     display:flex;align-items:center;gap:20px}
   .brand{display:flex;align-items:center;gap:12px}
-  .brand .name{font-size:15px;font-weight:500}
-  .brand .sub{color:var(--text-3);font-size:13px;margin-left:2px}
+  .brand .name{font-size:15px;font-weight:500;color:var(--ink)}
+  .brand .sub{color:var(--ink-3);font-size:13px}
   .brand .eyebrow{margin-left:14px;padding-left:14px;border-left:1px solid var(--border);
-    font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3)}
-  .nav-links{display:flex;align-items:center;gap:10px;margin-left:auto}
+    font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3)}
+  .nav-links{display:flex;align-items:center;gap:12px;margin-left:auto}
   .nav-links a{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
-    color:var(--text-3);text-decoration:none;transition:color 150ms}
-  .nav-links a:hover{color:var(--text)}
-  .nav-links a.active{color:var(--blue)}
-  .nav-links .nav-sep{color:rgba(255,255,255,0.20);font-size:11px}
+    color:var(--ink-3);text-decoration:none;transition:color 150ms}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a.active{color:var(--umber-deep)}
+  .nav-links .nav-sep{color:var(--ink-4);font-size:11px}
 
-  main{max-width:1280px;margin:0 auto;padding:40px 28px 80px;color:var(--text)}
-  main section, main .card, main table{color:inherit}
-  .hb-grid-bg{
-    background-image:
-      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
+  main{max-width:1280px;margin:0 auto;padding:48px 32px 96px}
+
+  .eyebrow{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+    color:var(--umber);font-weight:600}
+  .eyebrow::before{content:"";display:inline-block;width:18px;height:1px;
+    background:var(--umber);vertical-align:middle;margin-right:10px;margin-bottom:3px}
+
+  /* ── HERO (compact — ops is diagnostic, not editorial) ── */
+  .hero{
+    position:relative;overflow:hidden;
+    padding:44px 48px 48px;margin-bottom:32px;
+    background:
+      radial-gradient(ellipse 60% 100% at 100% 50%, rgba(139,111,78,0.12), transparent 60%),
+      linear-gradient(135deg, #EEE8D2 0%, #E5DBBB 100%);
+    border:1px solid var(--border);border-radius:3px;
   }
-  .page-header{
-    margin-bottom:40px;padding:40px 32px 40px;border-bottom:1px solid var(--border);
-    background-image:
-      radial-gradient(ellipse 40% 60% at 90% 50%, rgba(70,91,255,0.06), transparent),
-      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-    background-size: auto, 40px 40px, 40px 40px;
+  .hero-inner{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:48px;align-items:end}
+  .hero .eyebrow{margin-bottom:18px}
+  .hero-title{font-family:var(--font-display);font-weight:500;
+    font-size:clamp(40px,5vw,62px);line-height:1;letter-spacing:-0.015em;margin:0;color:var(--ink)}
+  .hero-sub{margin-top:14px;font-size:14.5px;color:var(--ink-2);line-height:1.55;max-width:580px}
+  .hero-sub b{color:var(--ink);font-weight:500}
+  .health-pills{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .pill{
+    display:flex;align-items:center;gap:8px;padding:8px 14px;
+    background:rgba(255,255,255,0.42);border:1px solid var(--border);border-radius:2px;
+    font-size:11px;letter-spacing:0.04em;color:var(--ink-2);
   }
-  .page-eyebrow{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3);margin-bottom:14px}
-  .page-title{font-family:var(--font-display);font-size:56px;font-weight:500;letter-spacing:0.025em;
-    line-height:0.96;text-transform:uppercase;margin:0}
-  .page-sub{font-size:15px;color:var(--text-2);margin-top:14px;max-width:720px}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+  .pill.warn .dot{background:var(--amber)}
+  .pill.err .dot{background:var(--red)}
+  .pill .v{font-family:var(--font-mono);color:var(--ink);font-weight:500}
+  @media (max-width:860px){
+    .hero{padding:32px 28px}
+    .hero-inner{grid-template-columns:1fr}
+    .health-pills{justify-content:flex-start}
+  }
 
-  section{margin-bottom:56px}
-  section + section{margin-top:48px}
-  .sec-title{font-family:var(--font-display);font-size:22px;font-weight:500;letter-spacing:0.02em;
-    margin:0 0 6px}
-  .sec-sub{font-size:12px;color:var(--text-3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:20px}
+  /* ── Section chrome ── */
+  .sec-head{margin:36px 0 16px;display:flex;align-items:baseline;gap:16px}
+  .sec-title{font-family:var(--font-display);font-size:26px;font-weight:500;
+    letter-spacing:-0.005em;color:var(--ink);margin:0}
+  .sec-sub{font-size:13px;color:var(--ink-3)}
+  .sec-upd{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--ink-3);letter-spacing:0.02em}
 
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:24px 28px}
+  /* ── Bento grid ── */
+  .bento{display:grid;grid-template-columns:repeat(6, 1fr);gap:16px}
+  .tile{
+    background:var(--surface);border:1px solid var(--border);border-radius:3px;
+    padding:24px 26px;transition:border-color 220ms, box-shadow 220ms;
+  }
+  .tile:hover{border-color:var(--umber-light);box-shadow:0 6px 20px rgba(91,65,41,0.06)}
+  .tile-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}
+  .tile-hd .lbl{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--umber);font-weight:600}
+  .tile-hd .hint{font-size:10px;letter-spacing:0.06em;color:var(--ink-3)}
+  .t-span-4{grid-column:span 4}
+  .t-span-3{grid-column:span 3}
+  .t-span-2{grid-column:span 2}
+  .t-span-6{grid-column:span 6}
+  @media (max-width:960px){.t-span-4,.t-span-3,.t-span-2{grid-column:span 6}}
 
-  .hbar{display:grid;grid-template-columns:180px 1fr 200px;gap:16px;align-items:center;margin-bottom:14px}
+  /* ── Waterfall ── */
+  .hbar{display:grid;grid-template-columns:160px 1fr 210px;gap:18px;align-items:center;margin-bottom:16px}
   .hbar:last-child{margin-bottom:0}
-  .hbar .lbl{font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-2)}
-  .hbar .track{height:8px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden}
-  .hbar .track > div{height:100%;border-radius:2px;transition:width 500ms}
-  .hbar .meta{font-family:var(--font-mono);font-size:13px;color:var(--text-2);
-    display:grid;grid-template-columns:50px 50px 70px;gap:14px;align-items:end;justify-content:end;text-align:right}
-  .hbar .meta .cell{display:flex;flex-direction:column;gap:2px;align-items:flex-end;line-height:1.1}
-  .hbar .meta .cell .v{color:var(--text);font-weight:500;font-variant-numeric:tabular-nums}
-  .hbar .meta .cell.pct .v{color:var(--text-3)}
+  .hbar .lbl{font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-2);font-weight:500}
+  .hbar .track{height:8px;background:rgba(139,111,78,0.10);border-radius:2px;overflow:hidden}
+  .hbar .track > div{height:100%;border-radius:2px;transition:width 600ms cubic-bezier(.22,.75,.31,1)}
+  .hbar .meta{display:grid;grid-template-columns:52px 52px 78px;gap:14px;align-items:end;text-align:right}
+  .hbar .meta .cell{display:flex;flex-direction:column;gap:3px;align-items:flex-end;line-height:1}
+  .hbar .meta .cell .v{font-family:var(--font-mono);color:var(--ink);font-weight:500;font-size:14px;font-variant-numeric:tabular-nums}
+  .hbar .meta .cell.pct .v{color:var(--ink-3)}
   .hbar .meta .cell.vf  .v{color:var(--green)}
-  .hbar .meta .cell .k{font-size:8.5px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);font-family:var(--font-ui);font-weight:500}
-  .waterfall-hd{display:grid;grid-template-columns:180px 1fr 200px;gap:16px;align-items:center;
-    margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-  .waterfall-hd .spacer{grid-column:1 / span 2}
-  .waterfall-hd .cols{display:grid;grid-template-columns:50px 50px 70px;gap:14px;text-align:right;
-    font-size:8.5px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);font-weight:500}
+  .hbar .meta .cell .k{font-size:8.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);font-family:var(--font-ui);font-weight:500}
 
-  .summary{display:flex;gap:24px;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);
-    font-size:12px;color:var(--text-2);letter-spacing:0.04em}
+  .summary{display:flex;gap:28px;flex-wrap:wrap;margin-top:20px;padding-top:18px;
+    border-top:1px solid var(--border-soft);font-size:12px;color:var(--ink-2)}
   .summary span{display:inline-flex;align-items:baseline;gap:6px}
-  .summary span b{color:var(--text);font-weight:500;font-family:var(--font-mono)}
+  .summary span b{color:var(--umber-deep);font-weight:600;font-family:var(--font-mono)}
 
-  .fall-row{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;
-    padding:18px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
+  /* ── Fallthrough ── */
+  .fall-row{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;
+    padding:16px 0;border-bottom:1px solid var(--border-soft)}
   .fall-row:last-child{border-bottom:none}
-  .fall-row .reason{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px}
-  .fall-row .action{font-size:12px;color:var(--text-3);font-style:italic}
+  .fall-row .reason{font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:4px}
+  .fall-row .action{font-size:12px;color:var(--ink-3);font-style:italic}
   .fall-row .num{
-    justify-self:end;padding-left:24px;min-width:72px;text-align:right;
-    border-left:1px solid rgba(238,236,221,0.20);
-    font-family:var(--font-display);font-size:26px;font-weight:400;
-    line-height:1;color:var(--text);letter-spacing:-0.01em;
+    justify-self:end;padding-left:24px;min-width:80px;text-align:right;
+    border-left:1px solid var(--border);
+    font-family:var(--font-display);font-size:28px;font-weight:500;line-height:1;
+    color:var(--ink);letter-spacing:-0.01em;font-variant-numeric:tabular-nums;
   }
+  .ft-lede{margin-bottom:16px;padding:14px 18px;border-radius:2px;
+    background:var(--umber-glow);border-left:3px solid var(--umber);
+    font-size:13px;color:var(--ink-2);line-height:1.55}
+  .ft-lede b{color:var(--umber-deep);font-weight:600}
 
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  th{font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);
-    text-align:left;font-weight:500;padding:12px 14px;border-bottom:1px solid var(--border)}
-  td{padding:14px;border-bottom:1px solid rgba(255,255,255,0.06);color:var(--text-2)}
-  td.num{font-family:var(--font-mono);text-align:right;color:var(--text)}
-  tr:last-child td{border-bottom:none}
+  /* ── DB health / API keys ── */
+  .kv{display:flex;flex-direction:column;gap:10px}
+  .kv-row{display:flex;justify-content:space-between;align-items:baseline;
+    padding-bottom:9px;border-bottom:1px solid var(--border-soft)}
+  .kv-row:last-child{border-bottom:none;padding-bottom:0}
+  .kv-row .k{font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+  .kv-row .v{font-family:var(--font-mono);font-size:14px;color:var(--ink);font-weight:500;
+    font-variant-numeric:tabular-nums}
 
-  .state{padding:60px;text-align:center;color:var(--text-3)}
-  footer{max-width:1280px;margin:0 auto;padding:24px 28px 40px;
-    font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
-    border-top:1px solid var(--border)}
-  /* prose-cap */ .reasoning, .brief-section p, .account-brief p, .brief-row .v { max-width: 68ch }
+  .key-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+    padding:10px 0;border-bottom:1px solid var(--border-soft)}
+  .key-row:last-child{border-bottom:none}
+  .key-row .nm{font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-2);font-weight:500}
+  .key-row .pv{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-3)}
+  .key-row .status{display:flex;align-items:center;gap:6px}
+  .key-row .status .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+  .key-row.missing .status .dot{background:var(--red)}
+  .key-row .status .lbl{font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--green);font-weight:600}
+  .key-row.missing .status .lbl{color:var(--red)}
 
-  /* ops: per-card update timestamp */
-  .sec-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px}
-  .sec-head .sec-title{margin:0}
-  .sec-head .sec-upd{font-family:var(--font-mono);font-size:11px;color:var(--text-3);letter-spacing:0.02em}
-  .card-label{text-transform:none;font-size:13px;letter-spacing:0;color:rgba(255,255,255,0.72);font-weight:500}
-  /* pipeline cadence */
-  .cadence{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-  .cad-row{padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:2px}
-  .cad-row .lbl{font-size:11px;color:var(--text-3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px}
-  .cad-row .val{font-family:var(--font-display);font-size:26px;color:var(--text);font-weight:500;line-height:1.1}
-  .cad-row .sub{font-size:11.5px;color:var(--text-3);margin-top:4px;font-family:var(--font-mono)}
-  .err-row{padding:10px 14px;border-left:2px solid var(--red);background:rgba(239,68,68,0.05);margin-bottom:8px;font-family:var(--font-mono);font-size:11.5px;color:var(--text-2);border-radius:0 2px 2px 0}
+  /* ── Pipeline cadence ── */
+  .cadence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+  .cad-row{padding:18px 20px;background:rgba(255,255,255,0.35);
+    border:1px solid var(--border);border-left:3px solid var(--umber);border-radius:2px;
+    transition:border-left-color 180ms}
+  .cad-row:hover{border-left-color:var(--umber-deep)}
+  .cad-row .lbl{font-size:10px;color:var(--ink-3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;font-weight:600}
+  .cad-row .val{font-family:var(--font-display);font-size:30px;color:var(--ink);font-weight:500;line-height:1;letter-spacing:-0.01em;font-variant-numeric:tabular-nums}
+  .cad-row .sub{font-size:11.5px;color:var(--ink-3);margin-top:6px;font-family:var(--font-mono)}
 
-  .ft-lede{margin-bottom:14px;padding:12px 16px;border:1px solid var(--border);
-    background:rgba(255,255,255,0.02);border-left:2px solid var(--blue);border-radius:2px;
-    font-size:13px;color:var(--text-2);line-height:1.55}
-  .ft-lede b{color:var(--text);font-weight:500}
+  /* ── Recent activity tables ── */
+  .ed-table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .ed-table th{font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);
+    font-weight:500;text-align:left;padding:10px 12px 10px 0;border-bottom:1px solid var(--border)}
+  .ed-table td{padding:11px 12px 11px 0;border-bottom:1px solid var(--border-soft);color:var(--ink-2)}
+  .ed-table td.num{font-family:var(--font-mono);text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+  .ed-table td.mono{font-family:var(--font-mono);color:var(--ink-3);font-size:11px}
+  .ed-table tr:last-child td{border-bottom:none}
+  .ed-table .firm{color:var(--ink);font-weight:500}
+  .ed-table .contact{color:var(--ink-2)}
+  .score-pill{display:inline-block;padding:2px 8px;border-radius:2px;font-family:var(--font-mono);
+    font-size:11px;font-weight:500;font-variant-numeric:tabular-nums}
+  .score-pill.strong{background:rgba(91,65,41,0.14);color:var(--umber-deep);border:1px solid rgba(91,65,41,0.32)}
+  .score-pill.good  {background:rgba(139,111,78,0.14);color:var(--umber);border:1px solid rgba(139,111,78,0.32)}
+  .score-pill.mod   {background:rgba(194,90,30,0.12);color:var(--orange);border:1px solid rgba(194,90,30,0.32)}
+  .score-pill.weak  {background:rgba(168,50,28,0.12);color:var(--red);border:1px solid rgba(168,50,28,0.32)}
+
+  .sig-chip{display:inline-block;padding:2px 8px;border-radius:2px;
+    font-size:10px;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;
+    background:rgba(176,125,26,0.11);color:var(--amber);border:1px solid rgba(176,125,26,0.32)}
+  .sig-chip.press{background:rgba(176,125,26,0.11);color:var(--amber);border-color:rgba(176,125,26,0.32)}
+  .sig-chip.hiring{background:rgba(79,122,59,0.11);color:var(--green);border-color:rgba(79,122,59,0.32)}
+  .sig-chip.twitter{background:rgba(194,90,30,0.11);color:var(--orange);border-color:rgba(194,90,30,0.32)}
+  .sig-chip.linkedin{background:rgba(70,91,255,0.10);color:var(--blue);border-color:rgba(70,91,255,0.28)}
+
+  /* ── Parse errors ── */
+  .err-row{padding:11px 15px;border-left:3px solid var(--red);
+    background:rgba(168,50,28,0.05);margin-bottom:8px;font-family:var(--font-mono);
+    font-size:11.5px;color:var(--ink-2);border-radius:0 2px 2px 0}
+  .err-empty{padding:28px;text-align:center;color:var(--ink-3);font-style:italic;
+    background:rgba(79,122,59,0.05);border:1px dashed rgba(79,122,59,0.3);border-radius:2px}
+
+  .state{padding:40px;text-align:center;color:var(--ink-3);font-style:italic}
+  footer{max-width:1280px;margin:0 auto;padding:32px 32px 48px;font-size:10px;
+    letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);border-top:1px solid var(--border-soft)}
+
+  /* entrance */
+  .fade-in{opacity:0;transform:translateY(8px);animation:rise 560ms ease forwards}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  .fade-in.d1{animation-delay:60ms}
+  .fade-in.d2{animation-delay:120ms}
+  .fade-in.d3{animation-delay:180ms}
 </style>
 </head>
 <body>
@@ -139,7 +237,7 @@
 <header>
   <div class="brand">
     <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path fill="#F5F5F5" d="M2 2h2v2H2V2Zm3 2h3V2H5v2Zm4-2v2h5V2H9ZM2 8h2V5H2v3Zm3 0h3V5H5v3Zm4 0h5V5H9v3Zm-7 6h2V9H2v5Zm3 0h3V9H5v5Zm4 0h5V9H9v5Z"/>
+      <path fill="#1E1A14" d="M2 2h2v2H2V2Zm3 2h3V2H5v2Zm4-2v2h5V2H9ZM2 8h2V5H2v3Zm3 0h3V5H5v3Zm4 0h5V5H9v3Zm-7 6h2V9H2v5Zm3 0h3V9H5v5Zm4 0h5V9H9v5Z"/>
     </svg>
     <span class="name"></span>
     <span class="sub">Signal Engine</span>
@@ -154,43 +252,119 @@
 </header>
 
 <main>
-  <div class="page-header">
-    <div class="page-eyebrow">Operations</div>
-    <h1 class="page-title">Pipeline Ops</h1>
-    <div class="page-sub">Where contacts come from, why they stall, and which firm types convert.</div>
-  </div>
 
-  <section>
-    <div class="sec-head"><h2 class="sec-title">Contact waterfall</h2><div class="sec-upd" id="upd-waterfall">—</div></div>
-    <div class="sec-sub" id="waterfall-sub">Where contacts come from</div>
-    <div class="card"><div id="waterfall"><div class="state">Loading…</div></div>
+  <!-- HERO -->
+  <section class="hero fade-in">
+    <div class="hero-inner">
+      <div>
+        <div class="eyebrow">System health · live</div>
+        <h1 class="hero-title">Pipeline ops.</h1>
+        <div class="hero-sub" id="h-sub">Loading system health…</div>
+      </div>
+      <div class="health-pills" id="health-pills"></div>
+    </div>
+  </section>
+
+  <!-- ROW 1: Waterfall (4) + DB Health (2) -->
+  <div class="sec-head">
+    <h2 class="sec-title">Enrichment topology</h2>
+    <span class="sec-sub">Where tier-1 contacts come from, and where the DB stands</span>
+    <span class="sec-upd" id="upd-waterfall">—</span>
+  </div>
+  <div class="bento">
+    <div class="tile t-span-4 fade-in d1">
+      <div class="tile-hd">
+        <span class="lbl">Contact waterfall</span>
+        <span class="hint" id="waterfall-sub">Where contacts come from</span>
+      </div>
+      <div id="waterfall"><div class="state">Loading…</div></div>
       <div class="summary" id="waterfall-summary"></div>
     </div>
-  </section>
 
-  <section>
-    <div class="sec-head"><h2 class="sec-title">Fallthrough analysis</h2><div class="sec-upd" id="upd-fallthrough">—</div></div>
-    <div class="sec-sub">Why contacts miss the queue (threshold 50)</div>
-    <div class="card"><div id="fallthrough"></div></div>
-  </section>
-
-  <section>
-    <div class="sec-head">
-      <h2 class="sec-title">Pipeline cadence</h2>
-      <div class="sec-upd" id="upd-cadence">—</div>
+    <div class="tile t-span-2 fade-in d2">
+      <div class="tile-hd">
+        <span class="lbl">Database health</span>
+        <span class="hint" id="db-size">—</span>
+      </div>
+      <div class="kv" id="db-rows"><div class="state">Loading…</div></div>
     </div>
-    <div class="sec-sub">What the pipeline did last run.</div>
-    <div class="card"><div id="cadence" class="cadence"><div class="state">Loading…</div></div></div>
+  </div>
+
+  <!-- ROW 2: Fallthrough (4) + API keys (2) -->
+  <div class="sec-head">
+    <h2 class="sec-title">Flow diagnostics</h2>
+    <span class="sec-sub">Why contacts stall, and which APIs are wired up</span>
+    <span class="sec-upd" id="upd-fallthrough">—</span>
+  </div>
+  <div class="bento">
+    <div class="tile t-span-4 fade-in d1">
+      <div class="tile-hd">
+        <span class="lbl">Fallthrough analysis</span>
+        <span class="hint">Tier 1 · threshold 50</span>
+      </div>
+      <div id="fallthrough"><div class="state">Loading…</div></div>
+    </div>
+
+    <div class="tile t-span-2 fade-in d2">
+      <div class="tile-hd">
+        <span class="lbl">API keys</span>
+        <span class="hint">Env wiring</span>
+      </div>
+      <div id="api-keys"><div class="state">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- Cadence -->
+  <div class="sec-head">
+    <h2 class="sec-title">Pipeline cadence</h2>
+    <span class="sec-sub">What the pipeline did last run</span>
+    <span class="sec-upd" id="upd-cadence">—</span>
+  </div>
+  <section class="fade-in">
+    <div id="cadence" class="cadence"><div class="state">Loading…</div></div>
   </section>
 
-  <section>
-    <div class="sec-head">
-      <h2 class="sec-title">Parse errors</h2>
-      <div class="sec-upd" id="upd-errors">—</div>
+  <!-- ROW 3: Recent scoring + Recent signals -->
+  <div class="sec-head">
+    <h2 class="sec-title">Recent activity</h2>
+    <span class="sec-sub">Last 10 scores · last 10 signals</span>
+  </div>
+  <div class="bento">
+    <div class="tile t-span-3 fade-in d1">
+      <div class="tile-hd">
+        <span class="lbl">Scoring activity</span>
+        <span class="hint">Most recent 10</span>
+      </div>
+      <table class="ed-table" id="recent-scores">
+        <thead><tr><th>Firm</th><th>Contact</th><th style="text-align:right">Score</th></tr></thead>
+        <tbody><tr><td colspan="3" class="state">Loading…</td></tr></tbody>
+      </table>
     </div>
-    <div class="sec-sub">Claude responses the scorer couldn't parse.</div>
-    <div class="card"><div id="parse-errors"><div class="state">Loading…</div></div></div>
+
+    <div class="tile t-span-3 fade-in d2">
+      <div class="tile-hd">
+        <span class="lbl">Signals ingested</span>
+        <span class="hint">Most recent 10</span>
+      </div>
+      <table class="ed-table" id="recent-signals">
+        <thead><tr><th>Type</th><th>Firm</th><th style="text-align:right">Age</th></tr></thead>
+        <tbody><tr><td colspan="3" class="state">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Parse errors -->
+  <div class="sec-head">
+    <h2 class="sec-title">Parse errors</h2>
+    <span class="sec-sub">Claude responses the scorer couldn't parse</span>
+    <span class="sec-upd" id="upd-errors">—</span>
+  </div>
+  <section class="fade-in">
+    <div class="tile t-span-6">
+      <div id="parse-errors"><div class="state">Loading…</div></div>
+    </div>
   </section>
+
 </main>
 
 <footer id="footer">Loading…</footer>
@@ -198,64 +372,95 @@
 <script>
 (() => {
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const prettyType = t => ({pe:'Private Equity',hedge_fund:'Hedge Fund',investment_bank:'Investment Bank',credit_fund:'Credit Fund',credit:'Credit Fund'}[t] || (t||'unknown').replace(/_/g,' '));
-  const scoreColor = s => s>=75?'var(--green)': s>=55?'var(--amber)': s>=35?'var(--orange)':'var(--red)';
+  const fmt = n => (n||0).toLocaleString();
+  const prettyKey = k => k.replace('_API_KEY','').replace('_API_TOKEN','').replace('_',' ');
+  const scorePill = s => s>=75?'strong': s>=55?'good': s>=35?'mod':'weak';
 
-  // Reads real email_sources aggregate from stats (all contacts, not just queued).
-  // Falls back to classifying per-contact if the aggregate is missing (older JSON).
+  // Source palette — umber spectrum, red for "no email"
+  const SOURCE_COLORS = {
+    exa_team_page:    '#5B4129',
+    team_page_direct: '#8B6F4E',
+    hunter:           '#B0895F',
+    pattern:          '#C4A77A',
+    linkedin:         '#465BFF',
+    manual:           '#B5A889',
+    none:             '#C25A1E',
+  };
+
+  function timeAgo(iso){
+    if (!iso) return '—';
+    const t = new Date(iso).getTime();
+    if (isNaN(t)) return '—';
+    const mins = Math.round((Date.now() - t) / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.round(mins/60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.round(hrs/24);
+    return `${days}d ago`;
+  }
+
+  // ── Hero / health pills ─────────────────────────────
+  function renderHero(od, stats){
+    const h = od.health || {}, rc = h.row_counts || {}, e = od.enrichment || {};
+    const errs = (od.parse_errors || []).length;
+    const latestSignal = stats?.latest_signal || null;
+    const pe = document.getElementById('health-pills');
+    const pills = [
+      {lbl:'DB', v: `${h.db_size_kb||0} KB`, status:'ok'},
+      {lbl:'Verified rate', v: `${e.hit_rate_pct||0}%`, status: (e.hit_rate_pct||0) >= 70 ? 'ok' : 'warn'},
+      {lbl:'Parse errors', v: errs, status: errs === 0 ? 'ok' : errs < 5 ? 'warn' : 'err'},
+      {lbl:'Latest signal', v: timeAgo(latestSignal), status:'ok'},
+    ];
+    pe.innerHTML = pills.map(p =>
+      `<div class="pill ${p.status==='warn'?'warn':p.status==='err'?'err':''}">
+        <span class="dot"></span>
+        <span>${esc(p.lbl)}</span>
+        <span class="v">${esc(String(p.v))}</span>
+      </div>`).join('');
+    const sub = document.getElementById('h-sub');
+    sub.innerHTML = `<b>${fmt(rc.firms||0)}</b> firms · <b>${fmt(rc.contacts||0)}</b> contacts · <b>${fmt(rc.signals||0)}</b> signals · <b>${fmt(rc.scores||0)}</b> scoring decisions.`;
+  }
+
+  // ── Waterfall ────────────────────────────────────────
   function renderWaterfall(data){
     const sources = (data.stats && data.stats.email_sources) || null;
-
-    // Canonical buckets in display order. Maps to whatever keys the DB emits.
     const buckets = [
-      {k:'exa_team_page',    lbl:'Exa Team Page',     color:'#465BFF'},
-      {k:'team_page_direct', lbl:'Direct Team Page',  color:'rgba(70,91,255,0.55)'},
-      {k:'hunter',           lbl:'Hunter Verified',   color:'rgba(255,255,255,0.55)'},
-      {k:'pattern',          lbl:'Pattern Guess',     color:'rgba(255,255,255,0.32)'},
-      {k:'linkedin',         lbl:'LinkedIn',          color:'rgba(255,255,255,0.28)'},
-      {k:'manual',           lbl:'Manual',            color:'rgba(255,255,255,0.24)'},
-      {k:'none',             lbl:'No Email',          color:'rgba(239,68,68,0.60)'},
+      {k:'exa_team_page',    lbl:'Exa Team Page'},
+      {k:'team_page_direct', lbl:'Direct Team Page'},
+      {k:'hunter',           lbl:'Hunter Verified'},
+      {k:'pattern',          lbl:'Pattern Guess'},
+      {k:'linkedin',         lbl:'LinkedIn'},
+      {k:'manual',           lbl:'Manual'},
+      {k:'none',             lbl:'No Email'},
     ];
-
     let rows;
     if (sources){
-      // Real aggregate: {src: {n, verified}}
       rows = buckets
-        .map(b => ({...b, n: sources[b.k]?.n || 0, verified: sources[b.k]?.verified || 0}))
+        .map(b => ({...b, color: SOURCE_COLORS[b.k] || '#B5A889',
+          n: sources[b.k]?.n || 0, verified: sources[b.k]?.verified || 0}))
         .filter(b => b.n > 0 || b.k === 'none');
-      // Append any unexpected keys the DB emits so we don't silently hide data.
       for (const [k, v] of Object.entries(sources)){
         if (!buckets.some(b => b.k === k) && v.n > 0){
-          rows.push({k, lbl: k.replace(/_/g,' '), color:'rgba(255,255,255,0.38)', n:v.n, verified:v.verified || 0});
+          rows.push({k, lbl: k.replace(/_/g,' '), color:'#B5A889', n:v.n, verified:v.verified || 0});
         }
       }
     } else {
-      // Fallback: classify per-contact (best-effort).
-      const cs = data.contacts || [];
-      const fallback = {};
-      for (const c of cs){
-        const k = c.email_source || (c.email ? 'pattern' : 'none');
-        fallback[k] = (fallback[k] || 0) + 1;
-      }
-      rows = Object.entries(fallback).map(([k, n]) => {
-        const b = buckets.find(x => x.k === k);
-        return {k, lbl: b?.lbl || k.replace(/_/g,' '), color: b?.color || 'rgba(255,255,255,0.32)', n, verified:0};
-      });
+      rows = [];
     }
-
     const total = Math.max(1, rows.reduce((a,b) => a + b.n, 0));
-    const subEl = document.getElementById('waterfall-sub');
     const wfEl  = document.getElementById('waterfall');
+    const subEl = document.getElementById('waterfall-sub');
     const sumEl = document.getElementById('waterfall-summary');
-    if (!wfEl){ console.error('waterfall element not found'); return; }
-    if (subEl) subEl.textContent = `Where ${total} contacts come from`;
+    if (!wfEl) return;
+    if (subEl) subEl.textContent = `${total} tier-1 contacts`;
     wfEl.innerHTML = rows.map(b => {
       const pct = (b.n / total) * 100;
       const vCell = (b.verified && b.k !== 'none')
         ? `<div class="cell vf"><div class="v">${b.verified}</div><div class="k">verified</div></div>`
         : `<div class="cell vf"><div class="v">—</div><div class="k">verified</div></div>`;
       return `<div class="hbar">
-        <div class="lbl">${b.lbl}</div>
+        <div class="lbl">${esc(b.lbl)}</div>
         <div class="track"><div style="width:${Math.max(1.5,pct)}%;background:${b.color}"></div></div>
         <div class="meta">
           <div class="cell"><div class="v">${b.n}</div><div class="k">count</div></div>
@@ -269,26 +474,26 @@
     const withEmail = rows.filter(b => b.k !== 'none').reduce((a,b) => a + b.n, 0);
     const missing  = rows.find(b => b.k === 'none')?.n || 0;
     if (sumEl) sumEl.innerHTML = `
-      <span><b>${Math.round(verified/total*100)}%</b>verified</span>
-      <span><b>${Math.round((withEmail - verified)/total*100)}%</b>found, unverified</span>
-      <span><b>${Math.round(missing/total*100)}%</b>no email</span>`;
+      <span><b>${Math.round(verified/total*100)}%</b> verified</span>
+      <span><b>${Math.round((withEmail - verified)/total*100)}%</b> found, unverified</span>
+      <span><b>${Math.round(missing/total*100)}%</b> no email</span>`;
   }
 
+  // ── Fallthrough ──────────────────────────────────────
   function renderFallthrough(opsData){
     const el = document.getElementById('fallthrough');
-    if (!el){ console.error('fallthrough element not found'); return; }
+    if (!el) return;
     const ft = (opsData && opsData.fallthrough) || null;
     const rows = ft ? [
-      {reason:`Score below threshold (50) — tier 1`, count:ft.below_threshold, action:'Collect more signals or expand ICP criteria'},
-      {reason:'No verified email — tier 1',          count:ft.no_email,        action:'Queue into Hunter.io enrichment batch'},
-      {reason:'No signal attached — tier 1',         count:ft.no_signal,       action:'Run collectors or attach manual signal'},
-      {reason:'Buying stage: exploring — tier 1',    count:ft.exploring,       action:'Deprioritize this cycle, re-score next run'},
+      {reason:'Score below threshold (50)', count:ft.below_threshold, action:'Collect more signals or expand ICP criteria'},
+      {reason:'No verified email',          count:ft.no_email,        action:'Queue into Hunter.io enrichment batch'},
+      {reason:'No signal attached',         count:ft.no_signal,       action:'Run collectors or attach manual signal'},
+      {reason:'Buying stage: exploring',    count:ft.exploring,       action:'Deprioritize this cycle, re-score next run'},
     ] : [];
-    // Lede: which reason has the highest count?
     let lede = '';
     const top = rows.filter(r => r.count).sort((a,b) => b.count - a.count)[0];
     if (top){
-      lede = `<div class="ft-lede"><b>${top.count}</b> contacts stalled at <b>${esc(top.reason.toLowerCase())}</b>. ${esc(top.action)}.</div>`;
+      lede = `<div class="ft-lede"><b>${top.count}</b> tier-1 contacts stalled at <b>${esc(top.reason.toLowerCase())}</b>. ${esc(top.action)}.</div>`;
     }
     el.innerHTML = lede + (rows.length
       ? rows.map(r => `
@@ -302,99 +507,121 @@
       : `<div class="state">Run scripts/update_ops.py to populate fallthrough counts.</div>`);
   }
 
-  function renderStages(data){
-    const cs = data.contacts || [];
-    const byFirm = new Map();
-    for (const c of cs) if (!byFirm.has(c.firm_id)) byFirm.set(c.firm_id, c);
-    const firms = [...byFirm.values()];
-    const stages = [
-      {k:'deploying',  lbl:'Deploying',  color:'var(--green)'},
-      {k:'evaluating', lbl:'Evaluating', color:'var(--amber)'},
-      {k:'exploring',  lbl:'Exploring',  color:'var(--orange)'},
-    ];
-    const max = Math.max(1, ...stages.map(s => firms.filter(f => (f.buying_stage||'').toLowerCase() === s.k).length));
-    document.getElementById('stages').innerHTML = stages.map(s => {
-      const list = firms.filter(f => (f.buying_stage||'').toLowerCase() === s.k);
-      const avg = list.length ? list.reduce((a,f)=>a+(f.score||0),0)/list.length : 0;
-      return `<div class="hbar">
-        <div class="lbl">${s.lbl}</div>
-        <div class="track"><div style="width:${(list.length/max)*100}%;background:${s.color}"></div></div>
-        <div class="meta"><b>${list.length} firms</b>avg ${Math.round(avg)}</div>
-      </div>`;
-    }).join('');
+  // ── DB health ───────────────────────────────────────
+  function renderDbHealth(od){
+    const h = od.health || {};
+    const rc = h.row_counts || {};
+    const dbsize = document.getElementById('db-size');
+    if (dbsize) dbsize.textContent = `${(h.db_size_kb || 0).toFixed(1)} KB`;
+    const el = document.getElementById('db-rows');
+    if (!el) return;
+    const tables = ['firms','contacts','signals','scores','outreach_queue','review_decisions'];
+    el.innerHTML = tables.map(t => `
+      <div class="kv-row">
+        <span class="k">${esc(t)}</span>
+        <span class="v">${fmt(rc[t] ?? 0)}</span>
+      </div>`).join('');
   }
 
-  function renderFirmTable(data){
-    const cs = data.contacts || [];
-    const byType = {};
-    for (const c of cs){
-      const t = c.firm_type || 'unknown';
-      const g = byType[t] ||= {firms:new Set(), contacts:0, scoreSum:0, scored:0, emails:0, top:null};
-      g.firms.add(c.firm_id);
-      g.contacts++;
-      if (c.score > 0){ g.scoreSum += c.score; g.scored++; }
-      if (c.email_verified && c.email) g.emails++;
-      if (!g.top || (c.score||0) > (g.top.score||0)) g.top = c;
-    }
-    const rows = Object.entries(byType).map(([t, g]) => ({
-      t, firms: g.firms.size, contacts: g.contacts,
-      avg: g.scored ? g.scoreSum / g.scored : 0,
-      emailRate: g.contacts ? g.emails / g.contacts : 0,
-      top: g.top ? `${g.top.contact_name} · ${g.top.firm_name}` : '—',
-    })).sort((a,b) => b.avg - a.avg);
+  // ── API keys ────────────────────────────────────────
+  function renderApiKeys(od){
+    const keys = od.api_keys || [];
+    const el = document.getElementById('api-keys');
+    if (!el) return;
+    el.innerHTML = keys.map(k => `
+      <div class="key-row ${k.set ? '' : 'missing'}">
+        <div>
+          <div class="nm">${esc(prettyKey(k.name))}</div>
+          <div class="pv">${esc(k.preview || '—')}</div>
+        </div>
+        <div class="status">
+          <span class="dot"></span>
+          <span class="lbl">${k.set ? 'Set' : 'Missing'}</span>
+        </div>
+      </div>`).join('');
+  }
 
-    document.querySelector('#firm-table tbody').innerHTML = rows.map(r => `
+  // ── Cadence ─────────────────────────────────────────
+  function renderCadence(od){
+    const rc = (od.health || {}).row_counts || {};
+    const e = od.enrichment || {};
+    const lastDay = (od.pipeline_cadence || [])[0] || {};
+    const errs = (od.parse_errors || []).length;
+    const el = document.getElementById('cadence');
+    if (!el) return;
+    el.innerHTML = [
+      {lbl:'Signals collected', val: fmt(rc.signals ?? 0), sub:'total in DB'},
+      {lbl:'Contacts enriched', val: fmt(e.verified ?? 0), sub:`${e.hit_rate_pct||0}% hit rate`},
+      {lbl:'Scoring runs (today)', val: fmt(lastDay.n ?? 0), sub:`avg ${lastDay.avg_score ?? '—'}`},
+      {lbl:'Parse errors', val: fmt(errs), sub: errs ? 'see below' : 'clean'},
+    ].map(c => `<div class="cad-row"><div class="lbl">${esc(c.lbl)}</div><div class="val">${esc(c.val)}</div><div class="sub">${esc(c.sub)}</div></div>`).join('');
+  }
+
+  // ── Recent scoring activity ─────────────────────────
+  function renderRecentScores(od){
+    const rows = (od.recent_scores || []).slice(0, 10);
+    const tb = document.querySelector('#recent-scores tbody');
+    if (!tb) return;
+    tb.innerHTML = rows.length ? rows.map(r => `
       <tr>
-        <td style="color:var(--text)">${esc(prettyType(r.t))}</td>
-        <td class="num">${r.firms}</td>
-        <td class="num">${r.contacts}</td>
-        <td class="num" style="color:${scoreColor(r.avg)}">${Math.round(r.avg)}</td>
-        <td class="num">${Math.round(r.emailRate*100)}%</td>
-        <td style="font-size:12px">${esc(r.top)}</td>
-      </tr>`).join('') || `<tr><td colspan="6" class="state">No data</td></tr>`;
+        <td class="firm">${esc(r.firm)}</td>
+        <td class="contact">${esc(r.contact)}</td>
+        <td class="num"><span class="score-pill ${scorePill(r.score)}">${Math.round(r.score)}</span></td>
+      </tr>`).join('') : `<tr><td colspan="3" class="state">No recent scores</td></tr>`;
+  }
+
+  // ── Recent signals ──────────────────────────────────
+  function renderRecentSignals(od){
+    const rows = (od.recent_signals || []).slice(0, 10);
+    const tb = document.querySelector('#recent-signals tbody');
+    if (!tb) return;
+    tb.innerHTML = rows.length ? rows.map(r => `
+      <tr>
+        <td><span class="sig-chip ${esc(r.signal_type||'')}">${esc(r.signal_type || '—')}</span></td>
+        <td class="firm">${esc(r.firm || '—')}</td>
+        <td class="mono" style="text-align:right">${esc(timeAgo(r.signal_date || r.created_at))}</td>
+      </tr>`).join('') : `<tr><td colspan="3" class="state">No recent signals</td></tr>`;
+  }
+
+  // ── Parse errors ────────────────────────────────────
+  function renderParseErrors(od){
+    const el = document.getElementById('parse-errors');
+    if (!el) return;
+    const errs = od.parse_errors || [];
+    el.innerHTML = errs.length
+      ? errs.slice(-10).map(er => `<div class="err-row">${esc((er.raw || JSON.stringify(er)).slice(0,300))}</div>`).join('')
+      : `<div class="err-empty">No parse errors in the last run. Scorer output is clean.</div>`;
   }
 
   async function load(){
+    let data = null, od = null;
     try{
       const r = await fetch('contacts_data.json', {cache:'no-store'});
-      if (!r.ok) throw new Error('HTTP '+r.status);
-      const data = await r.json();
-      renderWaterfall(data);
-      const ts = data.generated_at ? new Date(data.generated_at).toLocaleString() : '—';
-      document.getElementById('footer').textContent = `Generated ${ts} · ${(data.contacts||[]).length} Contacts`;
-    
-      // Ops-only: per-card timestamps + cadence + parse errors from ops_data.json
-      try{
-        const rx = await fetch('ops_data.json', {cache:'no-store'});
-        if (rx.ok){
-          const od = await rx.json();
-          renderFallthrough(od);
-          const ts = od.generated_at ? new Date(od.generated_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
-          ['upd-waterfall','upd-fallthrough','upd-cadence','upd-errors'].forEach(id => {
-            const el = document.getElementById(id); if (el) el.textContent = 'Updated ' + ts;
-          });
-          const h = od.health || {}, rc = h.row_counts || {}, e = od.enrichment || {};
-          const lastDay = (od.pipeline_cadence || [])[0] || {};
-          const cadenceEl = document.getElementById('cadence');
-          if (cadenceEl){
-            cadenceEl.innerHTML = [
-              {lbl:'Signals collected', val:rc.signals ?? 0, sub:'total in DB'},
-              {lbl:'Contacts enriched', val:e.verified ?? 0, sub:(e.hit_rate_pct||0) + '% hit rate'},
-              {lbl:'Scoring runs (today)', val:lastDay.n ?? 0, sub:'avg ' + (lastDay.avg_score ?? '—')},
-              {lbl:'Parse errors', val:(od.parse_errors||[]).length, sub:(od.parse_errors||[]).length ? 'see below' : 'clean'},
-            ].map(c => `<div class="cad-row"><div class="lbl">${esc(c.lbl)}</div><div class="val">${esc(String(c.val))}</div><div class="sub">${esc(c.sub)}</div></div>`).join('');
-          }
-          const peEl = document.getElementById('parse-errors');
-          if (peEl){
-            const errs = od.parse_errors || [];
-            peEl.innerHTML = errs.length
-              ? errs.slice(-5).map(er => `<div class="err-row">${esc((er.raw || JSON.stringify(er)).slice(0,260))}</div>`).join('')
-              : '<div style="color:var(--text-3);font-size:13px">No parse errors in the last run.</div>';
-          }
-        }
-      } catch(_){ /* ops data is optional */ }
-} catch(err){
-      document.getElementById('waterfall').innerHTML = `<div class="state">Failed to load data: ${esc(err.message)}</div>`;
+      if (r.ok) data = await r.json();
+    } catch(_){}
+    try{
+      const rx = await fetch('ops_data.json', {cache:'no-store'});
+      if (rx.ok) od = await rx.json();
+    } catch(_){}
+
+    if (data) renderWaterfall(data);
+    if (od){
+      renderHero(od, data?.stats || {});
+      renderFallthrough(od);
+      renderDbHealth(od);
+      renderApiKeys(od);
+      renderCadence(od);
+      renderRecentScores(od);
+      renderRecentSignals(od);
+      renderParseErrors(od);
+      const ts = od.generated_at ? new Date(od.generated_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
+      ['upd-waterfall','upd-fallthrough','upd-cadence','upd-errors'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.textContent = 'Updated ' + ts;
+      });
+      const ts2 = od.generated_at ? new Date(od.generated_at).toLocaleString() : '—';
+      document.getElementById('footer').textContent = `Generated ${ts2}`;
+    } else if (!data) {
+      document.getElementById('waterfall').innerHTML = `<div class="state">Failed to load ops data — run scripts/update_ops.py</div>`;
     }
   }
   load();
