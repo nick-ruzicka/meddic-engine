@@ -650,14 +650,18 @@
   .firm-group.collapsed .fh-chev{transform:rotate(-90deg)}
   .firm-group.collapsed .firm-contacts{display:none}
   .firm-contacts{}
-  .firm-contacts .trow{padding-left:42px !important}
-  .firm-contacts .trow .firm-cell{padding-left:0}
-  /* Hide firm-cell avatar+name inside grouped rows — redundant */
-  .firm-contacts .trow .firm-cell .avatar,
-  .firm-contacts .trow .firm-cell .firm-info .firm-name{display:none}
-  .firm-contacts .trow .firm-cell .firm-info{margin-left:0}
-  .firm-contacts .trow .firm-cell .firm-tags{font-size:10px}
-  .firm-contacts .trow{font-size:13px}
+  /* Grouped sub-rows: collapse firm column to a 24px indent; keep the 6-cell
+     grid so every child lands in its intended column. */
+  .firm-contacts .trow{
+    grid-template-columns: 24px minmax(260px, 1.5fr) minmax(260px, 1.6fr) 160px 260px 0 !important;
+    padding-left: 0 !important;
+    font-size: 13px;
+  }
+  /* Firm cell becomes an empty 24px indent — hide its content but keep the cell */
+  .firm-contacts .trow .firm-cell{padding:0 !important}
+  .firm-contacts .trow .firm-cell > *{display:none !important}
+  /* Chevron column collapses to zero width in grouped mode */
+  .firm-contacts .trow .chev{display:none}
   /* Chevron in compact mode: repurpose for "open panel" affordance */
   .view-compact .trow .chev::before{content:"›";font-size:16px}
   .view-compact .trow{cursor:pointer}
@@ -674,6 +678,42 @@
   .stat-card.ready{border-top:3px solid #465BFF}
   .stat-card.ready .val{font-size:52px}
   .stat-card:not(.ready) .val{font-size:36px}
+
+  /* Grouped rows: show title + add first-line ready indicator */
+  .view-compact .firm-contacts .contact-title{
+    display:block !important;
+    font-size:11.5px;
+    color:var(--text-3);
+    margin-top:2px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:320px;
+  }
+  .firm-contacts .contact-name{font-size:13.5px;color:var(--text);font-weight:500}
+  /* Actions: force consistent 6px gap even with the smaller DNC button */
+  .firm-contacts .actions{display:flex !important;gap:6px !important;align-items:center;justify-content:flex-end;flex-wrap:nowrap}
+  .firm-contacts .actions .btn{white-space:nowrap}
+  /* First-line ready indicator — pen icon inline with contact name */
+  .fl-ready{
+    display:inline-block;margin-left:6px;vertical-align:middle;
+    font-size:10px;color:#10b981;letter-spacing:0.04em;
+    padding:1px 6px;border:1px solid rgba(16,185,129,0.30);
+    border-radius:2px;background:rgba(16,185,129,0.08);
+    font-weight:500;
+  }
+  .fl-ready::before{content:"✎ ";font-size:9px}
+  /* Signal freshness chip on email column */
+  .sig-chip{
+    display:inline-block;margin-left:8px;font-size:10px;letter-spacing:0.04em;
+    padding:1px 6px;border-radius:2px;color:var(--text-3);
+    border:1px solid var(--border);font-family:var(--font-mono);
+    vertical-align:middle;
+  }
+  .sig-chip.fresh{color:var(--green);border-color:rgba(16,185,129,0.30)}
+  .sig-chip.warm {color:var(--amber);border-color:rgba(245,158,11,0.30)}
+  .sig-chip.cold {color:var(--text-3)}
+
 </style>
 </head>
 <body>
@@ -998,10 +1038,22 @@
         </div>
       </div>
       <div class="contact-cell">
-        <div class="contact-name">${esc(c.contact_name)}${meddicPill(c.title)}</div>
+        <div class="contact-name">${esc(c.contact_name)}${meddicPill(c.title)}${c.first_line ? '<span class="fl-ready" title="First line generated">READY</span>' : ''}</div>
         <div class="contact-title">${esc(c.title)}</div>
       </div>
-      <div class="email-cell"><span class="email-dot ${dotCls}"></span><span class="em">${esc(emailTxt)}</span></div>
+      <div class="email-cell">
+        <span class="email-dot ${dotCls}"></span>
+        <span class="em">${esc(emailTxt)}</span>
+        ${(() => {
+          if (!c.signal_date) return '';
+          const d = new Date(c.signal_date);
+          const h = (Date.now() - d.getTime()) / 36e5;
+          if (isNaN(h)) return '';
+          const cls = h < 24 ? 'fresh' : h < 24*7 ? 'warm' : 'cold';
+          const txt = h < 1 ? `${Math.round(h*60)}m` : h < 48 ? `${Math.round(h)}h` : h < 24*30 ? `${Math.round(h/24)}d` : `${Math.round(h/24/30)}mo`;
+          return `<span class="sig-chip ${cls}">${txt}</span>`;
+        })()}
+      </div>
       <div class="score-cell">
         <div class="score-bar"><div style="width:${Math.max(2,score)}%;background:${scoreColor(score)}"></div></div>
         <div class="score-num" style="color:${scoreNumColor(score)}">${score}</div>
