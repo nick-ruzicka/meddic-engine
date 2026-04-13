@@ -22,18 +22,6 @@ class GzipHandler(SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-cache")
         super().end_headers()
 
-    def copyfile(self, source, outputfile):
-        path = getattr(self, "_served_path", "") or ""
-        accept = self.headers.get("Accept-Encoding", "")
-        if "gzip" in accept and path.lower().endswith(COMPRESSIBLE):
-            data = source.read()
-            buf = io.BytesIO()
-            with gzip.GzipFile(fileobj=buf, mode="wb", compresslevel=6) as gz:
-                gz.write(data)
-            outputfile.write(buf.getvalue())
-        else:
-            super().copyfile(source, outputfile)
-
     def send_head(self):
         path = self.translate_path(self.path)
         self._served_path = path
