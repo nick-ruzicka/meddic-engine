@@ -212,6 +212,20 @@
   footer{max-width:1080px;margin:0 auto;padding:24px 28px 40px;
     font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
     border-top:1px solid var(--border)}
+
+  /* CTA section */
+  .cta-section{padding:56px 0 32px;text-align:center;border-top:1px solid var(--border);margin-top:56px}
+  .cta-section .sec-eyebrow{display:block;margin-bottom:14px}
+  .cta-section .sec-title{margin-bottom:14px}
+  .cta-body{font-size:16px;color:var(--text-2);margin-bottom:28px;line-height:1.55}
+  .cta-body b{color:var(--text);font-weight:500}
+  .btn-primary{
+    display:inline-block;background:#465BFF;color:#fff;text-decoration:none;
+    padding:14px 28px;font-size:13px;font-weight:500;letter-spacing:0.08em;
+    text-transform:uppercase;border-radius:2px;transition:background 150ms;
+  }
+  .btn-primary:hover{background:#3a4ce6}
+
 </style>
 </head>
 <body>
@@ -354,6 +368,15 @@
       </tbody>
     </table></div>
   </section>
+
+  <!-- SECTION N — CALL TO ACTION -->
+  <section class="cta-section">
+    <div class="sec-eyebrow">Live system</div>
+    <h2 class="sec-title">See it in action</h2>
+    <p class="cta-body">The full pipeline is live — <b id="cta-tier1">—</b> firms, <b id="cta-contacts">—</b> contacts, <b id="cta-ready">—</b> ready for outreach.</p>
+    <a href="index.html" class="btn-primary">Open the queue →</a>
+  </section>
+
 </main>
 
 <footer id="footer">Loading…</footer>
@@ -405,6 +428,23 @@
   }
   load();
 })();
+
+  // Hydrate CTA numbers from contacts_data.json
+  (async () => {
+    try {
+      const r = await fetch('contacts_data.json', {cache:'no-store'});
+      if (!r.ok) return;
+      const d = await r.json();
+      const s = d.stats || {};
+      const setNum = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v != null ? v : '—'; };
+      setNum('cta-tier1', s.tier1_firms ?? s.total_firms ?? '—');
+      setNum('cta-contacts', (d.contacts || []).filter(c => (c.tier || 1) === 1).length || s.total_contacts);
+      // ready = tier1 contacts with score ≥ 55 and verified email
+      const ready = (d.contacts || []).filter(c => (c.tier || 1) === 1 && (c.score||0) >= 55 && c.email_verified && c.email).length;
+      setNum('cta-ready', ready);
+    } catch(e) { /* silent */ }
+  })();
+
 </script>
 </body>
 </html>

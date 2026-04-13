@@ -47,14 +47,18 @@ def _stats(conn) -> dict:
         if sec_total else f"{active:,} ACTIVE TARGETS"
     )
 
-    # Email-source breakdown across ALL contacts (not just queued)
+    # Email-source breakdown — Tier-1 contacts only, exclude placeholders.
+    # (Tier 2 placeholder rows would otherwise dominate "no email" with 500+.)
     email_sources = {r["src"]: {"n": r["n"], "verified": r["v"]}
         for r in conn.execute("""
-            SELECT COALESCE(NULLIF(email_source,''), 'none') AS src,
+            SELECT COALESCE(NULLIF(c.email_source,''), 'none') AS src,
                    COUNT(*) AS n,
-                   SUM(CASE WHEN email_verified=1 THEN 1 ELSE 0 END) AS v
-              FROM contacts
-             GROUP BY COALESCE(NULLIF(email_source,''), 'none')
+                   SUM(CASE WHEN c.email_verified=1 THEN 1 ELSE 0 END) AS v
+              FROM contacts c
+              JOIN firms f ON f.id = c.firm_id
+             WHERE f.tier = 1
+               AND COALESCE(c.is_placeholder,0) = 0
+             GROUP BY COALESCE(NULLIF(c.email_source,''), 'none')
         """).fetchall()}
 
     # Recent triggers — Tier-1 signals within the last 48h for firms in an
