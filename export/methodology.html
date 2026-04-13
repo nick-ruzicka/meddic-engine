@@ -272,19 +272,20 @@
   <a href="#scoring-formula">Scoring</a>
   <a href="#skill-router">Router</a>
   <a href="#score-labels">Labels</a>
+  <a href="#economics">Economics</a>
 </nav>
 
 <main>
   <div class="page-header">
     <div class="page-eyebrow">Methodology</div>
     <h1 class="page-title">Every Score Has a Reason.</h1>
-    <div class="page-sub">The system behind the scores — how <span id="m-tier1-sub">20</span> target institutions become your outreach queue.</div>
+    <div class="page-sub">The system behind the scores — how <span id="m-tier1-sub">40</span> target institutions become your outreach queue.</div>
   </div>
 
   <section id="discovery">
     <div class="sec-eyebrow">Step 1 · Discovery</div>
-    <h2 class="sec-title">From <span id="m-icp-title">7,115</span> ICP firms to <span id="m-tier1-title">20</span> named accounts</h2>
-    <div class="sec-body">We start with <span id="m-icp-qualified">7,115</span> ICP-qualified firms from SEC filings. The top <span id="m-tier2">500</span> by AUM enter Tier 2 monitoring — firmographic scoring only, no contact enrichment. When a Tier 2 firm triggers a signal, it promotes to Tier 1 for full enrichment and contact scoring. The <span id="m-tier1">20</span> Tier 1 firms are hand-curated top-tier institutions with named contacts, verified emails, and full account briefs.</div>
+    <h2 class="sec-title">From <span id="m-icp-title">7,115</span> ICP firms to <span id="m-tier1-title">40</span> named accounts</h2>
+    <div class="sec-body">We start with <span id="m-icp-qualified">7,115</span> ICP-qualified firms from SEC filings. The top <span id="m-tier2">500</span> by AUM enter Tier 2 monitoring — firmographic scoring only, no contact enrichment. When a Tier 2 firm triggers a signal, it promotes to Tier 1 for full enrichment and contact scoring. The <span id="m-tier1">40</span> Tier 1 firms are hand-curated top-tier institutions with named contacts, verified emails, and full account briefs.</div>
     <div class="discovery">
       <div class="d-step"><div class="n" id="meth-icp">7,115</div><div class="lbl">ICP Qualified</div><div class="body">Filtered from <span id="m-sec-indexed">16,639</span> SEC-registered investment advisers.</div></div>
       <div class="d-connector" aria-hidden="true"></div>
@@ -292,7 +293,7 @@
       <div class="d-connector" aria-hidden="true"></div>
       <div class="d-step"><div class="n" id="meth-tier1">20</div><div class="lbl">Tier 1 Active</div><div class="body">Named contacts, verified emails, full Claude scoring.</div></div>
       <div class="d-connector" aria-hidden="true"></div>
-      <div class="d-step"><div class="n" id="meth-ready">111</div><div class="lbl">Ready to Send</div><div class="body">Strong + Good matches with verified email.</div></div>
+      <div class="d-step"><div class="n" id="meth-ready">338</div><div class="lbl">Ready to Send</div><div class="body">Strong + Good matches with verified email.</div></div>
     </div>
   </section>
 
@@ -336,10 +337,10 @@
       <table class="labels">
         <thead><tr><th>Dimension</th><th>MEDDIC Mapping</th></tr></thead>
         <tbody>
-          <tr><td class="name">ICP Fit</td><td>Metrics + Economic Buyer identification — is this firm/person the kind of account where  has proven ROI?</td></tr>
-          <tr><td class="name">AI Readiness</td><td>Identified Pain + Decision Criteria — does the firm have the workflow pain and evaluation framework to buy now?</td></tr>
-          <tr><td class="name">Reachability</td><td>Champion identification — can we actually reach a person who can advance the deal internally?</td></tr>
-          <tr><td class="name">Signal Freshness</td><td>Decision Process timing — how close is this firm to an actual purchase window?</td></tr>
+          <tr><td class="name">ICP Fit</td><td>Metrics + Economic Buyer — is this firm the kind of account where  has proven ROI, and is the contact senior enough to influence a budgeted decision?</td></tr>
+          <tr><td class="name">AI Readiness</td><td>Identified Pain + Decision Criteria — does the firm have the workflow pain and an active evaluation framework, not just stated AI ambition?</td></tr>
+          <tr><td class="name">Reachability</td><td>Champion access — verified email to a named person plausibly positioned to convene the buying committee. A prerequisite for the rest of MEDDIC, not the Champion qualification itself.</td></tr>
+          <tr><td class="name">Signal Freshness</td><td>Decision Process timing — recency of in-market behavior. Old signals decay; recent ones indicate the purchase window is open now.</td></tr>
         </tbody>
       </table>
     </div>
@@ -371,11 +372,11 @@
         <div class="k">Firm Type →</div>
         <div class="v"><span class="pill">icp_pe</span><span class="pill">icp_ib</span><span class="pill">icp_credit</span><span class="pill">icp_hf</span></div>
         <div class="k">Competitor Flag →</div>
-        <div class="v"><span class="pill">displacement_alphasense</span><span class="pill">displacement_rogo</span><span class="pill">displacement_bloomberg</span></div>
+        <div class="v"><span class="pill">displacement_alphasense</span><span class="pill">displacement_rogo</span><span class="pill">displacement_bloomberg</span><span class="pill">displacement_stack_ai</span><span class="pill">displacement_budget</span></div>
         <div class="k">Buying Stage →</div>
         <div class="v"><span class="pill">language_deploying</span><span class="pill">language_evaluating</span><span class="pill">language_exploring</span></div>
         <div class="k">Signal Types →</div>
-        <div class="v"><span class="pill">signals_press</span><span class="pill">signals_hiring</span><span class="pill">signals_twitter</span><span class="pill">signals_linkedin</span></div>
+        <div class="v"><span class="pill">signals_press</span><span class="pill">signals_hiring</span><span class="pill">signals_content_intent</span></div>
       </div>
       <div class="router-note">Claude only sees the sections relevant to each firm — keeping prompts precise and scoring consistent across hundreds of runs.</div>
     </div>
@@ -394,6 +395,27 @@
         <tr><td><span class="score-pill weak">&lt;35</span></td><td class="name">Weak</td><td class="action">Deprioritize this cycle</td></tr>
       </tbody>
     </table></div>
+  </section>
+
+  <section id="economics">
+    <div class="sec-eyebrow">Unit Economics</div>
+    <h2 class="sec-title">What this costs to run</h2>
+    <div class="sec-body">Every scored contact, brief, and first-line draft routes through Claude. Hunter verifies emails. The whole pipeline is metered — costs are tracked per call and amortized over the ready-to-send queue.</div>
+    <div class="dim-grid">
+      <div class="dim-card"><div class="t">Total Cost</div>
+        <div class="desc" style="font-family:var(--font-display);font-size:28px;color:var(--text);line-height:1.1;margin-top:6px">$<span id="econ-total">—</span></div>
+        <div class="desc" style="margin-top:6px">Full pipeline run — all Claude + Hunter calls.</div></div>
+      <div class="dim-card"><div class="t">Cost Per Lead</div>
+        <div class="desc" style="font-family:var(--font-display);font-size:28px;color:var(--text);line-height:1.1;margin-top:6px">$<span id="econ-cpl">—</span></div>
+        <div class="desc" style="margin-top:6px">Amortized across the ready-to-send queue.</div></div>
+      <div class="dim-card"><div class="t">Claude Calls</div>
+        <div class="desc" style="font-family:var(--font-display);font-size:28px;color:var(--text);line-height:1.1;margin-top:6px"><span id="econ-sonnet">—</span></div>
+        <div class="desc" style="margin-top:6px">Sonnet scoring passes across the Tier 1 universe.</div></div>
+      <div class="dim-card"><div class="t">Hunter Calls</div>
+        <div class="desc" style="font-family:var(--font-display);font-size:28px;color:var(--text);line-height:1.1;margin-top:6px"><span id="econ-hunter">—</span></div>
+        <div class="desc" style="margin-top:6px">Verified-email lookups — only on promoted contacts.</div></div>
+    </div>
+    <div class="router-note" style="margin-top:24px">At this cost structure, a single closed Tier 1 deal repays every pipeline run the system will ever make.</div>
   </section>
 
   <!-- SECTION N — CALL TO ACTION -->
@@ -435,6 +457,12 @@
         setNum('m-tier1-sub',     f.tier1_active);
         setNum('m-tier1-title',   f.tier1_active);
         setNum('m-icp-title',     f.icp_qualified);
+        const h = d.hero || {};
+        const setText = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.textContent = v; };
+        if (h.total_cost_usd != null) setText('econ-total',  Number(h.total_cost_usd).toFixed(2));
+        if (h.cost_per_lead  != null) setText('econ-cpl',    Number(h.cost_per_lead).toFixed(3));
+        if (h.sonnet_calls   != null) setNum ('econ-sonnet', h.sonnet_calls);
+        if (h.hunter_calls   != null) setNum ('econ-hunter', h.hunter_calls);
         generated_at = d.generated_at || generated_at;
       }
     } catch(err){
@@ -442,8 +470,8 @@
       // if analytics_data.json is missing (e.g., fresh checkout, no pipeline run).
       const fb = {
         'm-sec-indexed':'16,639','m-icp-qualified':'7,115','m-icp-title':'7,115',
-        'm-tier2':'500','m-tier1':'40+','m-tier1-sub':'40+','m-tier1-title':'40+',
-        'meth-icp':'7,115','meth-tier2':'500','meth-tier1':'40+','meth-ready':'200+',
+        'm-tier2':'500','m-tier1':'40','m-tier1-sub':'40','m-tier1-title':'40',
+        'meth-icp':'7,115','meth-tier2':'500','meth-tier1':'40','meth-ready':'338',
       };
       for (const [id, v] of Object.entries(fb)){
         const el = document.getElementById(id); if (el) el.textContent = v;

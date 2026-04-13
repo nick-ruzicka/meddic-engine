@@ -587,9 +587,11 @@ def main() -> int:
                 stage["count"] = canon["sec_icp"]
 
         stats = dict(canon)
-        # Legacy aliases the analytics.html template still reads
+        # Legacy aliases. `qualified` is intentionally NOT aliased to `ready`:
+        # "Qualified" in the HTML only refers to per-signal-type conversion
+        # (score≥55), which is computed row-by-row in build_signal_conversion.
+        # Aliasing them together conflates score≥55 with score≥55+verified.
         stats.update({
-            "qualified":     canon["ready"],
             "contacts":      canon["total_contacts"],
             "scored":        hero["scored"],
             "strong":        canon["strong_match"],

@@ -468,6 +468,15 @@
 (() => {
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt = n => (n||0).toLocaleString();
+  const formatAUM = val => {
+    if (!val || val === 0) return '—';
+    const n = Number(val);
+    if (!isFinite(n)) return '—';
+    if (n >= 1e12) return '$' + (n/1e12).toFixed(1) + 'T';
+    if (n >= 1e9)  return '$' + (n/1e9).toFixed(0) + 'B';
+    if (n >= 1e6)  return '$' + (n/1e6).toFixed(0) + 'M';
+    return '$' + n.toLocaleString();
+  };
   const prettyKey = k => k.replace('_API_KEY','').replace('_API_TOKEN','').replace('_',' ');
   const scorePill = s => s>=75?'strong': s>=55?'good': s>=35?'mod':'weak';
 

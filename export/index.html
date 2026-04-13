@@ -1066,6 +1066,15 @@
   };
 
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const formatAUM = val => {
+    if (!val || val === 0) return '—';
+    const n = Number(val);
+    if (!isFinite(n)) return '—';
+    if (n >= 1e12) return '$' + (n/1e12).toFixed(1) + 'T';
+    if (n >= 1e9)  return '$' + (n/1e9).toFixed(0) + 'B';
+    if (n >= 1e6)  return '$' + (n/1e6).toFixed(0) + 'M';
+    return '$' + n.toLocaleString();
+  };
   const fmtDate = d => { if(!d) return ''; try{return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric'})}catch{return d} };
   const scoreColor = s => s>=75?'linear-gradient(135deg, #465BFF, #7B8FFF)': s>=55?'rgba(255,255,255,0.55)': s>=35?'rgba(255,255,255,0.30)':'rgba(255,255,255,0.12)';
   const scoreNumColor = s => s>=75?'#8b9fff': s>=55?'rgba(255,255,255,0.85)': s>=35?'rgba(255,255,255,0.55)':'rgba(255,255,255,0.35)';
