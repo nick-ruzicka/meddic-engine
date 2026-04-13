@@ -1320,7 +1320,15 @@
       const qid = parseInt(row.dataset.qid, 10);
       row.addEventListener('click', e => {
         if (e.target.closest('[data-act], .actions, .skip-menu, button, textarea, select, a')) return;
-        toggleExpand(qid);
+        // Resolve the qid from the closest .trow at click time so the binding
+        // can't desync from the rendered DOM (defensive — prevents the
+        // "wrong-firm panel opens" class of bug where a re-render swapped
+        // rows but kept handlers from a stale paint).
+        const live = e.currentTarget.closest('.trow');
+        const liveQid = live ? parseInt(live.dataset.qid, 10) : qid;
+        const c = (state.data?.contacts || []).find(x => x.queue_id === liveQid);
+        console.log('row click → openPanel', {bindQid: qid, liveQid, contact: c?.contact_name, firm: c?.firm_name});
+        toggleExpand(liveQid);
       });
     });
     // Wire tier-2 "Activate" buttons separately (no queue_id available).
@@ -2033,6 +2041,7 @@
       h.addEventListener('click', e => {
         if (h.style.cursor === 'default') return;
         if (e.target.closest('.fh-top-link')) return;
+        e.stopPropagation();  // never let header clicks bubble to row handlers
         const grp = h.closest('.firm-group');
         const fid = parseInt(grp.dataset.firmId, 10);
         grp.classList.toggle('collapsed');
