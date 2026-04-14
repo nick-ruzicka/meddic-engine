@@ -2,6 +2,7 @@
 utils/helpers.py
 Shared utilities: config loading, date helpers, signal freshness calculation.
 """
+from __future__ import annotations
 
 import yaml
 import json
@@ -80,3 +81,9 @@ def truncate(text: str, max_chars: int = 500) -> str:
     if not text or len(text) <= max_chars:
         return text
     return text[:max_chars].rsplit(" ", 1)[0] + "..."
+
+
+def sanitize_untrusted(text: str | None, max_chars: int = 150) -> str:
+    """Strip non-printable chars and truncate. For external content (Twitter,
+    press) before interpolating into LLM prompts."""
+    return "".join(ch for ch in (text or "") if ch.isprintable())[:max_chars]

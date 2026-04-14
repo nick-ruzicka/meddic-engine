@@ -15,9 +15,7 @@ python3 -m database
 python3 data/seed/seed_accounts.py
 
 # Generate initial data for all pages
-python3 scripts/update_dashboard.py
-python3 scripts/update_analytics.py
-python3 scripts/update_ops.py
+scripts/refresh_dashboards.sh
 
 # Start Flask API in background
 python3 app.py &
