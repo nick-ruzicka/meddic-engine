@@ -2002,7 +2002,7 @@
     const el = document.getElementById('brief-section');
     if (!el) return;
     if (!brief){
-      el.innerHTML = '<div class="brief-error">No tier-1 signals in last 48h</div>';
+      el.innerHTML = '<div class="brief-error">No tier-1 signals in last 7d</div>';
       return;
     }
     const safe = esc(brief)
