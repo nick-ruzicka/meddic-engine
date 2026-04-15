@@ -1,8 +1,12 @@
 # MEDDIC Engine
 
+[![CI](https://github.com/nick-ruzicka/meddic-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/nick-ruzicka/meddic-engine/actions/workflows/ci.yml)
+
 I built 's outbound intelligence system as a GTM Engineer take-home. It monitors 16,639 SEC-registered investment advisers, filters to 7,115 ICP-qualified targets, and surfaces the right contacts at the right firms with the right message — scored, enriched, and ready for outreach.
 
-**Live**: http://YOUR_VPS_IP:8080
+**Live**: http://YOUR_VPS_IP:8080 · **Run locally**: `make run`
+
+![Dashboard](docs/dashboard.png)
 
 ## What It Does
 
@@ -31,6 +35,18 @@ I built 's outbound intelligence system as a GTM Engineer take-home. It monitors
 | Build time | 6 days |
 
 ## Architecture
+
+```mermaid
+flowchart LR
+  CFG[Config YAML<br/>ICP · skills · keywords] --> COL[Collectors<br/>Twitter · LinkedIn · Exa · SEC]
+  COL --> ENR[Enrichment<br/>Exa team pages · Hunter verify]
+  ENR --> SCO[Scoring<br/>Sonnet 4.6 · skill router]
+  SCO --> BRF[Account Brief<br/>Haiku · MEDDIC JSON]
+  BRF --> Q[Review Queue<br/>approve · skip · flag]
+  Q --> FL[First Line<br/>Haiku · voice skill]
+  FL --> OUT[CSV Export / API]
+  SCO -. daily .-> DB[/api/daily-brief<br/>7-day synthesis/]
+```
 
 ```
 ┌────────────────┐   ┌────────────────┐   ┌────────────────┐   ┌────────────────┐
