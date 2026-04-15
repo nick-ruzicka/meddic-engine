@@ -541,9 +541,8 @@ def generate_account_brief(firm: dict, contact: dict, signals: list[dict],
     )
     this_role = _classify_role(contact.get("title", ""))
     other_roles = [_classify_role(o.get("title", "")) for o in others]
-    # Prefer Claude-assigned MEDDIC role when available; otherwise fall back
-    # to the title regex. Confidence below 0.5 gets demoted to UNKNOWN for
-    # brief labeling (critique fix #6).
+    # Prefer Claude-assigned MEDDIC role when available; fall back to the
+    # title regex. Confidence below 0.5 demotes to UNKNOWN.
     stored_meddic = _load_meddic_role(contact.get("id", 0))
     if stored_meddic.get("role") and stored_meddic["role"] != "UNKNOWN" \
        and stored_meddic.get("confidence", 0) >= 0.5:

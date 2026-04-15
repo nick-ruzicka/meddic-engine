@@ -76,7 +76,7 @@ def _exa_search(exa, query: str, num_results: int, start_date: str,
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Result filtering (critique fix #3 — no firm-level noise)
+# Result filtering — keep contact-level signal only, drop firm-level noise
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _name_in_title_or_highlight(name: str, result) -> bool:
@@ -126,7 +126,7 @@ def _normalize(result, signal_type: str) -> dict:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Twitter handle extraction (critique fix #1)
+# Twitter handle extraction
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _maybe_extract_handle(url: str) -> Optional[str]:

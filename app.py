@@ -1,8 +1,4 @@
-"""
-app.py
-MEDDIC Engine — Flask application entry point.
-Serves the dashboard and API endpoints.
-"""
+"""Flask entry point — creates the app, registers blueprints, initializes the DB."""
 
 import os
 import logging

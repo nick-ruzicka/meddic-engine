@@ -307,10 +307,7 @@ def find_contact(name: str, domain: str, existing_email: str | None = None) -> d
     if px["email"]:
         return px
 
-    # 4. TODO: Apollo.io contact lookup
-    # 5. TODO: Exa contact search
-
-    # If we had a Hunter hit below threshold, return that as best-effort
+    # Best-effort fallback: return sub-threshold Hunter hit rather than nothing
     if h["email"]:
         return {**h, "source": "hunter_low_conf"}
 

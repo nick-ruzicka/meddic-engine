@@ -1,8 +1,4 @@
-"""
-database.py
-SQLite schema and connection management for MEDDIC Engine.
-All tables created here. Import get_db() wherever you need a connection.
-"""
+"""SQLite schema + connection factory. `get_db()` returns a row-factory connection."""
 
 import sqlite3
 import os

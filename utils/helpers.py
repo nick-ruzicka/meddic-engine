@@ -1,7 +1,4 @@
-"""
-utils/helpers.py
-Shared utilities: config loading, date helpers, signal freshness calculation.
-"""
+"""Shared utilities: config loading, date parsing, signal freshness scoring."""
 from __future__ import annotations
 
 import yaml
