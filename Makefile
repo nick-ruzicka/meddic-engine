@@ -8,8 +8,11 @@ install:       ## Create venv and install deps
 	./venv/bin/pip install --upgrade pip
 	./venv/bin/pip install -r requirements.txt
 
-run:           ## Start Flask API + static dashboard (start.sh)
+run:           ## Start API (gunicorn, 4 workers) + static dashboard via start.sh
 	./start.sh
+
+serve:         ## Run API alone under gunicorn (4 workers)
+	gunicorn app:app -w 4 --bind 0.0.0.0:8765 --timeout 120
 
 test:          ## Run smoke tests
 	pytest tests/ -q

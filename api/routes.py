@@ -380,11 +380,43 @@ def stats():
 _VOICE_SKILL_PATH = os.path.join(ROOT, "config", "skills", "voice", "outreach_voice_.md")
 HAIKU_MODEL = "claude-haiku-4-5-20251001"
 
-# Daily brief — server-side cache, 30-min TTL. Single-process only (the
-# demo deployment runs one Flask process); revisit if moved to gunicorn w/ workers.
-_brief_cache: dict = {"brief": None, "generated_at": None, "signal_count": 0}
+# Daily brief cache — Redis, shared across gunicorn workers. On Redis failure
+# we log and fall through to generation; the endpoint never hard-fails on cache.
+BRIEF_CACHE_KEY = ":daily_brief"
 BRIEF_TTL_SECONDS = 1800
 BRIEF_WINDOW_DAYS = 7
+
+try:
+    import redis as _redis
+    _brief_redis = _redis.Redis(
+        host=os.getenv("REDIS_HOST", "localhost"),
+        port=int(os.getenv("REDIS_PORT", 6379)),
+        socket_connect_timeout=1,
+        socket_timeout=1,
+        decode_responses=True,
+    )
+except Exception:
+    _brief_redis = None
+
+
+def _brief_cache_get() -> dict | None:
+    if _brief_redis is None:
+        return None
+    try:
+        raw = _brief_redis.get(BRIEF_CACHE_KEY)
+        return json.loads(raw) if raw else None
+    except Exception:
+        logger.warning("brief cache read failed; falling through to generation")
+        return None
+
+
+def _brief_cache_set(payload: dict) -> None:
+    if _brief_redis is None:
+        return
+    try:
+        _brief_redis.setex(BRIEF_CACHE_KEY, BRIEF_TTL_SECONDS, json.dumps(payload))
+    except Exception:
+        logger.warning("brief cache write failed; serving uncached")
 
 
 @api_bp.route("/daily-brief", methods=["GET"])
@@ -393,16 +425,9 @@ def daily_brief():
     from utils.helpers import sanitize_untrusted
 
     now = datetime.now(timezone.utc)
-    cached_at_iso = _brief_cache.get("generated_at")
-    if cached_at_iso:
-        cached_at = datetime.fromisoformat(cached_at_iso)
-        if now - cached_at < timedelta(seconds=BRIEF_TTL_SECONDS):
-            return jsonify({
-                "brief": _brief_cache["brief"],
-                "signal_count": _brief_cache["signal_count"],
-                "generated_at": cached_at_iso,
-                "cached": True,
-            })
+    cached = _brief_cache_get()
+    if cached:
+        return jsonify({**cached, "cached": True})
 
     conn = get_db()
     try:
@@ -426,7 +451,7 @@ def daily_brief():
 
     if not rows:
         result = {"brief": None, "signal_count": 0, "generated_at": now.isoformat()}
-        _brief_cache.update(result)
+        _brief_cache_set(result)
         return jsonify(result)
 
     signal_blocks = []
@@ -486,7 +511,7 @@ def daily_brief():
         "signal_count": len(rows),
         "generated_at": now.isoformat(),
     }
-    _brief_cache.update(result)
+    _brief_cache_set(result)
     return jsonify(result)
 
 

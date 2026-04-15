@@ -17,10 +17,10 @@ python3 data/seed/seed_accounts.py
 # Generate initial data for all pages
 scripts/refresh_dashboards.sh
 
-# Start Flask API in background
-python3 app.py &
+# Start Flask API via gunicorn (4 workers) in background
+gunicorn app:app -w 4 --bind 0.0.0.0:${PORT:-8765} --timeout 120 &
 API_PID=$!
-echo "✓ API running on port ${PORT:-8765} (pid $API_PID)"
+echo "✓ API running on port ${PORT:-8765} (pid $API_PID, 4 workers)"
 
 # Start dashboard static server (gzip-enabled)
 python3 scripts/static_server.py 8080 export &
