@@ -1,7 +1,5 @@
 # MEDDIC Engine
 
-[![CI](https://github.com/nick-ruzicka/meddic-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/nick-ruzicka/meddic-engine/actions/workflows/ci.yml)
-
 I built 's outbound intelligence system as a GTM Engineer take-home. It monitors 16,639 SEC-registered investment advisers, filters to 7,115 ICP-qualified targets, and surfaces the right contacts at the right firms with the right message — scored, enriched, and ready for outreach.
 
 **Live**: http://YOUR_VPS_IP:8080 · **Run locally**: `make run`
