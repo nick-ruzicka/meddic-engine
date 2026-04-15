@@ -13,16 +13,16 @@ from dateutil import parser as dateutil_parser
 
 logger = logging.getLogger(__name__)
 
-_config_cache = None
+_config_cache: dict[str, dict] = {}
 
 
 def load_config(config_path: str = "config/config.yaml") -> dict:
-    """Load and cache the YAML config file."""
-    global _config_cache
-    if _config_cache is None:
+    """Load and cache the YAML config file, keyed by resolved path."""
+    key = str(Path(config_path).resolve())
+    if key not in _config_cache:
         with open(config_path, "r") as f:
-            _config_cache = yaml.safe_load(f)
-    return _config_cache
+            _config_cache[key] = yaml.safe_load(f)
+    return _config_cache[key]
 
 
 def calculate_freshness_days(signal_date_str: str) -> int:

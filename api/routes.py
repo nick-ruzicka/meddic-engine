@@ -333,8 +333,6 @@ def activate():
         ).fetchone()
         if not row:
             return jsonify({"error": "firm_id not found"}), 404
-        # TODO: a follow-up job should pick up newly-promoted firms and run
-        # hunter + exa + linkedin enrichment + Claude scoring on them.
         conn.execute(
             "UPDATE firms SET tier = 1, updated_at = datetime('now') WHERE id = ?",
             (firm_id,),
@@ -382,7 +380,8 @@ def stats():
 _VOICE_SKILL_PATH = os.path.join(ROOT, "config", "skills", "voice", "outreach_voice_.md")
 HAIKU_MODEL = "claude-haiku-4-5-20251001"
 
-# Daily brief — server-side cache, 30-min TTL
+# Daily brief — server-side cache, 30-min TTL. Single-process only (the
+# demo deployment runs one Flask process); revisit if moved to gunicorn w/ workers.
 _brief_cache: dict = {"brief": None, "generated_at": None, "signal_count": 0}
 BRIEF_TTL_SECONDS = 1800
 BRIEF_WINDOW_DAYS = 7
@@ -701,7 +700,7 @@ def healthz():
         return jsonify({
             "status":    "ok",
             "firms":     firms,
-            "timestamp": datetime.now().isoformat(timespec="seconds"),
+            "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         })
     except Exception as e:
         logger.exception("healthz failed")

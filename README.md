@@ -91,10 +91,6 @@ Score = 0.30 × ICP Fit  +  0.25 × AI Readiness  +  0.25 × Reachability  +  0.
 
 Before each scoring call a deterministic router picks the prompt sections that apply to *this* account and nothing else. A PE firm loads `icp_pe`; a Rogo customer loads `displacement_rogo`; a firm flagged `evaluating` loads `language_evaluating`. Claude only sees the sections relevant to each account — ICP type, competitor context, buying stage, signal types. This is 's sales playbook encoded as a prompt routing system.
 
-## Demo
-
-Loom walkthrough: [link]
-
 ## Docs
 
 - [`docs/SUBMISSION.pdf`](docs/SUBMISSION.pdf) — final take-home submission
@@ -104,7 +100,7 @@ Loom walkthrough: [link]
 
 Python 3.9, Flask, SQLite (WAL, busy_timeout=5000), Claude API (`claude-sonnet-4-6` for scoring, `claude-haiku-4-5-20251001` for briefs + MEDDIC + first lines), Hunter.io, Exa AI (`exa-py`), TwitterAPI.io, Apify, SEC EDGAR bulk data.
 
-Dashboard is static HTML + inline Tailwind-flavored CSS + vanilla JS — no build step, no CDN JS, loads one JSON file per page.
+Dashboard is static HTML + custom CSS (Google Fonts CDN only) + vanilla JS — no framework, no build step, loads one JSON file per page.
 
 ## Running It
 
