@@ -35,8 +35,11 @@ def create_app():
     return app
 
 
+# Module-level app for WSGI servers (gunicorn app:app)
+app = create_app()
+
+
 if __name__ == "__main__":
-    app = create_app()
     port = int(os.getenv("PORT", 8765))
     debug = os.getenv("DEBUG", "false").lower() == "true"
     app.run(host="0.0.0.0", port=port, debug=debug)
