@@ -339,8 +339,48 @@ def _contacts(conn) -> list[dict]:
                     return p["url"]
         return url
 
+    def _inject_signals_into_research(research, contact_id, firm_id, conn):
+        """Merge earnings/linkedin signals from the signals table into
+        research_json so they appear in Recent Activity alongside Exa research."""
+        if research is None:
+            research = {"recent_posts": [], "speaking": [], "press": []}
+        sig_rows = conn.execute("""
+            SELECT signal_type, content, signal_date, source_url, author_name
+            FROM signals
+            WHERE (contact_id = ? OR firm_id = ?)
+              AND signal_type IN ('earnings', 'linkedin')
+              AND content IS NOT NULL AND LENGTH(content) > 30
+            ORDER BY COALESCE(signal_date, created_at) DESC
+            LIMIT 5
+        """, (contact_id, firm_id)).fetchall()
+        existing_urls = set()
+        for cat in ["recent_posts", "speaking", "press"]:
+            for item in research.get(cat, []):
+                if item.get("url"):
+                    existing_urls.add(item["url"].split("?")[0].rstrip("/"))
+        for s in sig_rows:
+            url = (s["source_url"] or "").split("?")[0].rstrip("/")
+            if url in existing_urls:
+                continue
+            existing_urls.add(url)
+            item = {
+                "signal_type": s["signal_type"],
+                "date": (s["signal_date"] or "")[:10],
+                "title": (s["author_name"] or "") + (" — " if s["author_name"] else "") + (s["content"] or "")[:120],
+                "snippet": (s["content"] or "")[:200],
+                "url": s["source_url"] or "",
+            }
+            if s["signal_type"] == "earnings":
+                research.setdefault("press", []).insert(0, item)
+            else:
+                research.setdefault("recent_posts", []).insert(0, item)
+        return research
+
     def _build(r):
         research = _parse_research(r["research_json"])
+        research = _inject_signals_into_research(
+            research, r["contact_id"], r["firm_id"], conn
+        )
         signal_url = _resolve_signal_url(r["signal_url"], research)
         return research, signal_url
 
