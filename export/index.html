@@ -1840,9 +1840,29 @@
     try{
       const r = await apiCall('/api/generate_first_line', {queue_id: qid});
       c.first_line = r.first_line || '';
-      showToast(`Generated first line for ${c.contact_name}`);
-      // Re-render side panel to pick up subject/body split layout
-      if (state.panelQid === qid) { openPanel(qid); }
+      // If response has subject+body, render the split layout directly
+      if (r.subject && r.body) {
+        const block = document.querySelector('#side-panel .sp-email-block') || ta.closest('.side-panel__section');
+        if (block) {
+          const disabled = c.status !== 'pending' ? 'disabled' : '';
+          block.outerHTML = `
+            <div class="side-panel__section sp-email-block">
+              <h4>Cold email
+                <button class="btn btn--ghost btn-gen" data-act="generate" ${disabled}>Regenerate ✦</button>
+              </h4>
+              <span class="sp-subject-lbl">Subject</span>
+              <div class="sp-subject" data-sp-subject>${esc(r.subject)}</div>
+              <span class="sp-body-lbl">Body</span>
+              <textarea class="sp-fl-textarea first-line" ${disabled}>${esc(r.body)}</textarea>
+              <button class="sp-email-copy" data-act="copy_email">Copy email ⎘</button>
+            </div>`;
+          bindRows();
+        }
+      } else {
+        ta.value = c.first_line;
+        ta.disabled = c.status !== 'pending';
+      }
+      showToast(`Generated email for ${c.contact_name}`);
     } catch(err){
       ta.value = '';
       ta.disabled = c.status !== 'pending';
