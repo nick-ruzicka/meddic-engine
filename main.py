@@ -55,6 +55,7 @@ COLLECTOR_MODULES = [
     ("linkedin", "collectors.linkedin_collector"),
     ("press",    "collectors.exa_collector"),
     ("hiring",   "collectors.hiring_collector"),
+    ("earnings", "collectors.earnings_collector"),
 ]
 
 

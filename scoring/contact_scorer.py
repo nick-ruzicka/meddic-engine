@@ -566,12 +566,24 @@ def generate_account_brief(firm: dict, contact: dict, signals: list[dict],
     if not api_key:
         return None
 
-    top_sig = signals[0] if signals else None
-    sig_content = (top_sig.get("content") or "")[:400] if top_sig else "no signals attached"
-    sig_url = (top_sig.get("source_url") or "no URL") if top_sig else "none"
-    sig_date = (top_sig.get("signal_date") or "unknown date") if top_sig else "none"
-    sig_type = (top_sig.get("signal_type") or "unknown") if top_sig else "none"
-    sig_line = f"[{sig_type}] {sig_date}: {sig_content}\n  Source URL: {sig_url}"
+    # Build multi-signal block — pass ALL signals (up to 8) with source URLs
+    if signals:
+        sig_lines = []
+        for i, sig in enumerate(signals[:8], 1):
+            s_type = (sig.get("signal_type") or "unknown").upper()
+            s_date = sig.get("signal_date") or "unknown date"
+            s_url = sig.get("source_url") or "no URL"
+            s_content = (sig.get("content") or "")[:300]
+            s_author = sig.get("author_name") or ""
+            author_line = f" (by {s_author})" if s_author else ""
+            sig_lines.append(
+                f"SIGNAL {i} [{s_type}] {s_date}{author_line}:\n"
+                f"  {s_content}\n"
+                f"  Source URL: {s_url}"
+            )
+        sig_line = "\n\n".join(sig_lines)
+    else:
+        sig_line = "no signals attached"
     aum = firm.get("aum_reported")
     aum_line = f"${aum/1e9:.1f}B" if aum else "not confirmed"
 

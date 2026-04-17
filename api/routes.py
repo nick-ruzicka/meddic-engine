@@ -675,12 +675,13 @@ def generate_brief():
         conn.close()
         return jsonify({"error": "queue_id not found"}), 404
 
-    # Latest signal for context
-    sig = conn.execute("""
-        SELECT signal_type, content, signal_date FROM signals
+    # All signals for this contact + firm (multi-signal brief input)
+    sig_rows = conn.execute("""
+        SELECT signal_type, content, signal_date, source_url, author_name
+         FROM signals
          WHERE contact_id=? OR firm_id=?
-         ORDER BY COALESCE(signal_date, created_at) DESC LIMIT 1
-    """, (row["contact_id"], row["firm_id"])).fetchone()
+         ORDER BY COALESCE(signal_date, created_at) DESC LIMIT 8
+    """, (row["contact_id"], row["firm_id"])).fetchall()
     conn.close()
 
     from scoring.contact_scorer import generate_account_brief
@@ -696,7 +697,7 @@ def generate_brief():
                "email_verified": row["email_verified"], "linkedin_url": row["linkedin_url"]}
     score_result = {"score": row["score"], "label": row["label"], "action": row["action"],
                     "reasoning": row["reasoning"], "missing": row["missing"]}
-    signals = [dict(sig)] if sig else []
+    signals = [dict(s) for s in sig_rows]
 
     brief = generate_account_brief(firm, contact, signals, score_result)
     if not brief:

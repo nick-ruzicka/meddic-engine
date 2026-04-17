@@ -350,6 +350,11 @@
     border-color:var(--border);border-left:2px solid rgba(238,236,221,0.35);
     padding-left:7px;
   }
+  .tag.sig-earnings{
+    background:rgba(245,158,11,0.12);color:#fbbf24;
+    border-color:rgba(245,158,11,0.30);border-left:2px solid #f59e0b;
+    padding-left:7px;
+  }
   .tag.status-approved{background:var(--blue-dim);color:#8b9fff;border-color:var(--blue-border)}
   .tag.status-skipped{background:rgba(255,255,255,0.06);color:var(--text-3)}
   .tag.status-flagged{background:rgba(239,68,68,0.08);color:rgba(248,113,113,0.75);border-color:rgba(239,68,68,0.20)}
@@ -1940,10 +1945,12 @@
       exa:      'background:rgba(124,58,237,0.15);color:#a78bfa',
       hiring:   'background:rgba(245,158,11,0.15);color:#fbbf24',
       linkedin: 'background:rgba(70,91,255,0.15);color:#8b9fff',
+      earnings: 'background:rgba(245,158,11,0.15);color:#fbbf24;border-left:2px solid #f59e0b',
     };
     const SIG_LINK = {
       press:'→ Read article ↗', twitter:'→ View tweet ↗',
       linkedin:'→ View post ↗', hiring:'→ View posting ↗',
+      earnings:'→ Read transcript ↗',
       exa:'→ Read source ↗',
     };
     // Badge count uses only triggers newer than last_seen watermark.

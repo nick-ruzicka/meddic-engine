@@ -215,6 +215,50 @@ exa:
   # Only results from last N days
   recency_days: 90
 
+# ── Earnings Transcript Collection ──────────────────────────────────────────
+# Only publicly traded firms have earnings calls. Private firms (Vista, FP,
+# Silver Lake, Thoma Bravo) rely on press/social signals instead.
+earnings:
+  # Ticker → firm name mapping for public target firms
+  tickers:
+    KKR: KKR
+    BX: Blackstone
+    APO: Apollo Global Management
+    CG: Carlyle Group
+    ARES: Ares Management
+    TPG: TPG
+    BAM: Brookfield Asset Management
+    OWL: Blue Owl Capital
+    STEP: StepStone Group
+    HLI: Hamilton Lane
+    BRDG: Bridge Investment Group
+    PAX: Patria Investments
+
+  # Transcript sources in priority order (Exa search)
+  sources:
+    - fool.com
+    - seekingalpha.com
+    - marketscreener.com
+
+  # Extraction keywords — Claude Haiku scans for these themes
+  extract_themes:
+    - AI
+    - artificial intelligence
+    - machine learning
+    - automation
+    - technology investment
+    - digital transformation
+    - data infrastructure
+    - document processing
+    - due diligence technology
+    - engineering hiring
+
+  # Max transcript chars to process (Exa limit ~50K, WebFetch for overflow)
+  max_chars: 50000
+
+  # How many quarters back to check on first run
+  lookback_quarters: 2
+
 # ── Hunter.io Contact Enrichment ─────────────────────────────────────────────
 hunter:
   # Max contacts to enrich per run
