@@ -1104,7 +1104,7 @@
     'CUSTOMERS': '(src: TechCrunch)',
     'PAGES': '(src: .com/blog)',
   };
-  const expandTags = s => s.replace(/\[([A-Z_]+)\]/g, (m, tag) => TAG_MAP[tag] || m);
+  const expandTags = s => s.replace(/\(?(\[([A-Z_]+)\])\)?/g, (m, bracket, tag) => TAG_MAP[tag] || bracket);
   const linkify = s => {
     let out = esc(s);
     out = expandTags(out);
