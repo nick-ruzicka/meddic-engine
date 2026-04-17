@@ -1093,14 +1093,16 @@
 
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   // Escape HTML, expand proof-point tags to readable text, then convert URLs to clickable links
+  // Expand proof-point tags to short source citations only (not the full claim,
+  // which is already in the surrounding text and would cause duplication).
   const TAG_MAP = {
-    'OAK_HILL': 'Oak Hill 6x ROI ( case study)',
-    'EFFICIENCY': 'PE teams save 20-30h/deal (FinanceFeeds)',
-    'MARKET_SHARE': '40%+ of top AMs by AUM use  (FinanceFeeds)',
-    'SECURITY': 'SOC2 Type II, never trains on data (.com/security)',
-    'ACCURACY': '92% accuracy vs 68% standard RAG (FinanceFeeds)',
-    'CUSTOMERS': 'BlackRock, KKR, Carlyle, Centerview (TechCrunch)',
-    'PAGES': '1B pages processed (.com)',
+    'OAK_HILL': '(src:  case study, marketrealist.com)',
+    'EFFICIENCY': '(src: FinanceFeeds)',
+    'MARKET_SHARE': '(src: FinanceFeeds)',
+    'SECURITY': '(src: .com/security)',
+    'ACCURACY': '(src: FinanceFeeds)',
+    'CUSTOMERS': '(src: TechCrunch)',
+    'PAGES': '(src: .com/blog)',
   };
   const expandTags = s => s.replace(/\[([A-Z_]+)\]/g, (m, tag) => TAG_MAP[tag] || m);
   const linkify = s => {
