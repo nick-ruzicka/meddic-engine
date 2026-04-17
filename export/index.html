@@ -2590,18 +2590,26 @@
   }
 
   function renderBriefSP(b){
+    const role = (b.meddic_role || '').toUpperCase();
+    const champLbl = role === 'EB' ? 'Economic buyer'
+                   : role === 'CH' ? 'Champion'
+                   : role === 'UC' ? 'User / Champion'
+                   : 'Champion / Economic buyer';
     const rows = [
       {k:'Identified pain',    v:b.identified_pain || b.why_now || '',      cls:'why'},
       {k:'Objection',           v:b.objection || '',                         cls:'obj'},
       {k:'Decision criteria',   v:b.decision_criteria || b.angle || '',      cls:'ang'},
       {k:'Metrics',             v:b.metrics || b.proof_point || '',          cls:''},
-      {k:'Economic buyer / champion', v:b.champion || b.economic_buyer || '',cls:''},
+      {k:champLbl,              v:b.champion_eb || b.champion || b.economic_buyer || '', cls:''},
       {k:'Decision process',    v:b.decision_process || '',                  cls:''},
-      {k:'Multi-thread',        v:b.multi_thread || '',                      cls:''},
-      {k:'Sources',             v:b.sources || '',                           cls:'prf'},
+      {k:'Multi-thread',        v:b.thread || b.multi_thread || '',          cls:''},
     ].filter(r => r.v);
-    if (!rows.length) return '<em>Brief schema empty.</em>';
-    return rows.map(r => `<div class="sp-brief-row ${r.cls}"><div class="k">${esc(r.k)}</div><div class="v">${esc(r.v)}</div></div>`).join('');
+    // Sources row renders separately with distinct styling
+    const srcRow = b.sources
+      ? `<div class="sp-brief-row src" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08)"><div class="k" style="color:#465BFF">Sources</div><div class="v" style="font-size:11px;color:var(--text-3);line-height:1.55">${esc(b.sources)}</div></div>`
+      : '';
+    if (!rows.length && !srcRow) return '<em>Brief schema empty.</em>';
+    return rows.map(r => `<div class="sp-brief-row ${r.cls}"><div class="k">${esc(r.k)}</div><div class="v">${esc(r.v)}</div></div>`).join('') + srcRow;
   }
   // Backdrop click closes panel
   document.addEventListener('DOMContentLoaded', () => {
