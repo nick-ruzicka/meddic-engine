@@ -1840,11 +1840,9 @@
     try{
       const r = await apiCall('/api/generate_first_line', {queue_id: qid});
       c.first_line = r.first_line || '';
-      ta.value = c.first_line;
-      ta.disabled = c.status !== 'pending';
-      btn.innerHTML = 'Regenerate ✦';
-      btn.disabled = c.status !== 'pending';
       showToast(`Generated first line for ${c.contact_name}`);
+      // Re-render side panel to pick up subject/body split layout
+      if (state.panelQid === qid) { openPanel(qid); }
     } catch(err){
       ta.value = '';
       ta.disabled = c.status !== 'pending';
