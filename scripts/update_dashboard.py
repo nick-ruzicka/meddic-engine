@@ -138,6 +138,16 @@ def _stats(conn) -> dict:
     return page_specific
 
 
+# Demo-pinned contacts — these firms sort to the top of the dashboard
+_PINNED_CONTACTS = {
+    "Brian Maury",       # Francisco Partners
+    "Stuart Sim",        # Silver Lake
+    "Orlando Bravo",     # Thoma Bravo
+    "Tom DeFeo",         # Vista Equity Partners
+    "John Fitzpatrick",  # Blackstone
+}
+
+
 def _contacts(conn) -> list[dict]:
     # Latest signal per contact — fall back to latest signal per firm if contact has none.
     rows = conn.execute("""
@@ -432,6 +442,7 @@ def _contacts(conn) -> list[dict]:
         "signal_date":      r["signal_date"] or "",
         "first_line":       r["first_line"] or "",
         "status":           r["status"],
+        "pinned":           r["contact_name"] in _PINNED_CONTACTS,
         })
 
     # Firm-diversity sort: top 3 at each firm float up, rest fall below.

@@ -2245,7 +2245,13 @@
       g.contacts.push(r);
       g.topScore = Math.max(g.topScore, r.score||0);
     }
-    return [...map.values()].sort((a,b) => b.topScore - a.topScore);
+    // Pinned firms always sort first, then by topScore
+    return [...map.values()].sort((a,b) => {
+      const aPinned = a.contacts.some(c => c.pinned);
+      const bPinned = b.contacts.some(c => c.pinned);
+      if (aPinned !== bPinned) return aPinned ? -1 : 1;
+      return b.topScore - a.topScore;
+    });
   }
 
   function firmGroupHTML(g){
@@ -2254,9 +2260,10 @@
     const collapsedByUser = state.collapsedFirms.has(g.firm_id);
     const expandedByUser  = state.collapsedFirms.has('!'+g.firm_id);
     const isTopFirm = (state.topFirmIds || new Set()).has(g.firm_id);
+    const hasPinned = g.contacts.some(c => c.pinned);
     const collapsed = expandedByUser ? false
                     : collapsedByUser ? true
-                    : !isTopFirm;
+                    : !(isTopFirm || hasPinned);
     const top = Math.round(g.topScore);
     const stageTag = g.buying_stage ? `<span class="tag stage pill pill--amber">${esc(g.buying_stage)}</span>` : '';
     const typeTag  = g.firm_type ? `<span class="tag type pill pill--blue">${esc(prettyType(g.firm_type))}</span>` : '';
