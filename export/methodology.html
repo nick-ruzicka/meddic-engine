@@ -268,6 +268,7 @@
   <div class="sn-label">On this page</div>
   <a href="#discovery">Discovery</a>
   <a href="#signal-collection">Signals</a>
+  <a href="#sourcing">Sourcing</a>
   <a href="#meddic">MEDDIC</a>
   <a href="#scoring-formula">Scoring</a>
   <a href="#skill-router">Router</a>
@@ -291,7 +292,7 @@
       <div class="d-connector" aria-hidden="true"></div>
       <div class="d-step"><div class="n" id="meth-tier2">500</div><div class="lbl">Tier 2 Monitored</div><div class="body">Top-AUM firms, firmographic-only score. No cost.</div></div>
       <div class="d-connector" aria-hidden="true"></div>
-      <div class="d-step"><div class="n" id="meth-tier1">20</div><div class="lbl">Tier 1 Active</div><div class="body">Named contacts, verified emails, full Claude scoring.</div></div>
+      <div class="d-step"><div class="n" id="meth-tier1">40</div><div class="lbl">Tier 1 Active</div><div class="body">Named contacts, verified emails, full Claude scoring.</div></div>
       <div class="d-connector" aria-hidden="true"></div>
       <div class="d-step"><div class="n" id="meth-ready">338</div><div class="lbl">Ready to Send</div><div class="body">Strong + Good matches with verified email.</div></div>
     </div>
@@ -300,7 +301,7 @@
   <section id="signal-collection">
     <div class="sec-eyebrow">Step 2 · Signal Collection</div>
     <h2 class="sec-title">What we look for</h2>
-    <div class="sec-body">Four categories of signal, each scored for recency and relevance. The system watches for evidence that a firm is actively transforming — not just capable of it.</div>
+    <div class="sec-body">Five signal channels, each scored for recency and relevance. The system watches for evidence that a firm is actively transforming — not just capable of it.</div>
     <div class="sig-grid">
       <div class="sig-card pain">
         <div class="eyebrow">Pain</div>
@@ -326,6 +327,30 @@
         <div class="desc">Dissatisfaction with AlphaSense, Bloomberg, or Rogo. Price, depth, or workflow — each is a distinct sales story.</div>
         <div class="ex">Rogo is fine for quick Q&amp;A but breaks on multi-doc synthesis. We need something that actually reads the full data room.</div>
       </div>
+      <div class="sig-card" style="border-left-color:var(--amber)">
+        <div class="eyebrow">Earnings</div>
+        <h3 class="t">Transcript Intelligence</h3>
+        <div class="desc">Verbatim CEO/CFO quotes from quarterly earnings calls — on-the-record, timestamped, and linked to the full transcript. The highest-confidence signal type.</div>
+        <div class="ex">We hired Rodney Zemmel, who ran AI at McKinsey, to help with this. — Jonathan Gray, Blackstone Q4 2025 Earnings Call</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="sourcing">
+    <div class="sec-eyebrow">Integrity</div>
+    <h2 class="sec-title">Every claim has a source</h2>
+    <div class="sec-body">Account briefs cite their sources inline. Each field in the MEDDIC brief traces back to a specific signal, data point, or verified proof point — never invented.</div>
+    <div class="card">
+      <table class="labels">
+        <thead><tr><th>Source Type</th><th>How It Appears</th></tr></thead>
+        <tbody>
+          <tr><td class="name">Earnings transcript</td><td>Speaker name, context (prepared remarks / Q&amp;A), verbatim quote, transcript link</td></tr>
+          <tr><td class="name">Press / LinkedIn</td><td>Publication, date, clickable URL</td></tr>
+          <tr><td class="name">Verified proof point</td><td>Tagged citation — e.g. (src:  case study) with traceable origin</td></tr>
+          <tr><td class="name">Firm data</td><td>SEC filing, AUM, firm type — always labeled (firm data: ...)</td></tr>
+          <tr><td class="name">Inference</td><td>Explicitly marked: "no direct signal — inference only"</td></tr>
+        </tbody>
+      </table>
     </div>
   </section>
 
@@ -471,7 +496,7 @@
       const fb = {
         'm-sec-indexed':'16,639','m-icp-qualified':'7,115','m-icp-title':'7,115',
         'm-tier2':'500','m-tier1':'40','m-tier1-sub':'40','m-tier1-title':'40',
-        'meth-icp':'7,115','meth-tier2':'500','meth-tier1':'40','meth-ready':'338',
+        'meth-icp':'7,115','meth-tier2':'500','meth-tier1':'40','meth-ready':'339',
       };
       for (const [id, v] of Object.entries(fb)){
         const el = document.getElementById(id); if (el) el.textContent = v;
