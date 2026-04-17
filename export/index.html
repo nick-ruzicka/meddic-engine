@@ -1772,6 +1772,7 @@
     if (champEB)            rows.push({cls:'wtc', k:champLbl,           v:champEB});
     if (b.decision_process) rows.push({cls:'dp',  k:'Decision Process', v:b.decision_process});
     if (b.thread)           rows.push({cls:'thr', k:'⇄ Multi-Thread',   v:b.thread});
+    if (b.sources)          rows.push({cls:'prf', k:'Sources',          v:b.sources});
     return rows.map(r => `
       <div class="brief-row ${r.cls}">
         <div class="k">${r.k}</div>
@@ -2597,6 +2598,7 @@
       {k:'Economic buyer / champion', v:b.champion || b.economic_buyer || '',cls:''},
       {k:'Decision process',    v:b.decision_process || '',                  cls:''},
       {k:'Multi-thread',        v:b.multi_thread || '',                      cls:''},
+      {k:'Sources',             v:b.sources || '',                           cls:'prf'},
     ].filter(r => r.v);
     if (!rows.length) return '<em>Brief schema empty.</em>';
     return rows.map(r => `<div class="sp-brief-row ${r.cls}"><div class="k">${esc(r.k)}</div><div class="v">${esc(r.v)}</div></div>`).join('');

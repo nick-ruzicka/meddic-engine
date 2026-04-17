@@ -502,20 +502,22 @@ def _call_claude(system_prompt: str, user_message: str) -> str:
 
 _BRIEF_SYSTEM = (
     "You are building a one-page account intelligence brief for a  "
-    "sales rep.  sells Matrix — an AI platform that processes entire "
-    "document sets simultaneously for PE firms, investment banks, hedge funds, "
-    "and credit funds. Purpose-built for due diligence, VDR analysis, IC memos, "
+    "sales rep.  sells an AI platform that processes entire document "
+    "sets simultaneously for PE firms, investment banks, hedge funds, and "
+    "credit funds. Purpose-built for due diligence, VDR analysis, IC memos, "
     "portfolio monitoring.\n\n"
-    "Key proof points you can reference:\n"
-    "- Oak Hill Advisors: 6x ROI, Sonja Renander MD U.S. Credit stated publicly "
-    "at Private Markets AI Summit 2025\n"
-    "- $25T AUM of firms currently using \n"
-    "- Centerview Partners and Charlesbank: confirmed customers\n"
-    "- KKR, Carlyle: confirmed early adopters\n"
-    "- SOC2 Type II, data never leaves customer environment, private deployment "
-    "on customer's cloud\n\n"
-    "Compliance is the #1 sales barrier in finance. Lead objection handling "
-    "with data sovereignty, not product.\n\n"
+    "SOURCING RULES (critical):\n"
+    "- Every claim in your brief must be traceable to the SIGNALS, CONTACT "
+    "RESEARCH, or FIRM DATA provided in the user message.\n"
+    "- Do NOT reference specific  customers, ROI figures, AUM statistics, "
+    "or deployment architecture unless that information appears in the inputs.\n"
+    "- If a field needs data you don't have, say 'source needed' or 'confirm "
+    "with  team' rather than inventing plausible claims.\n"
+    "- For the 'identified_pain' and 'objection' fields, cite the signal or "
+    "data point that supports your inference (e.g. 'per [signal_type] signal "
+    "from [date]: ...').\n\n"
+    "Compliance is the #1 sales barrier in finance. Frame objection handling "
+    "around asking the right questions, not making deployment promises.\n\n"
     "Be specific. Be brief. Be actionable. Sound like a practitioner, not a "
     "vendor. Never use em dashes."
 )
@@ -599,16 +601,16 @@ def generate_account_brief(firm: dict, contact: dict, signals: list[dict],
     else:
         dc_seed = "Data sovereignty, measurable ROI, fit to existing workflow."
 
-    # Decision process — deterministic from buying_stage
+    # Decision process — inferred from buying_stage; phrased as inference, not fact
     bs = (firm.get("buying_stage") or "").lower()
     if bs == "deploying":
-        decision_process = "Active vendor selection - decision likely within 90 days."
+        decision_process = "Signals suggest active deployment — timing may favor near-term engagement."
     elif bs == "evaluating":
-        decision_process = "3-6 month evaluation window - build relationship with champion now."
+        decision_process = "Signals suggest evaluation phase — build relationship with champion."
     elif bs == "exploring":
-        decision_process = "12-18 month horizon - nurture sequence, not hot outreach."
+        decision_process = "Signals suggest early exploration — nurture, don't hard-sell."
     else:
-        decision_process = "Timing unconfirmed - let signals drive cadence."
+        decision_process = "Timing unconfirmed from available signals — let new signals drive cadence."
     # Find a complementary pair if any
     pair_role_hint = ""
     if this_role == "economic_buyer" and "technical_champion" in other_roles:
@@ -654,14 +656,22 @@ MULTI-THREAD HINT:
 {research_block}
 DECISION CRITERIA SEED (use verbatim as the first sentence of decision_criteria): "{dc_seed}"
 
+CRITICAL SOURCING RULES:
+- NEVER reference specific customers, firms, or case studies as  customers/users unless they are explicitly listed in the SIGNALS or CONTACT RESEARCH above.
+- NEVER fabricate ROI figures, dollar amounts, or deployment statistics.
+- NEVER claim specific deployment architecture details (cloud, VPC, data residency) unless provided in the inputs above.
+- For metrics, cite ONLY what you can infer from the signals and firm data provided. If no concrete metrics are available, say "Metrics: contact  team for case studies relevant to [firm type]."
+- If you don't have sourced data for a field, say so briefly rather than inventing plausible-sounding claims.
+
 You are producing a MEDDIC-framed account brief. Return ONLY valid JSON, no markdown:
 {{
-  "identified_pain": "1-2 sentences on the workflow pain this firm is feeling right now - reference the buying stage, signals, peer activity. This is the M-E-D-D-I-C 'I' - what hurts today.",
+  "identified_pain": "1-2 sentences on the workflow pain this firm is likely feeling based on the signals and buying stage above. Frame as inference ('signals suggest...', 'given their...'), not assertion.",
   "decision_criteria": "Start with the seed line above verbatim. Then add ONE sentence of firm-specific color (competitor context, AUM tier, or signal-driven nuance).",
-  "metrics": "Pipe-separated bullet metrics ONLY. Format: 'Oak Hill: 6x ROI | $25T AUM using  | 1000+ use cases in production'. Pick 2-3 most relevant to this firm type. No prose.",
+  "metrics": "Cite only metrics derivable from the inputs above. If the signals mention specific numbers, use those. Otherwise state 'Contact  for [firm-type]-specific case studies.' Do NOT invent ROI figures or customer counts.",
   "champion_eb": "ONE sentence identifying this contact as {meddic_role_label} and why they matter. If CONTACT RESEARCH is provided above, reference a SPECIFIC public activity (e.g. 'spoke at [venue] in [month] about [topic]' or 'posted on [date] about [topic]') — do NOT just repeat title+firm. If no research available, reference workflow ownership or political capital.",
-  "objection": "The most likely objection from this specific contact/firm type, plus one sentence on how to handle it. Lead with data sovereignty if compliance-flagged.",
-  "thread": "ONE sentence on multi-thread strategy: 'Pair [this role] with [complementary role] at [firm] - [reason].' If solo, say 'Solo-thread viable - find [role] to strengthen.'"
+  "objection": "The most likely objection from this specific contact/firm type, plus one sentence on how to address it. Do NOT make specific claims about 's deployment architecture — instead frame as 'worth confirming with 's team that [requirement] is met.'",
+  "thread": "ONE sentence on multi-thread strategy: 'Pair [this role] with [complementary role] at [firm] - [reason].' If solo, say 'Solo-thread viable - find [role] to strengthen.'",
+  "sources": "Comma-separated list of the specific inputs you used: e.g. 'twitter signal 2026-04-10, Exa press mention, contact LinkedIn post 2026-03-15, firm AUM from SEC filing'. If you had no signal data for a field, note which fields lack sourcing."
 }}"""
 
     try:
