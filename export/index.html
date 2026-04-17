@@ -1087,6 +1087,8 @@
   };
 
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // Escape HTML then convert URLs to clickable links
+  const linkify = s => esc(s).replace(/https?:\/\/[^\s),]+/g, url => `<a href="${url}" target="_blank" rel="noopener" style="color:#8b9fff;text-decoration:underline">${url}</a>`);
   const formatAUM = val => {
     if (!val || val === 0) return '—';
     const n = Number(val);
@@ -1776,7 +1778,7 @@
     return rows.map(r => `
       <div class="brief-row ${r.cls}">
         <div class="k">${r.k}</div>
-        <div class="v">${esc(r.v || '—')}</div>
+        <div class="v">${linkify(r.v || '—')}</div>
       </div>`).join('');
   }
 
@@ -2606,10 +2608,10 @@
     ].filter(r => r.v);
     // Sources row renders separately with distinct styling
     const srcRow = b.sources
-      ? `<div class="sp-brief-row src" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08)"><div class="k" style="color:#465BFF">Sources</div><div class="v" style="font-size:11px;color:var(--text-3);line-height:1.55">${esc(b.sources)}</div></div>`
+      ? `<div class="sp-brief-row src" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08)"><div class="k" style="color:#465BFF">Sources</div><div class="v" style="font-size:11px;color:var(--text-3);line-height:1.55">${linkify(b.sources)}</div></div>`
       : '';
     if (!rows.length && !srcRow) return '<em>Brief schema empty.</em>';
-    return rows.map(r => `<div class="sp-brief-row ${r.cls}"><div class="k">${esc(r.k)}</div><div class="v">${esc(r.v)}</div></div>`).join('') + srcRow;
+    return rows.map(r => `<div class="sp-brief-row ${r.cls}"><div class="k">${esc(r.k)}</div><div class="v">${linkify(r.v)}</div></div>`).join('') + srcRow;
   }
   // Backdrop click closes panel
   document.addEventListener('DOMContentLoaded', () => {
