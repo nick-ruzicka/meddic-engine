@@ -730,7 +730,7 @@ You are producing a MEDDIC-framed account brief. Return ONLY valid JSON, no mark
         client = anthropic.Anthropic(api_key=api_key)
         resp = _call_claude_with_retry(
             client,
-            model=BRIEF_MODEL, max_tokens=700, temperature=0.3,
+            model=BRIEF_MODEL, max_tokens=1500, temperature=0.3,
             system=_BRIEF_SYSTEM,
             messages=[{"role": "user", "content": user}],
         )

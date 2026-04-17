@@ -303,6 +303,120 @@ def build_source_health(conn, days: int = 14) -> dict:
     return {"days": days, "sources": out}
 
 
+def build_signal_quality(conn) -> dict:
+    """Per-source signal quality ranking. Joins signals → firms → scores to
+    measure which collectors produce signals that actually convert into
+    high-scoring, queue-ready contacts. Tier-1 only."""
+
+    # ── per-source volume + conversion ───────────────────────────────────
+    sources = _rows(conn, """
+        SELECT
+            sig.signal_type,
+            COUNT(DISTINCT sig.id)                                  AS total_signals,
+            COUNT(DISTINCT sig.firm_id)                             AS firms_touched,
+            COUNT(DISTINCT CASE WHEN sc.score IS NOT NULL
+                                THEN sig.firm_id END)               AS firms_scored,
+            COUNT(DISTINCT CASE WHEN sc.score >= 75
+                                THEN sig.firm_id END)               AS firms_strong,
+            COUNT(DISTINCT CASE WHEN sc.score >= 55
+                                THEN sig.firm_id END)               AS firms_good_plus,
+            COUNT(DISTINCT CASE WHEN oq.id IS NOT NULL
+                                THEN sig.firm_id END)               AS firms_queued,
+            ROUND(AVG(sc.score), 1)                                 AS avg_score,
+            ROUND(AVG(sc.icp_fit), 1)                               AS avg_icp_fit,
+            ROUND(AVG(sc.ai_readiness), 1)                          AS avg_ai_readiness,
+            ROUND(AVG(sc.signal_freshness), 1)                      AS avg_freshness_score,
+            ROUND(AVG(sig.freshness_days), 1)                       AS avg_freshness_days
+        FROM signals sig
+        LEFT JOIN firms f ON f.id = sig.firm_id
+        LEFT JOIN scores sc ON sc.firm_id = sig.firm_id
+            AND COALESCE(sc.scored_by, 'claude') != 'firmographic_only'
+        LEFT JOIN outreach_queue oq ON oq.firm_id = sig.firm_id
+        WHERE f.tier = 1 OR sig.firm_id IS NULL
+        GROUP BY sig.signal_type
+        ORDER BY avg_score DESC NULLS LAST
+    """)
+
+    # Compute derived quality metrics per source.
+    for s in sources:
+        total = s["total_signals"] or 1
+        s["conversion_rate_pct"] = round(
+            100.0 * (s["firms_good_plus"] or 0) / max(s["firms_touched"] or 1, 1), 1)
+        s["strong_rate_pct"] = round(
+            100.0 * (s["firms_strong"] or 0) / max(s["firms_touched"] or 1, 1), 1)
+        s["signals_per_queued"] = (
+            round(total / s["firms_queued"], 1) if s["firms_queued"] else None)
+        # Quality rank label for quick dashboard scanning.
+        avg = s["avg_score"]
+        if avg is not None and avg >= 75:
+            s["quality_tier"] = "high"
+        elif avg is not None and avg >= 55:
+            s["quality_tier"] = "medium"
+        elif avg is not None:
+            s["quality_tier"] = "low"
+        else:
+            s["quality_tier"] = "unscored"
+
+    # ── per-source + subtype breakdown ───────────────────────────────────
+    subtypes = _rows(conn, """
+        SELECT
+            sig.signal_type,
+            COALESCE(sig.signal_subtype, '(none)') AS signal_subtype,
+            COUNT(DISTINCT sig.id)                                  AS total_signals,
+            ROUND(AVG(sc.score), 1)                                 AS avg_score,
+            COUNT(DISTINCT CASE WHEN sc.score >= 75
+                                THEN sig.firm_id END)               AS firms_strong
+        FROM signals sig
+        LEFT JOIN firms f ON f.id = sig.firm_id
+        LEFT JOIN scores sc ON sc.firm_id = sig.firm_id
+            AND COALESCE(sc.scored_by, 'claude') != 'firmographic_only'
+        WHERE f.tier = 1 OR sig.firm_id IS NULL
+        GROUP BY sig.signal_type, sig.signal_subtype
+        ORDER BY sig.signal_type, avg_score DESC NULLS LAST
+    """)
+
+    # ── per-source + buying_stage breakdown ──────────────────────────────
+    stages = _rows(conn, """
+        SELECT
+            sig.signal_type,
+            COALESCE(sig.buying_stage, '(unknown)') AS buying_stage,
+            COUNT(DISTINCT sig.id)                                  AS total_signals,
+            ROUND(AVG(sc.score), 1)                                 AS avg_score
+        FROM signals sig
+        LEFT JOIN firms f ON f.id = sig.firm_id
+        LEFT JOIN scores sc ON sc.firm_id = sig.firm_id
+            AND COALESCE(sc.scored_by, 'claude') != 'firmographic_only'
+        WHERE f.tier = 1 OR sig.firm_id IS NULL
+        GROUP BY sig.signal_type, sig.buying_stage
+        ORDER BY sig.signal_type, avg_score DESC NULLS LAST
+    """)
+
+    # ── top individual signals (by associated contact score) ─────────────
+    top_signals = _rows(conn, """
+        SELECT sig.id, sig.signal_type, sig.signal_subtype,
+               sig.author_name, sig.buying_stage,
+               sig.content, sig.signal_date, sig.source_url,
+               f.name AS firm,
+               sc.score AS contact_score, sc.label AS score_label
+          FROM signals sig
+          JOIN firms f ON f.id = sig.firm_id
+          JOIN scores sc ON sc.firm_id = sig.firm_id
+         WHERE f.tier = 1
+           AND COALESCE(sc.scored_by, 'claude') != 'firmographic_only'
+         ORDER BY sc.score DESC
+         LIMIT 20
+    """)
+    for r in top_signals:
+        r["content"] = (r["content"] or "")[:160]
+
+    return {
+        "sources": sources,
+        "by_subtype": subtypes,
+        "by_stage": stages,
+        "top_signals": top_signals,
+    }
+
+
 def build_firm_velocity(conn, days: int = 14, limit: int = 10) -> dict:
     """Top tier-1 firms by signal volume over the last N days, each with
     a daily series for a sparkline."""
@@ -377,6 +491,7 @@ def main() -> int:
             "pipeline_cadence":  build_pipeline_cadence(conn),
             "fallthrough":       build_fallthrough(conn),
             "source_health":     build_source_health(conn),
+            "signal_quality":    build_signal_quality(conn),
             "firm_velocity":     build_firm_velocity(conn),
             "signal_to_reach":   build_signal_to_reach(conn),
         }

@@ -241,6 +241,34 @@
   .src-row .total{font-family:var(--font-mono);font-size:13px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
   .src-row .last{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-3);text-align:right}
 
+  /* ── Signal quality ── */
+  .sq-row{display:grid;grid-template-columns:100px 60px repeat(4,1fr) 80px 80px;gap:12px;align-items:center;
+    padding:13px 0;border-bottom:1px solid var(--border-soft)}
+  .sq-row:last-child{border-bottom:none}
+  .sq-row .nm{font-size:11px;letter-spacing:0.10em;text-transform:uppercase;color:var(--ink);font-weight:500}
+  .sq-row .tier{display:inline-block;padding:2px 8px;border-radius:2px;font-size:9px;
+    letter-spacing:0.10em;text-transform:uppercase;font-weight:600}
+  .sq-row .tier.high{background:rgba(91,65,41,0.14);color:var(--umber-deep)}
+  .sq-row .tier.medium{background:rgba(176,125,26,0.12);color:var(--amber)}
+  .sq-row .tier.low{background:rgba(194,90,30,0.12);color:var(--orange)}
+  .sq-row .tier.unscored{background:rgba(139,111,78,0.08);color:var(--ink-3)}
+  .sq-row .metric{text-align:right;font-family:var(--font-mono);font-size:12px;color:var(--ink);
+    font-variant-numeric:tabular-nums}
+  .sq-row .metric small{display:block;font-size:8.5px;letter-spacing:0.10em;text-transform:uppercase;
+    color:var(--ink-3);font-family:var(--font-ui);font-weight:500;margin-bottom:2px}
+  .sq-row .conv{text-align:right;font-family:var(--font-mono);font-size:13px;font-weight:500;
+    color:var(--umber-deep);font-variant-numeric:tabular-nums}
+  .sq-row .conv small{display:block;font-size:8.5px;letter-spacing:0.10em;text-transform:uppercase;
+    color:var(--ink-3);font-family:var(--font-ui);font-weight:500;margin-bottom:2px}
+  .sq-sub-row{display:grid;grid-template-columns:100px 120px 60px 80px 60px;gap:12px;align-items:center;
+    padding:10px 0;border-bottom:1px solid var(--border-soft)}
+  .sq-sub-row:last-child{border-bottom:none}
+  .sq-sub-row .nm{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-2);font-weight:500}
+  .sq-sub-row .sub-nm{font-size:10.5px;color:var(--ink);font-weight:500}
+  .sq-sub-row .metric{text-align:right;font-family:var(--font-mono);font-size:11.5px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .sq-sub-row .metric small{display:block;font-size:8px;letter-spacing:0.10em;text-transform:uppercase;
+    color:var(--ink-3);font-family:var(--font-ui);font-weight:500;margin-bottom:2px}
+
   /* ── Enrichment timing ── */
   .et-hero{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px;
     padding-bottom:18px;border-bottom:1px solid var(--border-soft)}
@@ -433,6 +461,40 @@
         <span class="hint">Top tier-1 · signals / day</span>
       </div>
       <div id="firm-velocity"><div class="state">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- ROW 4b: Signal quality ranking -->
+  <div class="sec-head">
+    <h2 class="sec-title">Signal quality</h2>
+    <span class="sec-sub">Which sources produce signals that convert into high-scoring contacts</span>
+  </div>
+  <div class="bento">
+    <div class="tile t-span-6 fade-in">
+      <div class="tile-hd">
+        <span class="lbl">Source quality ranking</span>
+        <span class="hint">Tier-1 firms · ranked by avg contact score</span>
+      </div>
+      <div id="signal-quality"><div class="state">Loading…</div></div>
+    </div>
+  </div>
+  <div class="bento" style="margin-top:16px">
+    <div class="tile t-span-3 fade-in d1">
+      <div class="tile-hd">
+        <span class="lbl">Quality by signal subtype</span>
+        <span class="hint">Pain · evaluation · transformation · competitor</span>
+      </div>
+      <div id="sq-subtypes"><div class="state">Loading…</div></div>
+    </div>
+    <div class="tile t-span-3 fade-in d2">
+      <div class="tile-hd">
+        <span class="lbl">Top signals</span>
+        <span class="hint">Highest-scoring contact associations</span>
+      </div>
+      <table class="ed-table" id="sq-top-signals">
+        <thead><tr><th>Source</th><th>Firm</th><th>Signal</th><th style="text-align:right">Score</th></tr></thead>
+        <tbody><tr><td colspan="4" class="state">Loading…</td></tr></tbody>
+      </table>
     </div>
   </div>
 
@@ -815,6 +877,71 @@
       <div class="et-note">
         <b>Methodology:</b> For each tier-1 firm with both a scraped signal and a verified contact, elapsed days between the firm's earliest <code style="font-family:var(--font-mono)">signal_date</code> and the earliest <code style="font-family:var(--font-mono)">created_at</code> on any <code style="font-family:var(--font-mono)">email_verified=1</code> contact. Reports the distribution across firms — a real, schema-defensible pipeline cadence metric.
       </div>`;
+  }
+
+  // ── Signal quality ranking ───────────────────────────
+  function renderSignalQuality(od){
+    const sq = od.signal_quality || {};
+
+    // Main ranking table
+    const el = document.getElementById('signal-quality');
+    if (el){
+      const sources = sq.sources || [];
+      if (!sources.length){
+        el.innerHTML = `<div class="state">No scored signals yet</div>`;
+      } else {
+        const hdr = `<div class="sq-row" style="border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:4px">
+          <div style="font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500">Source</div>
+          <div style="font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500;text-align:center">Quality</div>
+          <div class="metric"><small>Signals</small></div>
+          <div class="metric"><small>Avg score</small></div>
+          <div class="metric"><small>Strong 75+</small></div>
+          <div class="metric"><small>Good 55+</small></div>
+          <div class="conv"><small>Conversion</small></div>
+          <div class="metric"><small>Sig / queue</small></div>
+        </div>`;
+        el.innerHTML = hdr + sources.map(s => `<div class="sq-row">
+          <div class="nm"><span class="sig-chip ${esc(s.signal_type)}">${esc(s.signal_type)}</span></div>
+          <div style="text-align:center"><span class="tier ${esc(s.quality_tier)}">${esc(s.quality_tier)}</span></div>
+          <div class="metric">${fmt(s.total_signals)}</div>
+          <div class="metric">${s.avg_score != null ? s.avg_score.toFixed(1) : '—'}</div>
+          <div class="metric">${fmt(s.firms_strong || 0)} <span style="font-size:10px;color:var(--ink-3)">(${s.strong_rate_pct}%)</span></div>
+          <div class="metric">${fmt(s.firms_good_plus || 0)} <span style="font-size:10px;color:var(--ink-3)">(${s.conversion_rate_pct}%)</span></div>
+          <div class="conv">${s.conversion_rate_pct}%</div>
+          <div class="metric">${s.signals_per_queued != null ? s.signals_per_queued : '—'}</div>
+        </div>`).join('');
+      }
+    }
+
+    // Subtype breakdown
+    const stEl = document.getElementById('sq-subtypes');
+    if (stEl){
+      const subs = sq.by_subtype || [];
+      if (!subs.length){
+        stEl.innerHTML = `<div class="state">No subtype data</div>`;
+      } else {
+        stEl.innerHTML = subs.map(s => `<div class="sq-sub-row">
+          <div class="nm"><span class="sig-chip ${esc(s.signal_type)}">${esc(s.signal_type)}</span></div>
+          <div class="sub-nm">${esc(s.signal_subtype)}</div>
+          <div class="metric">${fmt(s.total_signals)}</div>
+          <div class="metric">${s.avg_score != null ? s.avg_score.toFixed(1) : '—'}</div>
+          <div class="metric">${fmt(s.firms_strong || 0)}</div>
+        </div>`).join('');
+      }
+    }
+
+    // Top signals table
+    const tb = document.querySelector('#sq-top-signals tbody');
+    if (tb){
+      const top = (sq.top_signals || []).slice(0, 15);
+      tb.innerHTML = top.length ? top.map(r => `
+        <tr>
+          <td><span class="sig-chip ${esc(r.signal_type||'')}">${esc(r.signal_type || '—')}</span></td>
+          <td class="firm">${esc(r.firm || '—')}</td>
+          <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.content)}">${esc((r.content || '').slice(0, 80))}</td>
+          <td class="num"><span class="score-pill ${scorePill(r.contact_score)}">${r.contact_score != null ? Math.round(r.contact_score) : '—'}</span></td>
+        </tr>`).join('') : `<tr><td colspan="4" class="state">No scored signals yet</td></tr>`;
+    }
   }
 
   // ── Parse errors ────────────────────────────────────
