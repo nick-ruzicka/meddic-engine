@@ -502,22 +502,49 @@ def _call_claude(system_prompt: str, user_message: str) -> str:
 
 _BRIEF_SYSTEM = (
     "You are building a one-page account intelligence brief for a  "
-    "sales rep.  sells an AI platform that processes entire document "
-    "sets simultaneously for PE firms, investment banks, hedge funds, and "
-    "credit funds. Purpose-built for due diligence, VDR analysis, IC memos, "
+    "sales rep.  sells Matrix, an AI platform that processes entire "
+    "document sets simultaneously for PE firms, investment banks, hedge funds, "
+    "and credit funds. Purpose-built for due diligence, VDR analysis, IC memos, "
     "portfolio monitoring.\n\n"
+
+    "VERIFIED PROOF POINTS (cite source tag when using):\n"
+    "- [OAK_HILL] Oak Hill Advisors: 6x ROI. Sonja Renander, MD U.S. Credit, "
+    "direct quote: 'We have seen a 6X+ ROI on our investment with .' "
+    "(src:  case study via marketrealist.com)\n"
+    "- [MARKET_SHARE] 40%+ of largest asset managers by AUM use ; "
+    "$15T+ in global assets under AI-driven decisions "
+    "(src: FinanceFeeds, 2025)\n"
+    "- [PAGES] 1 billion pages processed, up from 47M one year prior "
+    "(src: .com/blog)\n"
+    "- [CUSTOMERS] Confirmed public customers: BlackRock, KKR, Carlyle, "
+    "Centerview Partners, Charlesbank, MetLife, U.S. Air Force "
+    "(src: TechCrunch, FinanceFeeds)\n"
+    "- [EFFICIENCY] IB teams save 30-40h per deal; PE teams save 20-30h per deal; "
+    "credit agreement review time reduced 75% (src: FinanceFeeds)\n"
+    "- [SECURITY] SOC2 Type II certified. Never trains on customer data "
+    "(src: .com/security)\n"
+    "- [ACCURACY] 92% accuracy on benchmarks vs 68% for standard RAG "
+    "(src: FinanceFeeds)\n\n"
+
+    "UNVERIFIED — do NOT claim these:\n"
+    "- Deployment model details (SaaS vs on-prem vs VPC) are not publicly "
+    "documented. Say 'confirm deployment model with ' if asked.\n"
+    "- Any customer NOT in the [CUSTOMERS] list above.\n"
+    "- Any ROI figure other than Oak Hill's 6x.\n\n"
+
     "SOURCING RULES (critical):\n"
-    "- Every claim in your brief must be traceable to the SIGNALS, CONTACT "
-    "RESEARCH, or FIRM DATA provided in the user message.\n"
-    "- Do NOT reference specific  customers, ROI figures, AUM statistics, "
-    "or deployment architecture unless that information appears in the inputs.\n"
-    "- If a field needs data you don't have, say 'source needed' or 'confirm "
-    "with  team' rather than inventing plausible claims.\n"
-    "- For the 'identified_pain' and 'objection' fields, cite the signal or "
-    "data point that supports your inference (e.g. 'per [signal_type] signal "
-    "from [date]: ...').\n\n"
-    "Compliance is the #1 sales barrier in finance. Frame objection handling "
-    "around asking the right questions, not making deployment promises.\n\n"
+    "- Every claim must be traceable to either (a) a VERIFIED PROOF POINT "
+    "above (cite the [TAG]), (b) the SIGNALS / CONTACT RESEARCH in the user "
+    "message, or (c) the FIRM DATA provided.\n"
+    "- In the 'sources' field, list every [TAG] and signal you referenced.\n"
+    "- For 'identified_pain' and 'objection', cite the specific signal or data "
+    "point (e.g. 'per twitter signal from 2026-04-10: ...').\n"
+    "- If a field lacks source data, say so briefly. Never invent.\n\n"
+
+    "Compliance is the #1 sales barrier in finance. For objection handling, "
+    "reference [SECURITY] for what IS verified; for deployment specifics, "
+    "recommend confirming with 's team.\n\n"
+
     "Be specific. Be brief. Be actionable. Sound like a practitioner, not a "
     "vendor. Never use em dashes."
 )
@@ -667,11 +694,11 @@ You are producing a MEDDIC-framed account brief. Return ONLY valid JSON, no mark
 {{
   "identified_pain": "1-2 sentences on the workflow pain this firm is likely feeling based on the signals and buying stage above. Frame as inference ('signals suggest...', 'given their...'), not assertion.",
   "decision_criteria": "Start with the seed line above verbatim. Then add ONE sentence of firm-specific color (competitor context, AUM tier, or signal-driven nuance).",
-  "metrics": "Cite only metrics derivable from the inputs above. If the signals mention specific numbers, use those. Otherwise state 'Contact  for [firm-type]-specific case studies.' Do NOT invent ROI figures or customer counts.",
+  "metrics": "Use ONLY the VERIFIED PROOF POINTS from the system prompt (cite [TAG]). Pick the 2-3 most relevant to this firm type. Format: 'Oak Hill 6x ROI [OAK_HILL] | 40% of top AMs by AUM [MARKET_SHARE]'. Never invent figures.",
   "champion_eb": "ONE sentence identifying this contact as {meddic_role_label} and why they matter. If CONTACT RESEARCH is provided above, reference a SPECIFIC public activity (e.g. 'spoke at [venue] in [month] about [topic]' or 'posted on [date] about [topic]') — do NOT just repeat title+firm. If no research available, reference workflow ownership or political capital.",
-  "objection": "The most likely objection from this specific contact/firm type, plus one sentence on how to address it. Do NOT make specific claims about 's deployment architecture — instead frame as 'worth confirming with 's team that [requirement] is met.'",
+  "objection": "The most likely objection from this specific contact/firm type, plus one sentence on how to address it. You MAY cite [SECURITY] (SOC2 Type II, never trains on data). For deployment model (SaaS/VPC/on-prem), say 'confirm deployment options with ' — do not assert architecture details.",
   "thread": "ONE sentence on multi-thread strategy: 'Pair [this role] with [complementary role] at [firm] - [reason].' If solo, say 'Solo-thread viable - find [role] to strengthen.'",
-  "sources": "Comma-separated list of the specific inputs you used: e.g. 'twitter signal 2026-04-10, Exa press mention, contact LinkedIn post 2026-03-15, firm AUM from SEC filing'. If you had no signal data for a field, note which fields lack sourcing."
+  "sources": "List ALL sources used: (1) proof-point tags like [OAK_HILL], [SECURITY], [MARKET_SHARE]; (2) signal inputs like 'twitter signal 2026-04-10'; (3) firm data like 'SEC AUM filing'. Note any fields where sourcing is weak or absent."
 }}"""
 
     try:
