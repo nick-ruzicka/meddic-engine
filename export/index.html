@@ -1092,8 +1092,23 @@
   };
 
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  // Escape HTML then convert URLs to clickable links
-  const linkify = s => esc(s).replace(/https?:\/\/[^\s),]+/g, url => `<a href="${url}" target="_blank" rel="noopener" style="color:#8b9fff;text-decoration:underline">${url}</a>`);
+  // Escape HTML, expand proof-point tags to readable text, then convert URLs to clickable links
+  const TAG_MAP = {
+    'OAK_HILL': 'Oak Hill 6x ROI ( case study)',
+    'EFFICIENCY': 'PE teams save 20-30h/deal (FinanceFeeds)',
+    'MARKET_SHARE': '40%+ of top AMs by AUM use  (FinanceFeeds)',
+    'SECURITY': 'SOC2 Type II, never trains on data (.com/security)',
+    'ACCURACY': '92% accuracy vs 68% standard RAG (FinanceFeeds)',
+    'CUSTOMERS': 'BlackRock, KKR, Carlyle, Centerview (TechCrunch)',
+    'PAGES': '1B pages processed (.com)',
+  };
+  const expandTags = s => s.replace(/\[([A-Z_]+)\]/g, (m, tag) => TAG_MAP[tag] || m);
+  const linkify = s => {
+    let out = esc(s);
+    out = expandTags(out);
+    out = out.replace(/https?:\/\/[^\s),]+/g, url => `<a href="${url}" target="_blank" rel="noopener" style="color:#8b9fff;text-decoration:underline">${url}</a>`);
+    return out;
+  };
   const formatAUM = val => {
     if (!val || val === 0) return '—';
     const n = Number(val);

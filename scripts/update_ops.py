@@ -304,117 +304,123 @@ def build_source_health(conn, days: int = 14) -> dict:
 
 
 def build_signal_quality(conn) -> dict:
-    """Per-source signal quality ranking. Joins signals → firms → scores to
-    measure which collectors produce signals that actually convert into
-    high-scoring, queue-ready contacts. Tier-1 only."""
+    """Per-source signal quality ranking. Simple: how many signals per source,
+    how many firms they touch, and what avg score those firms get."""
 
-    # ── per-source volume + conversion ───────────────────────────────────
+    # One row per firm: best + avg Claude score.
+    conn.execute("DROP TABLE IF EXISTS _sq_firm_best")
+    conn.execute("""
+        CREATE TEMP TABLE _sq_firm_best AS
+        SELECT firm_id,
+               MAX(score) AS best_score,
+               AVG(score) AS avg_score
+          FROM scores
+         WHERE COALESCE(scored_by, 'claude') != 'firmographic_only'
+         GROUP BY firm_id
+    """)
+
+    # ── per-source: volume, firms, avg score ─────────────────────────────
     sources = _rows(conn, """
         SELECT
             sig.signal_type,
-            COUNT(DISTINCT sig.id)                                  AS total_signals,
-            COUNT(DISTINCT sig.firm_id)                             AS firms_touched,
-            COUNT(DISTINCT CASE WHEN sc.score IS NOT NULL
-                                THEN sig.firm_id END)               AS firms_scored,
-            COUNT(DISTINCT CASE WHEN sc.score >= 75
-                                THEN sig.firm_id END)               AS firms_strong,
-            COUNT(DISTINCT CASE WHEN sc.score >= 55
-                                THEN sig.firm_id END)               AS firms_good_plus,
-            COUNT(DISTINCT CASE WHEN oq.id IS NOT NULL
-                                THEN sig.firm_id END)               AS firms_queued,
-            ROUND(AVG(sc.score), 1)                                 AS avg_score,
-            ROUND(AVG(sc.icp_fit), 1)                               AS avg_icp_fit,
-            ROUND(AVG(sc.ai_readiness), 1)                          AS avg_ai_readiness,
-            ROUND(AVG(sc.signal_freshness), 1)                      AS avg_freshness_score,
-            ROUND(AVG(sig.freshness_days), 1)                       AS avg_freshness_days
+            COUNT(DISTINCT sig.id)       AS total_signals,
+            COUNT(DISTINCT sig.firm_id)  AS firms_touched,
+            ROUND(AVG(fb.avg_score), 1)  AS avg_score,
+            ROUND(AVG(sig.freshness_days), 1) AS avg_freshness_days
         FROM signals sig
         LEFT JOIN firms f ON f.id = sig.firm_id
-        LEFT JOIN scores sc ON sc.firm_id = sig.firm_id
-            AND COALESCE(sc.scored_by, 'claude') != 'firmographic_only'
-        LEFT JOIN outreach_queue oq ON oq.firm_id = sig.firm_id
+        LEFT JOIN _sq_firm_best fb ON fb.firm_id = sig.firm_id
         WHERE f.tier = 1 OR sig.firm_id IS NULL
         GROUP BY sig.signal_type
         ORDER BY avg_score DESC NULLS LAST
     """)
 
-    # Compute derived quality metrics per source.
-    for s in sources:
-        total = s["total_signals"] or 1
-        s["conversion_rate_pct"] = round(
-            100.0 * (s["firms_good_plus"] or 0) / max(s["firms_touched"] or 1, 1), 1)
-        s["strong_rate_pct"] = round(
-            100.0 * (s["firms_strong"] or 0) / max(s["firms_touched"] or 1, 1), 1)
-        s["signals_per_queued"] = (
-            round(total / s["firms_queued"], 1) if s["firms_queued"] else None)
-        # Quality rank label for quick dashboard scanning.
-        avg = s["avg_score"]
-        if avg is not None and avg >= 75:
-            s["quality_tier"] = "high"
-        elif avg is not None and avg >= 55:
-            s["quality_tier"] = "medium"
-        elif avg is not None:
-            s["quality_tier"] = "low"
-        else:
-            s["quality_tier"] = "unscored"
-
-    # ── per-source + subtype breakdown ───────────────────────────────────
-    subtypes = _rows(conn, """
-        SELECT
-            sig.signal_type,
-            COALESCE(sig.signal_subtype, '(none)') AS signal_subtype,
-            COUNT(DISTINCT sig.id)                                  AS total_signals,
-            ROUND(AVG(sc.score), 1)                                 AS avg_score,
-            COUNT(DISTINCT CASE WHEN sc.score >= 75
-                                THEN sig.firm_id END)               AS firms_strong
-        FROM signals sig
-        LEFT JOIN firms f ON f.id = sig.firm_id
-        LEFT JOIN scores sc ON sc.firm_id = sig.firm_id
-            AND COALESCE(sc.scored_by, 'claude') != 'firmographic_only'
-        WHERE f.tier = 1 OR sig.firm_id IS NULL
-        GROUP BY sig.signal_type, sig.signal_subtype
-        ORDER BY sig.signal_type, avg_score DESC NULLS LAST
-    """)
-
-    # ── per-source + buying_stage breakdown ──────────────────────────────
-    stages = _rows(conn, """
-        SELECT
-            sig.signal_type,
-            COALESCE(sig.buying_stage, '(unknown)') AS buying_stage,
-            COUNT(DISTINCT sig.id)                                  AS total_signals,
-            ROUND(AVG(sc.score), 1)                                 AS avg_score
-        FROM signals sig
-        LEFT JOIN firms f ON f.id = sig.firm_id
-        LEFT JOIN scores sc ON sc.firm_id = sig.firm_id
-            AND COALESCE(sc.scored_by, 'claude') != 'firmographic_only'
-        WHERE f.tier = 1 OR sig.firm_id IS NULL
-        GROUP BY sig.signal_type, sig.buying_stage
-        ORDER BY sig.signal_type, avg_score DESC NULLS LAST
-    """)
-
-    # ── top individual signals (by associated contact score) ─────────────
+    # ── top signals (one per firm, most recent) ──────────────────────────
     top_signals = _rows(conn, """
-        SELECT sig.id, sig.signal_type, sig.signal_subtype,
-               sig.author_name, sig.buying_stage,
-               sig.content, sig.signal_date, sig.source_url,
-               f.name AS firm,
-               sc.score AS contact_score, sc.label AS score_label
-          FROM signals sig
-          JOIN firms f ON f.id = sig.firm_id
-          JOIN scores sc ON sc.firm_id = sig.firm_id
-         WHERE f.tier = 1
-           AND COALESCE(sc.scored_by, 'claude') != 'firmographic_only'
-         ORDER BY sc.score DESC
-         LIMIT 20
+        WITH ranked AS (
+            SELECT sig.id, sig.signal_type, sig.signal_subtype,
+                   sig.content, sig.signal_date, sig.source_url,
+                   sig.firm_id,
+                   f.name AS firm,
+                   COALESCE(sc_direct.score, fb.best_score) AS contact_score,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY sig.firm_id
+                       ORDER BY COALESCE(sig.signal_date, sig.created_at) DESC
+                   ) AS rn
+              FROM signals sig
+              JOIN firms f ON f.id = sig.firm_id
+              LEFT JOIN scores sc_direct ON sc_direct.contact_id = sig.contact_id
+                   AND COALESCE(sc_direct.scored_by, 'claude') != 'firmographic_only'
+              LEFT JOIN _sq_firm_best fb ON fb.firm_id = sig.firm_id
+             WHERE f.tier = 1
+               AND COALESCE(sc_direct.score, fb.best_score) IS NOT NULL
+        )
+        SELECT id, signal_type, signal_subtype, content, signal_date,
+               source_url, firm, contact_score
+          FROM ranked
+         WHERE rn = 1
+         ORDER BY contact_score DESC
+         LIMIT 15
     """)
     for r in top_signals:
         r["content"] = (r["content"] or "")[:160]
 
+    interpretation = _build_quality_interpretation(sources)
+
+    conn.execute("DROP TABLE IF EXISTS _sq_firm_best")
+
     return {
         "sources": sources,
-        "by_subtype": subtypes,
-        "by_stage": stages,
         "top_signals": top_signals,
+        "interpretation": interpretation,
     }
+
+
+def _build_quality_interpretation(sources: list[dict]) -> dict:
+    """Brief, actionable interpretation of source quality. No LLM call."""
+
+    findings: list[str] = []
+    optimizations: list[str] = []
+
+    if not sources:
+        return {"findings": ["No signal data yet."], "optimizations": []}
+
+    scored = [s for s in sources if s.get("avg_score") is not None]
+    if not scored:
+        return {"findings": ["Signals collected but none scored yet."], "optimizations": []}
+
+    by_score = sorted(scored, key=lambda x: x["avg_score"], reverse=True)
+    by_vol = sorted(sources, key=lambda x: x.get("total_signals") or 0, reverse=True)
+
+    # What's working
+    best = by_score[0]
+    findings.append(
+        f"{best['signal_type'].title()} has the highest avg score ({best['avg_score']}) "
+        f"across {best['firms_touched']} firms."
+    )
+    if by_vol[0]["signal_type"] != best["signal_type"]:
+        findings.append(
+            f"{by_vol[0]['signal_type'].title()} drives volume "
+            f"({by_vol[0]['total_signals']} signals) but ranks lower on quality."
+        )
+
+    # What to scale
+    for s in scored:
+        vol = s.get("total_signals") or 0
+        avg = s["avg_score"]
+        if vol < 30 and avg > 60:
+            optimizations.append(
+                f"**{s['signal_type'].title()}** scores well ({avg} avg) on just "
+                f"{vol} signals — worth scaling up."
+            )
+        fresh_d = s.get("avg_freshness_days")
+        if fresh_d and fresh_d > 60:
+            optimizations.append(
+                f"**{s['signal_type'].title()}** signals average {fresh_d:.0f} days old. "
+                f"Tightening the date window would improve freshness scores."
+            )
+
+    return {"findings": findings, "optimizations": optimizations}
 
 
 def build_firm_velocity(conn, days: int = 14, limit: int = 10) -> dict:
