@@ -536,10 +536,18 @@ _BRIEF_SYSTEM = (
     "- Every claim must be traceable to either (a) a VERIFIED PROOF POINT "
     "above (cite the [TAG]), (b) the SIGNALS / CONTACT RESEARCH in the user "
     "message, or (c) the FIRM DATA provided.\n"
-    "- In the 'sources' field, list every [TAG] and signal you referenced.\n"
-    "- For 'identified_pain' and 'objection', cite the specific signal or data "
-    "point (e.g. 'per twitter signal from 2026-04-10: ...').\n"
-    "- If a field lacks source data, say so briefly. Never invent.\n\n"
+    "- INLINE CITATIONS REQUIRED: every sentence in every field must end with "
+    "a parenthetical source, e.g. '(per press signal 2025-10-01: Anthropic "
+    "case study)' or '(firm data: SEC filing)' or '([SECURITY])'. No "
+    "sentence without a citation.\n"
+    "- ANTI-EXTRAPOLATION: only state what the signal text literally says. "
+    "Do NOT infer what the firm is 'probably evaluating', 'likely facing', "
+    "or 'may be considering' unless the signal explicitly says so. If the "
+    "signal says they use Claude Code for dev teams, do NOT say they use "
+    "Claude for due diligence. Stick to the exact claim.\n"
+    "- In the 'sources' field, list every [TAG], signal URL, and data source.\n"
+    "- If a field lacks source data, say 'no direct signal — inference only' "
+    "rather than presenting inference as fact.\n\n"
 
     "Compliance is the #1 sales barrier in finance. For objection handling, "
     "reference [SECURITY] for what IS verified; for deployment specifics, "
@@ -559,7 +567,11 @@ def generate_account_brief(firm: dict, contact: dict, signals: list[dict],
         return None
 
     top_sig = signals[0] if signals else None
-    sig_line = (top_sig.get("content") or "")[:300] if top_sig else "no signals attached"
+    sig_content = (top_sig.get("content") or "")[:400] if top_sig else "no signals attached"
+    sig_url = (top_sig.get("source_url") or "no URL") if top_sig else "none"
+    sig_date = (top_sig.get("signal_date") or "unknown date") if top_sig else "none"
+    sig_type = (top_sig.get("signal_type") or "unknown") if top_sig else "none"
+    sig_line = f"[{sig_type}] {sig_date}: {sig_content}\n  Source URL: {sig_url}"
     aum = firm.get("aum_reported")
     aum_line = f"${aum/1e9:.1f}B" if aum else "not confirmed"
 
@@ -692,13 +704,13 @@ CRITICAL SOURCING RULES:
 
 You are producing a MEDDIC-framed account brief. Return ONLY valid JSON, no markdown:
 {{
-  "identified_pain": "1-2 sentences on the workflow pain this firm is likely feeling based on the signals and buying stage above. Frame as inference ('signals suggest...', 'given their...'), not assertion.",
+  "identified_pain": "1-2 sentences on the workflow pain this firm is likely feeling. EACH sentence must end with an inline citation: (per [signal_type] signal [date]: [source_url]) or (firm data: [fact]). Only state what the signal literally says. If inferring beyond the signal, prefix with 'no direct signal — inference:' so the reader knows.",
   "decision_criteria": "Start with the seed line above verbatim. Then add ONE sentence of firm-specific color (competitor context, AUM tier, or signal-driven nuance).",
   "metrics": "Use ONLY the VERIFIED PROOF POINTS from the system prompt (cite [TAG]). Pick the 2-3 most relevant to this firm type. Format: 'Oak Hill 6x ROI [OAK_HILL] | 40% of top AMs by AUM [MARKET_SHARE]'. Never invent figures.",
   "champion_eb": "ONE sentence identifying this contact as {meddic_role_label} and why they matter. If CONTACT RESEARCH is provided above, reference a SPECIFIC public activity (e.g. 'spoke at [venue] in [month] about [topic]' or 'posted on [date] about [topic]') — do NOT just repeat title+firm. If no research available, reference workflow ownership or political capital.",
   "objection": "The most likely objection from this specific contact/firm type, plus one sentence on how to address it. You MAY cite [SECURITY] (SOC2 Type II, never trains on data). For deployment model (SaaS/VPC/on-prem), say 'confirm deployment options with ' — do not assert architecture details.",
   "thread": "ONE sentence on multi-thread strategy: 'Pair [this role] with [complementary role] at [firm] - [reason].' If solo, say 'Solo-thread viable - find [role] to strengthen.'",
-  "sources": "List ALL sources used: (1) proof-point tags like [OAK_HILL], [SECURITY], [MARKET_SHARE]; (2) signal inputs like 'twitter signal 2026-04-10'; (3) firm data like 'SEC AUM filing'. Note any fields where sourcing is weak or absent."
+  "sources": "List ALL sources: (1) proof-point tags [OAK_HILL] etc; (2) signal type + date + URL; (3) firm data facts. Flag any field where you had no direct source and relied on inference."
 }}"""
 
     try:
