@@ -150,6 +150,18 @@ def _check_url(session: requests.Session, slug: str, url: str) -> bool:
                 "URL check failed for %s (%s): HTTP %d", slug, url, resp.status_code
             )
             return False
+    except requests.exceptions.SSLError:
+        # Retry with verify=False for TLS version mismatches
+        try:
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            resp = session.head(url, timeout=_TIMEOUT, allow_redirects=True, verify=False)
+            if resp.status_code < 400:
+                logger.debug("URL OK (SSL-fallback) [%d]: %s (%s)", resp.status_code, url, slug)
+                return True
+            return False
+        except requests.RequestException:
+            return False
     except requests.RequestException as exc:
         logger.warning("URL check error for %s (%s): %s", slug, url, exc)
         return False

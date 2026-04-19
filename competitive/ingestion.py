@@ -7,6 +7,7 @@ rate-limited fetching, and full competitor ingestion orchestration.
 import logging
 import os
 import re
+import subprocess
 import threading
 import time
 import xml.etree.ElementTree as ET
@@ -165,6 +166,22 @@ _RATE_LIMIT_SECONDS = 1.0  # 1 request per second per domain
 _USER_AGENT = "CIBot/1.0"
 
 
+def _fetch_via_curl(url: str, timeout: int = 15) -> Optional[str]:
+    """Fallback fetcher using system curl for TLS 1.3 sites."""
+    try:
+        result = subprocess.run(
+            ["curl", "-sL", "-A", _USER_AGENT, "--max-time", str(timeout), url],
+            capture_output=True, text=True, timeout=timeout + 5,
+        )
+        if result.returncode == 0 and result.stdout:
+            return result.stdout
+        logger.debug("curl fallback failed for %s: exit %d", url, result.returncode)
+        return None
+    except Exception as exc:
+        logger.debug("curl fallback error for %s: %s", url, exc)
+        return None
+
+
 def _fetch(url: str, timeout: int = 15) -> Optional[str]:
     """GET url with rate limiting (1 req/sec per domain).
 
@@ -191,6 +208,11 @@ def _fetch(url: str, timeout: int = 15) -> Optional[str]:
         )
         resp.raise_for_status()
         return resp.text
+    except requests.exceptions.SSLError:
+        # Fall back to curl for hosts whose TLS version exceeds the
+        # system's OpenSSL/LibreSSL capabilities (Python 3.9 + LibreSSL
+        # 2.8 can't negotiate TLS 1.3 which some modern sites require).
+        return _fetch_via_curl(url, timeout)
     except Exception as exc:
         logger.debug("_fetch failed for %s: %s", url, exc)
         return None

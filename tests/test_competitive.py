@@ -784,13 +784,13 @@ class TestCLI:
         def fake_search(name, slug):
             search_calls.append(slug)
 
-        def fake_brief(slug, force=False):
+        def fake_brief(slug, name, force=False):
             brief_calls.append(slug)
 
-        def fake_trajectory(slug, force=False):
+        def fake_trajectory(slug, name, force=False):
             trajectory_calls.append(slug)
 
-        def fake_signals(slug):
+        def fake_signals(slug, name, positioning):
             signal_calls.append(slug)
 
         def fake_verify(slugs=None):

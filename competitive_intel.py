@@ -92,12 +92,14 @@ def run(
     if run_analysis:
         for comp in competitors:
             slug = comp["slug"]
+            name = comp["name"]
+            positioning = comp["positioning"] or ""
             logger.info("[%s] Generating brief …", slug)
-            generate_brief(slug, force=force)
+            generate_brief(slug, name, force=force)
             logger.info("[%s] Generating trajectory …", slug)
-            generate_trajectory(slug, force=force)
+            generate_trajectory(slug, name, force=force)
             logger.info("[%s] Detecting signals …", slug)
-            detect_signals(slug)
+            detect_signals(slug, name, positioning)
     else:
         logger.info("Analysis phase skipped (ingest_only=%s, skip_analysis=%s).", ingest_only, skip_analysis)
 
