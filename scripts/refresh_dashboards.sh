@@ -16,3 +16,4 @@ mkdir -p logs
 python3 scripts/update_dashboard.py >> logs/refresh.log 2>&1
 python3 scripts/update_analytics.py >> logs/refresh.log 2>&1
 python3 scripts/update_ops.py       >> logs/refresh.log 2>&1
+python3 scripts/update_competitive.py >> logs/refresh.log 2>&1

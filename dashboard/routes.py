@@ -18,16 +18,18 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXPORT = os.path.join(ROOT, "export")
 
 _PAGES = {
-    "":            "index.html",
-    "analytics":   "analytics.html",
-    "ops":         "ops.html",
-    "methodology": "methodology.html",
+    "":             "index.html",
+    "analytics":    "analytics.html",
+    "ops":          "ops.html",
+    "methodology":  "methodology.html",
+    "competitive":  "competitive.html",
 }
 
 _DATA_WHITELIST = {
     "contacts_data.json",
     "analytics_data.json",
     "ops_data.json",
+    "competitive_data.json",
 }
 
 
@@ -61,6 +63,11 @@ def ops():
 @dashboard_bp.route("/methodology", methods=["GET"])
 def methodology():
     return _serve_page(_PAGES["methodology"])
+
+
+@dashboard_bp.route("/competitive", methods=["GET"])
+def competitive():
+    return _serve_page(_PAGES["competitive"])
 
 
 # .html suffix form — existing pages cross-link with this pattern
