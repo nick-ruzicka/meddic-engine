@@ -65,7 +65,7 @@
   .nav-links a.active{color:var(--blue)}
   .nav-links .nav-sep{color:rgba(255,255,255,0.20);font-size:11px}
 
-  main{max-width:100%;margin:0;padding:0 0 64px}
+  main{max-width:100%;margin:0;padding:0}
 
   /* ==== HERO ==== */
   .hero{
@@ -132,38 +132,71 @@
   .tab-bar button.active{color:var(--text);border-bottom-color:var(--blue)}
 
   /* ==== TAB PANELS ==== */
-  .tab-panel{display:none;padding:28px 40px}
+  .tab-panel{display:none}
   .tab-panel.active{display:block}
 
-  /* ==== BRIEFS TAB ==== */
-  .comp-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
-    gap:16px;
+  /* ==== SIDEBAR + DETAIL LAYOUT ==== */
+  .split-layout{
+    display:flex;
+    min-height:calc(100vh - 64px - 180px - 80px);
   }
-  .comp-card{
+  .sidebar{
+    width:240px;
+    flex-shrink:0;
     background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:2px;
-    overflow:hidden;
-    transition:border-color 150ms;
+    border-right:1px solid var(--border);
+    overflow-y:auto;
+    position:sticky;
+    top:64px;
+    max-height:calc(100vh - 64px);
   }
-  .comp-card:hover{border-color:var(--border-strong)}
-  .comp-card-header{
-    padding:20px 22px;
+  .sidebar-item{
+    display:flex;align-items:center;gap:8px;
+    padding:12px 16px;
     cursor:pointer;
+    border-left:3px solid transparent;
+    transition:background 150ms, border-color 150ms;
     user-select:none;
   }
-  .comp-card-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-  .threat-dot{
+  .sidebar-item:hover{background:rgba(255,255,255,0.03)}
+  .sidebar-item.active{
+    background:rgba(70,91,255,0.06);
+    border-left-color:var(--blue);
+  }
+  .sidebar-item .threat-dot{
     width:8px;height:8px;border-radius:50%;flex-shrink:0;
   }
   .threat-dot.high{background:var(--red)}
   .threat-dot.medium{background:var(--amber)}
   .threat-dot.low{background:rgba(255,255,255,0.30)}
-  .comp-name{font-size:16px;font-weight:500;letter-spacing:0.01em}
-  .comp-pills{display:flex;gap:6px;margin-left:auto;flex-shrink:0}
+  .sidebar-item .sb-name{
+    font-size:13px;font-weight:500;color:var(--text);
+    flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .sidebar-item.active .sb-name{color:#fff}
+  .sidebar-item .sb-pill{
+    display:inline-flex;align-items:center;
+    padding:1px 5px;border-radius:2px;
+    font-size:9px;font-weight:500;
+    letter-spacing:0.06em;text-transform:uppercase;line-height:1.4;
+    flex-shrink:0;
+  }
+  .sb-pill.high{background:var(--red-dim);color:#f87171}
+  .sb-pill.medium{background:var(--amber-dim);color:#fbbf24}
+  .sb-pill.low{background:rgba(255,255,255,0.06);color:var(--text-3)}
 
+  .detail-panel{
+    flex:1;
+    overflow-y:auto;
+    padding:32px 40px 64px;
+    max-height:calc(100vh - 64px);
+  }
+  .detail-inner{max-width:800px}
+
+  /* Brief header */
+  .brief-header{margin-bottom:28px}
+  .brief-header-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .brief-comp-name{font-size:26px;font-weight:500;letter-spacing:0.01em}
   .pill{
     display:inline-flex;align-items:center;
     padding:2px 7px;border-radius:2px;
@@ -176,67 +209,65 @@
   .pill--blue{background:var(--blue-dim);color:#8b9fff;border:1px solid var(--blue-border)}
   .pill--green{background:rgba(16,185,129,0.12);color:#34d399;border:1px solid transparent}
 
-  .comp-pos{font-size:13px;color:var(--text-2);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .comp-diff{font-size:12px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .comp-updated{font-size:10px;color:var(--text-3);margin-top:10px;letter-spacing:0.06em;text-transform:uppercase}
+  .brief-url{
+    font-size:12px;color:var(--text-3);text-decoration:none;
+    letter-spacing:0.02em;transition:color 150ms;
+  }
+  .brief-url:hover{color:var(--blue)}
+  .brief-updated{
+    font-size:10px;color:var(--text-3);letter-spacing:0.06em;text-transform:uppercase;
+    margin-top:4px;
+  }
 
-  /* Accordion expansion */
-  .comp-card-body{
-    max-height:0;overflow:hidden;
-    transition:max-height 350ms cubic-bezier(0.4,0,0.2,1);
-  }
-  .comp-card.open .comp-card-body{max-height:1200px}
-  .comp-card-body-inner{
-    padding:0 22px 22px;
-    border-top:1px solid var(--border);
-    padding-top:18px;
-  }
-  .detail-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:16px;
-    margin-bottom:16px;
-  }
-  .detail-field .detail-label{
+  /* Brief sections */
+  .brief-section{margin-bottom:24px}
+  .brief-section-label{
     font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;
-    color:var(--text-3);margin-bottom:6px;
+    color:var(--text-3);margin-bottom:8px;
   }
-  .detail-field .detail-value{font-size:13px;color:var(--text-2);line-height:1.5}
-  .recent-moves{width:100%}
-  .recent-moves-title{
+  .brief-section-text{
+    font-size:14px;color:var(--text-2);line-height:1.6;margin:0;
+  }
+  .brief-section-sources{
+    margin-top:6px;display:flex;flex-wrap:wrap;gap:4px 10px;
+  }
+  .source-link{
+    font-size:11px;color:var(--blue);text-decoration:none;
+    letter-spacing:0.02em;transition:color 150ms;
+  }
+  .source-link:hover{text-decoration:underline}
+
+  /* Threat assessment block */
+  .threat-block{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:20px 24px;
+    margin-bottom:24px;
+  }
+  .threat-block-label{
     font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;
     color:var(--text-3);margin-bottom:10px;
   }
-  .recent-moves ul{margin:0;padding-left:18px}
-  .recent-moves li{font-size:13px;color:var(--text-2);margin-bottom:6px;line-height:1.5}
+  .threat-block-body{display:flex;align-items:flex-start;gap:10px}
+  .threat-block-text{font-size:14px;color:var(--text-2);line-height:1.6;margin:0}
 
-  .methodology-block{
-    margin-top:32px;
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:2px;
-    padding:24px 28px;
+  /* Recent moves */
+  .moves-list{list-style:none;margin:0;padding:0}
+  .moves-list li{margin-bottom:14px}
+  .move-text{font-size:14px;color:var(--text-2);line-height:1.6;margin:0}
+  .move-source{
+    display:inline-flex;align-items:center;gap:3px;
+    margin-top:3px;
   }
-  .methodology-block h3{
-    font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;
-    color:var(--text-3);margin:0 0 12px;
+  .move-source-arrow{font-size:11px;color:var(--text-3)}
+  .move-source a{
+    font-size:11px;color:var(--blue);text-decoration:none;
   }
-  .methodology-block p{font-size:13px;color:var(--text-2);margin:0;line-height:1.65}
+  .move-source a:hover{text-decoration:underline}
 
   /* ==== TRAJECTORIES TAB ==== */
-  .traj-controls{margin-bottom:24px}
-  .traj-select{
-    background:var(--surface);
-    border:1px solid var(--border);
-    color:var(--text);
-    padding:9px 14px;
-    border-radius:2px;
-    font-size:13px;
-    cursor:pointer;
-    min-width:200px;
-  }
-  .traj-select:focus{border-color:rgba(70,91,255,0.50);outline:none}
-  .era-list{display:flex;flex-direction:column;gap:16px;max-width:740px}
+  .era-list{display:flex;flex-direction:column;gap:16px;max-width:800px}
   .era-card{
     background:var(--surface);
     border:1px solid var(--border);
@@ -248,9 +279,7 @@
     color:var(--blue);margin-bottom:8px;
   }
   .era-theme{font-size:16px;font-weight:500;margin-bottom:6px}
-  .era-positioning{font-size:13px;color:var(--text-2);font-style:italic;margin-bottom:12px}
-  .era-moments{margin:0;padding-left:18px}
-  .era-moments li{font-size:13px;color:var(--text-2);margin-bottom:6px;line-height:1.5}
+  .era-desc{font-size:13px;color:var(--text-2);line-height:1.6;margin:0}
 
   .inflection-card{
     background:linear-gradient(135deg,rgba(70,91,255,0.06) 0%,var(--surface) 100%);
@@ -278,37 +307,9 @@
   }
   .traj-summary p{font-size:14px;color:var(--text-2);margin:0;line-height:1.6}
 
-  .empty-state{
-    text-align:center;
-    padding:48px 24px;
-    color:var(--text-3);
-    font-size:14px;
-  }
-  .empty-state .empty-icon{font-size:28px;margin-bottom:12px;opacity:0.4}
-
   /* ==== LIVE SIGNALS TAB ==== */
-  .signals-layout{display:grid;grid-template-columns:220px 1fr;gap:24px}
-  .signal-filters{display:flex;flex-direction:column;gap:16px}
-  .filter-group-title{
-    font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;
-    color:var(--text-3);margin-bottom:8px;
-  }
-  .filter-chips{display:flex;flex-wrap:wrap;gap:6px}
-  .filter-chip{
-    background:rgba(255,255,255,0.04);
-    border:1px solid var(--border);
-    border-radius:2px;
-    padding:5px 10px;
-    font-size:11px;
-    color:var(--text-3);
-    cursor:pointer;
-    transition:all 150ms;
-    text-transform:capitalize;
-  }
-  .filter-chip:hover{border-color:var(--border-strong);color:var(--text-2)}
-  .filter-chip.active{background:var(--blue-dim);border-color:var(--blue-border);color:#8b9fff}
-
-  .signal-feed{display:flex;flex-direction:column;gap:12px}
+  .signals-full{padding:28px 40px}
+  .signal-feed{display:flex;flex-direction:column;gap:12px;max-width:800px}
   .signal-card{
     background:var(--surface);
     border:1px solid var(--border);
@@ -321,11 +322,23 @@
   .signal-card .comp-label{font-size:12px;font-weight:500;color:var(--text)}
   .signal-card .time-ago{font-size:11px;color:var(--text-3);margin-left:auto}
   .signal-card .summary{font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:8px}
-  .signal-card .source-link{
-    font-size:11px;color:var(--blue);text-decoration:none;
-    letter-spacing:0.04em;
+
+  .empty-state{
+    text-align:center;
+    padding:48px 24px;
+    color:var(--text-3);
+    font-size:14px;
   }
-  .signal-card .source-link:hover{text-decoration:underline}
+  .empty-state .empty-icon{font-size:28px;margin-bottom:12px;opacity:0.4}
+
+  /* ==== FOOTER ==== */
+  .page-footer{
+    padding:20px 40px;
+    border-top:1px solid var(--border);
+    font-size:11px;color:var(--text-3);
+    letter-spacing:0.02em;
+    text-align:center;
+  }
 
   /* ==== RESPONSIVE ==== */
   @media(max-width:900px){
@@ -335,15 +348,40 @@
     .hero{padding:28px 20px 24px}
     .stat-cards{margin:20px 20px 0}
     .tab-bar{padding:0 20px}
-    .tab-panel{padding:20px}
-    .signals-layout{grid-template-columns:1fr}
-    .detail-grid{grid-template-columns:1fr}
+
+    .split-layout{flex-direction:column}
+    .sidebar{
+      width:100%;
+      position:static;
+      max-height:none;
+      border-right:none;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      overflow-x:auto;
+      overflow-y:hidden;
+    }
+    .sidebar-item{
+      white-space:nowrap;
+      border-left:none;
+      border-bottom:3px solid transparent;
+      padding:10px 14px;
+    }
+    .sidebar-item.active{
+      border-bottom-color:var(--blue);
+      border-left-color:transparent;
+    }
+    .detail-panel{
+      max-height:none;
+      padding:20px;
+    }
+    .signals-full{padding:20px}
   }
   @media(max-width:600px){
     .stat-cards{grid-template-columns:1fr}
-    .comp-grid{grid-template-columns:1fr}
     header{padding:0 16px}
     .nav-links{display:none}
+    .brief-comp-name{font-size:20px}
+    .detail-panel{padding:16px}
   }
 </style>
 </head>
@@ -413,29 +451,32 @@
 
 <!-- Tab: Briefs -->
 <div class="tab-panel active" id="tab-briefs">
-  <div class="comp-grid" id="comp-grid"></div>
-  <div class="methodology-block">
-    <h3>Methodology</h3>
-    <p>Competitive briefs are generated by ingesting each competitor's public web presence, product documentation, and recent announcements. Content is analyzed by Claude to extract positioning, pricing signals, strengths, weaknesses, and threat assessments relative to . Briefs are refreshed weekly; signals are detected daily from monitored sources.</p>
+  <div class="split-layout">
+    <div class="sidebar" id="briefs-sidebar"></div>
+    <div class="detail-panel">
+      <div class="detail-inner" id="briefs-detail"></div>
+    </div>
   </div>
 </div>
 
 <!-- Tab: Trajectories -->
 <div class="tab-panel" id="tab-trajectories">
-  <div class="traj-controls">
-    <select class="traj-select" id="traj-select">
-      <option value="">Select a competitor...</option>
-    </select>
+  <div class="split-layout">
+    <div class="sidebar" id="traj-sidebar"></div>
+    <div class="detail-panel">
+      <div class="detail-inner" id="traj-detail"></div>
+    </div>
   </div>
-  <div id="traj-content"></div>
 </div>
 
 <!-- Tab: Live Signals -->
 <div class="tab-panel" id="tab-signals">
-  <div id="signals-content"></div>
+  <div class="signals-full" id="signals-content"></div>
 </div>
 
 </main>
+
+<footer class="page-footer" id="page-footer"></footer>
 
 <script>
 /* === Helpers === */
@@ -471,12 +512,62 @@ function threatLevel(brief){
   return 'low';
 }
 
+function threatPillClass(tl){
+  if(tl==='high') return 'pill--red';
+  if(tl==='medium') return 'pill--amber';
+  return 'pill--muted';
+}
+
+function threatLabel(tl){
+  if(tl==='high') return 'High Threat';
+  if(tl==='medium') return 'Medium';
+  return 'Low';
+}
+
 function tierLabel(tier){
   return 'Tier '+tier;
 }
 
+function extractDomain(url){
+  if(!url) return '';
+  try{
+    var u=new URL(url);
+    return u.hostname.replace(/^www\./,'');
+  }catch(e){return url}
+}
+
+/** Get text and sources from a field that may be string or {text, sources} */
+function getSourced(field){
+  if(!field) return {text:'', sources:[]};
+  if(typeof field==='string') return {text:field, sources:[]};
+  return {text:field.text||'', sources:field.sources||[]};
+}
+
+function renderSourceLinks(sources){
+  if(!sources||!sources.length) return '';
+  var html='<div class="brief-section-sources">Sources: ';
+  sources.forEach(function(url, i){
+    if(i>0) html+=', ';
+    html+='<a class="source-link" href="'+esc(url)+'" target="_blank" rel="noopener">'+esc(extractDomain(url))+'</a>';
+  });
+  html+='</div>';
+  return html;
+}
+
+/* === Tabs === */
+document.querySelectorAll('.tab-bar button').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('.tab-bar button').forEach(function(b){b.classList.remove('active')});
+    document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active')});
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.getAttribute('data-tab')).classList.add('active');
+  });
+});
+
 /* === Data === */
 var DATA=null;
+var selectedBrief=null;
+var selectedTraj=null;
 
 fetch('competitive_data.json')
   .then(function(r){return r.json()})
@@ -502,136 +593,181 @@ function render(){
   document.getElementById('st-threat').textContent=s.high_threat||0;
   document.getElementById('st-updated').textContent=formatDate(DATA.generated_at);
 
-  // Briefs
-  renderBriefs(comps);
+  // Briefs sidebar + detail
+  renderBriefsSidebar(comps);
+  if(comps.length) selectBrief(comps[0].slug);
 
-  // Trajectories dropdown
-  renderTrajSelect(comps);
+  // Trajectories sidebar + detail
+  renderTrajSidebar(comps);
+  if(comps.length) selectTraj(comps[0].slug);
 
   // Signals
-  renderSignals(sigs,comps);
+  renderSignals(sigs, comps);
+
+  // Footer
+  var footer=document.getElementById('page-footer');
+  footer.textContent='Last pipeline run: '+formatDate(DATA.generated_at)+' \u00b7 '+comps.length+' competitors tracked';
 }
 
-/* --- Briefs --- */
-function renderBriefs(comps){
-  var grid=document.getElementById('comp-grid');
-  if(!comps.length){
-    grid.innerHTML='<div class="empty-state"><div class="empty-icon">--</div><div>No competitors tracked yet.</div></div>';
-    return;
-  }
-  var html='';
+/* --- Briefs Sidebar --- */
+function renderBriefsSidebar(comps){
+  var sb=document.getElementById('briefs-sidebar');
+  sb.innerHTML='';
   comps.forEach(function(c){
     var tl=threatLevel(c.brief);
-    var b=c.brief||{};
-    var hasBrief=!!c.brief;
-    var threatPill=tl==='high'?'pill--red':tl==='medium'?'pill--amber':'pill--muted';
-    var threatText=tl==='high'?'High Threat':tl==='medium'?'Medium':'Low';
-
-    html+='<div class="comp-card" data-slug="'+esc(c.slug)+'">';
-    html+='<div class="comp-card-header" onclick="toggleCard(this)">';
-    html+='<div class="comp-card-top">';
-    html+='<span class="threat-dot '+tl+'"></span>';
-    html+='<span class="comp-name">'+esc(c.name)+'</span>';
-    html+='<div class="comp-pills">';
-    html+='<span class="pill '+threatPill+'">'+threatText+'</span>';
-    html+='<span class="pill pill--muted">'+esc(tierLabel(c.tier))+'</span>';
-    html+='</div></div>';
-
-    if(hasBrief){
-      html+='<div class="comp-pos">'+esc(b.positioning_actual||c.positioning||'--')+'</div>';
-      html+='<div class="comp-diff">'+esc(b.key_differentiation||'--')+'</div>';
-    } else {
-      html+='<div class="comp-pos">'+esc(c.positioning||'Positioning pending...')+'</div>';
-      html+='<div class="comp-diff" style="font-style:italic;opacity:0.5">Brief pending...</div>';
-    }
-
-    html+='<div class="comp-updated">Updated '+esc(c.brief_generated_at?ago(c.brief_generated_at):'--')+'</div>';
-    html+='</div>'; // header
-
-    // Accordion body
-    html+='<div class="comp-card-body"><div class="comp-card-body-inner">';
-    if(hasBrief){
-      html+='<div class="detail-grid">';
-      html+=detailField('Self-positioning',b.self_positioning||b.positioning_actual||'--');
-      html+=detailField('Target ICP',b.target_icp||'--');
-      html+=detailField('Pricing Signals',b.pricing_signals||'--');
-      html+=detailField('Threat Reasoning',b.threat_reasoning||'--');
-      html+=detailField('Weakness vs ',b.weakness_vs_||'--');
-      html+=detailField('Strength vs ',b.strength_vs_||'--');
-      html+='</div>';
-
-      // Recent moves
-      var moves=b.recent_moves||[];
-      if(moves.length){
-        html+='<div class="recent-moves">';
-        html+='<div class="recent-moves-title">Recent Moves</div>';
-        html+='<ul>';
-        moves.forEach(function(m){html+='<li>'+esc(m)+'</li>'});
-        html+='</ul></div>';
-      }
-    } else {
-      html+='<div class="empty-state" style="padding:24px 0"><div>Brief not yet generated. Run the competitive pipeline to generate briefs.</div></div>';
-    }
-    html+='</div></div>'; // body inner + body
-    html+='</div>'; // card
+    var item=document.createElement('div');
+    item.className='sidebar-item';
+    item.setAttribute('data-slug',c.slug);
+    item.innerHTML=
+      '<span class="threat-dot '+tl+'"></span>'+
+      '<span class="sb-name">'+esc(c.name)+'</span>'+
+      '<span class="sb-pill '+tl+'">'+esc(threatLabel(tl))+'</span>';
+    item.addEventListener('click',function(){selectBrief(c.slug)});
+    sb.appendChild(item);
   });
-  grid.innerHTML=html;
 }
 
-function detailField(label,value){
-  return '<div class="detail-field"><div class="detail-label">'+esc(label)+'</div><div class="detail-value">'+esc(value)+'</div></div>';
-}
-
-function toggleCard(headerEl){
-  var card=headerEl.closest('.comp-card');
-  card.classList.toggle('open');
-}
-
-/* --- Trajectories --- */
-function renderTrajSelect(comps){
-  var sel=document.getElementById('traj-select');
-  comps.forEach(function(c){
-    var opt=document.createElement('option');
-    opt.value=c.slug;
-    opt.textContent=c.name;
-    sel.appendChild(opt);
+function selectBrief(slug){
+  selectedBrief=slug;
+  // Update sidebar active
+  document.querySelectorAll('#briefs-sidebar .sidebar-item').forEach(function(el){
+    el.classList.toggle('active',el.getAttribute('data-slug')===slug);
   });
-
-  // Default to F2.ai if available
-  var f2=comps.find(function(c){return c.slug==='f2'});
-  if(f2) sel.value='f2';
-
-  sel.addEventListener('change',function(){renderTrajectory(sel.value)});
-  if(sel.value) renderTrajectory(sel.value);
-}
-
-function renderTrajectory(slug){
-  var container=document.getElementById('traj-content');
-  var comp=(DATA.competitors||[]).find(function(c){return c.slug===slug});
-  if(!comp){container.innerHTML='';return}
-
-  var traj=comp.trajectory;
-  if(!traj){
-    container.innerHTML='<div class="empty-state"><div class="empty-icon">--</div><div>Trajectory not yet generated for '+esc(comp.name)+'. Run the competitive pipeline to build trajectories.</div></div>';
+  // Find competitor
+  var comp=null;
+  (DATA.competitors||[]).forEach(function(c){if(c.slug===slug) comp=c});
+  if(!comp){
+    document.getElementById('briefs-detail').innerHTML='<div class="empty-state"><div class="empty-icon">--</div>Competitor not found.</div>';
     return;
   }
+  renderBriefDetail(comp);
+}
+
+function renderBriefDetail(comp){
+  var el=document.getElementById('briefs-detail');
+  var b=comp.brief||{};
+  var tl=threatLevel(b);
 
   var html='';
 
+  // Header
+  html+='<div class="brief-header">';
+  html+='<div class="brief-header-top">';
+  html+='<span class="brief-comp-name">'+esc(comp.name)+'</span>';
+  html+='<span class="pill '+esc(threatPillClass(tl))+'">'+esc(threatLabel(tl))+'</span>';
+  html+='<span class="pill pill--muted">'+esc(tierLabel(comp.tier))+'</span>';
+  html+='</div>';
+  if(comp.url){
+    html+='<a class="brief-url" href="'+esc(comp.url)+'" target="_blank" rel="noopener">'+esc(extractDomain(comp.url))+' &#8599;</a>';
+  }
+  html+='<div class="brief-updated">Updated '+esc(comp.brief_generated_at?ago(comp.brief_generated_at):'--')+'</div>';
+  html+='</div>';
+
+  // Brief sections
+  var sections=[
+    {key:'positioning_self', label:'POSITIONING (SELF-DESCRIBED)'},
+    {key:'positioning_actual', label:'ACTUAL POSITIONING'},
+    {key:'target_icp', label:'TARGET ICP'},
+    {key:'key_differentiation', label:'KEY DIFFERENTIATION'},
+    {key:'strength_vs_', label:'STRENGTH VS '},
+    {key:'weakness_vs_', label:'WEAKNESS VS '},
+    {key:'pricing_signals', label:'PRICING SIGNALS'}
+  ];
+
+  sections.forEach(function(sec){
+    var field=getSourced(b[sec.key]);
+    if(!field.text) return;
+    html+='<div class="brief-section">';
+    html+='<div class="brief-section-label">'+esc(sec.label)+'</div>';
+    html+='<p class="brief-section-text">'+esc(field.text)+'</p>';
+    html+=renderSourceLinks(field.sources);
+    html+='</div>';
+  });
+
+  // Threat assessment
+  if(b.threat_reasoning){
+    html+='<div class="threat-block">';
+    html+='<div class="threat-block-label">THREAT ASSESSMENT</div>';
+    html+='<div class="threat-block-body">';
+    html+='<span class="pill '+esc(threatPillClass(tl))+'" style="flex-shrink:0;margin-top:3px">'+esc(threatLabel(tl))+'</span>';
+    html+='<p class="threat-block-text">'+esc(b.threat_reasoning)+'</p>';
+    html+='</div>';
+    html+='</div>';
+  }
+
+  // Recent moves
+  var moves=b.recent_moves||[];
+  if(moves.length){
+    html+='<div class="brief-section">';
+    html+='<div class="brief-section-label">RECENT MOVES</div>';
+    html+='<ul class="moves-list">';
+    moves.forEach(function(m){
+      var mText=typeof m==='string'?m:(m.text||'');
+      var mSource=typeof m==='string'?'':(m.source||'');
+      html+='<li>';
+      html+='<p class="move-text">'+esc(mText)+'</p>';
+      if(mSource){
+        html+='<div class="move-source">';
+        html+='<span class="move-source-arrow">&#8599;</span>';
+        html+='<a href="'+esc(mSource)+'" target="_blank" rel="noopener">'+esc(extractDomain(mSource))+'</a>';
+        html+='</div>';
+      }
+      html+='</li>';
+    });
+    html+='</ul>';
+    html+='</div>';
+  }
+
+  el.innerHTML=html;
+}
+
+/* --- Trajectories Sidebar --- */
+function renderTrajSidebar(comps){
+  var sb=document.getElementById('traj-sidebar');
+  sb.innerHTML='';
+  comps.forEach(function(c){
+    var tl=threatLevel(c.brief);
+    var item=document.createElement('div');
+    item.className='sidebar-item';
+    item.setAttribute('data-slug',c.slug);
+    item.innerHTML=
+      '<span class="threat-dot '+tl+'"></span>'+
+      '<span class="sb-name">'+esc(c.name)+'</span>';
+    item.addEventListener('click',function(){selectTraj(c.slug)});
+    sb.appendChild(item);
+  });
+}
+
+function selectTraj(slug){
+  selectedTraj=slug;
+  document.querySelectorAll('#traj-sidebar .sidebar-item').forEach(function(el){
+    el.classList.toggle('active',el.getAttribute('data-slug')===slug);
+  });
+  var comp=null;
+  (DATA.competitors||[]).forEach(function(c){if(c.slug===slug) comp=c});
+  if(!comp||!comp.trajectory){
+    document.getElementById('traj-detail').innerHTML='<div class="empty-state"><div class="empty-icon">--</div>No trajectory data available.</div>';
+    return;
+  }
+  renderTrajDetail(comp);
+}
+
+function renderTrajDetail(comp){
+  var el=document.getElementById('traj-detail');
+  var t=comp.trajectory;
+  var html='';
+
+  html+='<div style="margin-bottom:20px"><span style="font-size:20px;font-weight:500">'+esc(comp.name)+'</span> <span style="font-size:13px;color:var(--text-3);margin-left:8px">Trajectory Analysis</span></div>';
+
   // Eras
-  var eras=traj.eras||[];
-  if(eras.length){
+  if(t.eras&&t.eras.length){
     html+='<div class="era-list">';
-    eras.forEach(function(era){
+    t.eras.forEach(function(era){
       html+='<div class="era-card">';
-      html+='<div class="era-period">'+esc(era.period||'--')+'</div>';
-      html+='<div class="era-theme">'+esc(era.dominant_theme||era.theme||'--')+'</div>';
-      html+='<div class="era-positioning">'+esc(era.positioning||'')+'</div>';
-      var moments=era.key_moments||[];
-      if(moments.length){
-        html+='<ul class="era-moments">';
-        moments.forEach(function(m){html+='<li>'+esc(m)+'</li>'});
-        html+='</ul>';
+      html+='<div class="era-period">'+esc(era.period)+'</div>';
+      html+='<div class="era-theme">'+esc(era.theme||era.description||'')+'</div>';
+      if(era.description&&era.theme){
+        html+='<p class="era-desc">'+esc(era.description)+'</p>';
       }
       html+='</div>';
     });
@@ -639,146 +775,59 @@ function renderTrajectory(slug){
   }
 
   // Inflection points
-  var inflections=traj.inflection_points||[];
-  if(inflections.length){
+  if(t.inflection_points&&t.inflection_points.length){
     html+='<div class="inflection-card" style="margin-top:16px">';
     html+='<h3>Inflection Points</h3>';
     html+='<ul>';
-    inflections.forEach(function(ip){
-      html+='<li>'+esc(typeof ip==='string'?ip:(ip.description||ip.event||JSON.stringify(ip)))+'</li>';
+    t.inflection_points.forEach(function(ip){
+      html+='<li>'+esc(ip)+'</li>';
     });
-    html+='</ul></div>';
+    html+='</ul>';
+    html+='</div>';
   }
 
   // Summary
-  var summary=traj.summary||traj.trajectory_summary||'';
-  if(summary){
+  if(t.trajectory_summary){
     html+='<div class="traj-summary">';
     html+='<h3>Trajectory Summary</h3>';
-    html+='<p>'+esc(summary)+'</p>';
+    html+='<p>'+esc(t.trajectory_summary)+'</p>';
     html+='</div>';
   }
 
-  if(!html){
-    html='<div class="empty-state"><div>Trajectory data is empty for '+esc(comp.name)+'.</div></div>';
-  }
-
-  container.innerHTML=html;
+  el.innerHTML=html;
 }
 
 /* --- Signals --- */
-function renderSignals(sigs,comps){
-  var container=document.getElementById('signals-content');
-
-  // Collect all signals from competitors too
-  var allSigs=sigs.slice();
-  comps.forEach(function(c){
-    (c.recent_signals||[]).forEach(function(s){
-      s._comp_name=c.name;
-      s._comp_slug=c.slug;
-      allSigs.push(s);
-    });
-  });
-
-  if(!allSigs.length){
-    container.innerHTML='<div class="empty-state" style="padding:64px 24px"><div class="empty-icon" style="font-size:32px;opacity:0.3">--</div><div style="margin-top:8px">Live signals start appearing after 24h of monitoring.</div><div style="margin-top:4px;font-size:12px;color:var(--text-3)">The system monitors competitor web pages, announcements, and public data sources.</div></div>';
+function renderSignals(sigs, comps){
+  var el=document.getElementById('signals-content');
+  if(!sigs||!sigs.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">--</div>No live signals detected yet. Signals will appear here as they are captured from monitored sources.</div>';
     return;
   }
 
-  // Gather unique categories, relevances, competitor names
-  var categories={},relevances={},compNames={};
-  allSigs.forEach(function(s){
-    if(s.category) categories[s.category]=1;
-    if(s.relevance) relevances[s.relevance]=1;
-    var cn=s._comp_name||s.competitor||'';
-    if(cn) compNames[cn]=1;
-  });
+  // Build name lookup
+  var nameMap={};
+  comps.forEach(function(c){nameMap[c.slug]=c.name});
 
-  var html='<div class="signals-layout">';
-
-  // Sidebar filters
-  html+='<div class="signal-filters">';
-  html+=filterGroup('Category',Object.keys(categories),'category');
-  html+=filterGroup('Relevance',Object.keys(relevances),'relevance');
-  html+=filterGroup('Competitor',Object.keys(compNames),'competitor');
-  html+='</div>';
-
-  // Feed
-  html+='<div class="signal-feed" id="signal-feed">';
-  allSigs.forEach(function(s){
-    var cat=s.category||'general';
-    var rel=s.relevance||'low';
-    var comp=s._comp_name||s.competitor||'Unknown';
-    var relPill=rel==='high'?'pill--red':rel==='medium'?'pill--amber':'pill--muted';
-
-    html+='<div class="signal-card" data-category="'+esc(cat)+'" data-relevance="'+esc(rel)+'" data-competitor="'+esc(comp)+'">';
+  var html='<div class="signal-feed">';
+  sigs.forEach(function(sig){
+    html+='<div class="signal-card">';
     html+='<div class="signal-card-top">';
-    html+='<span class="pill pill--blue">'+esc(cat)+'</span>';
-    html+='<span class="comp-label">'+esc(comp)+'</span>';
-    html+='<span class="pill '+relPill+'">'+esc(rel)+'</span>';
-    html+='<span class="time-ago">'+esc(ago(s.detected_at||s.date||''))+'</span>';
+    html+='<span class="comp-label">'+esc(nameMap[sig.competitor_slug]||sig.competitor_slug||'Unknown')+'</span>';
+    if(sig.signal_type){
+      html+='<span class="pill pill--muted">'+esc(sig.signal_type)+'</span>';
+    }
+    html+='<span class="time-ago">'+esc(sig.detected_at?ago(sig.detected_at):'')+'</span>';
     html+='</div>';
-    html+='<div class="summary">'+esc(s.summary||s.title||'--')+'</div>';
-    if(s.source_url||s.url){
-      html+='<a class="source-link" href="'+esc(s.source_url||s.url)+'" target="_blank" rel="noopener">View source &rarr;</a>';
+    html+='<div class="summary">'+esc(sig.summary||sig.text||'')+'</div>';
+    if(sig.source_url){
+      html+='<a class="source-link" href="'+esc(sig.source_url)+'" target="_blank" rel="noopener">'+esc(extractDomain(sig.source_url))+'</a>';
     }
     html+='</div>';
   });
   html+='</div>';
-  html+='</div>';
-
-  container.innerHTML=html;
-
-  // Bind filter chips
-  container.querySelectorAll('.filter-chip').forEach(function(chip){
-    chip.addEventListener('click',function(){
-      chip.classList.toggle('active');
-      applySignalFilters();
-    });
-  });
+  el.innerHTML=html;
 }
-
-function filterGroup(title,items,attr){
-  if(!items.length) return '';
-  var h='<div><div class="filter-group-title">'+esc(title)+'</div><div class="filter-chips">';
-  items.forEach(function(item){
-    h+='<button class="filter-chip" data-filter-attr="'+esc(attr)+'" data-filter-val="'+esc(item)+'">'+esc(item)+'</button>';
-  });
-  h+='</div></div>';
-  return h;
-}
-
-function applySignalFilters(){
-  var active={};
-  document.querySelectorAll('.filter-chip.active').forEach(function(chip){
-    var attr=chip.getAttribute('data-filter-attr');
-    var val=chip.getAttribute('data-filter-val');
-    if(!active[attr]) active[attr]=[];
-    active[attr].push(val);
-  });
-
-  document.querySelectorAll('.signal-card').forEach(function(card){
-    var show=true;
-    Object.keys(active).forEach(function(attr){
-      if(active[attr].length){
-        var cardVal=card.getAttribute('data-'+attr)||'';
-        if(active[attr].indexOf(cardVal)===-1) show=false;
-      }
-    });
-    card.style.display=show?'':'none';
-  });
-}
-
-/* === Tab switching === */
-document.querySelectorAll('.tab-bar button').forEach(function(btn){
-  btn.addEventListener('click',function(){
-    document.querySelectorAll('.tab-bar button').forEach(function(b){b.classList.remove('active')});
-    btn.classList.add('active');
-    var tab=btn.getAttribute('data-tab');
-    document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active')});
-    document.getElementById('tab-'+tab).classList.add('active');
-  });
-});
 </script>
 </body>
 </html>
