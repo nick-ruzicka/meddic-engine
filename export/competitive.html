@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Competitive Intelligence — MEDDIC Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared.css">
+<style>
+  :root{
+    --bg:#101010;
+    --surface:#161616;
+    --elevated:#1c1c1c;
+    --overlay:#222222;
+    --text:#ffffff;
+    --text-2:rgba(255,255,255,0.72);
+    --text-3:rgba(255,255,255,0.55);
+    --border:rgba(255,255,255,0.10);
+    --border-strong:rgba(255,255,255,0.18);
+    --divider:#1F1F1F;
+
+    --blue:#465BFF;
+    --blue-dim:rgba(70,91,255,0.15);
+    --blue-border:rgba(70,91,255,0.40);
+
+    --green:#10b981; --green-dim:rgba(16,185,129,0.12);
+    --amber:#f59e0b; --amber-dim:rgba(245,158,11,0.12); --amber-border:rgba(245,158,11,0.25);
+    --red:#ef4444; --red-dim:rgba(239,68,68,0.12); --red-border:rgba(239,68,68,0.25);
+    --violet:#7c3aed;
+    --teal:#0d9488;
+
+    --font-ui:'Inter',system-ui,-apple-system,sans-serif;
+    --font-display:'Playfair Display',Georgia,serif;
+    --font-mono:'SF Mono','Fira Code',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  button,select,textarea,input{font-family:inherit;color:inherit}
+
+  /* ==== NAV ==== */
+  header{
+    position:sticky;top:0;z-index:20;
+    background:rgba(16,16,16,0.92);backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    height:64px;padding:0 28px;
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .name{font-size:15px;font-weight:500;letter-spacing:0.02em;color:var(--text)}
+  .brand .sub{color:var(--text-3);font-size:13px;letter-spacing:0.02em;margin-left:2px}
+  .brand .eyebrow{
+    margin-left:14px;padding-left:14px;border-left:1px solid var(--border);
+    font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);
+  }
+  .nav-links{display:flex;align-items:center;gap:10px;margin-left:auto;margin-right:16px}
+  .nav-links a{
+    font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--text-3);text-decoration:none;transition:color 150ms;
+  }
+  .nav-links a:hover{color:var(--text)}
+  .nav-links a.active{color:var(--blue)}
+  .nav-links .nav-sep{color:rgba(255,255,255,0.20);font-size:11px}
+
+  main{max-width:100%;margin:0;padding:0 0 64px}
+
+  /* ==== HERO ==== */
+  .hero{
+    position:relative;overflow:hidden;
+    background:
+      radial-gradient(ellipse 60% 80% at 85% 50%, rgba(70,91,255,0.04) 0%, transparent 70%),
+      linear-gradient(105deg, #101010 0%, #101010 55%, #131318 100%);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    padding:40px 40px 36px;
+  }
+  .hero-eyebrow{
+    font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;
+    color:var(--blue);margin-bottom:14px;
+  }
+  .hero-title{
+    font-family:var(--font-display);
+    font-size:48px;font-weight:500;letter-spacing:0.015em;line-height:1;
+    color:var(--text);margin:0;
+  }
+  .hero-sub{font-size:14px;color:var(--text-2);margin-top:16px;letter-spacing:0.01em;max-width:640px}
+
+  /* ==== STAT CARDS ==== */
+  .stat-cards{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:28px 40px 0;
+    background:var(--surface);border:1px solid var(--border);border-radius:2px;
+  }
+  .stat-card{
+    background:transparent;border:none;border-radius:0;
+    padding:28px 32px;
+    border-top:2px solid transparent;
+    border-left:1px solid rgba(255,255,255,0.08);
+  }
+  .stat-card:first-child{border-left:none}
+  .stat-card.c-blue{border-top-color:var(--blue)}
+  .stat-card.c-amber{border-top-color:var(--amber)}
+  .stat-card.c-red{border-top-color:var(--red)}
+  .stat-card.c-muted{border-top-color:rgba(255,255,255,0.25)}
+  .stat-card .lbl{
+    font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;
+    color:var(--text-3);margin-bottom:10px;
+  }
+  .stat-card .val{
+    font-size:36px;font-weight:300;letter-spacing:-0.02em;line-height:1;
+    color:var(--text);font-variant-numeric:tabular-nums;
+  }
+  .stat-card .sub{font-size:11px;color:var(--text-3);margin-top:6px;letter-spacing:0.02em}
+
+  /* ==== TAB BAR ==== */
+  .tab-bar{
+    display:flex;gap:0;padding:0 40px;
+    border-bottom:1px solid var(--border);
+    background:var(--surface);
+  }
+  .tab-bar button{
+    background:transparent;border:none;
+    padding:14px 24px;
+    font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--text-3);cursor:pointer;
+    border-bottom:2px solid transparent;
+    transition:color 150ms,border-color 150ms;
+    position:relative;bottom:-1px;
+  }
+  .tab-bar button:hover{color:rgba(255,255,255,0.70)}
+  .tab-bar button.active{color:var(--text);border-bottom-color:var(--blue)}
+
+  /* ==== TAB PANELS ==== */
+  .tab-panel{display:none;padding:28px 40px}
+  .tab-panel.active{display:block}
+
+  /* ==== BRIEFS TAB ==== */
+  .comp-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+    gap:16px;
+  }
+  .comp-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    overflow:hidden;
+    transition:border-color 150ms;
+  }
+  .comp-card:hover{border-color:var(--border-strong)}
+  .comp-card-header{
+    padding:20px 22px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .comp-card-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .threat-dot{
+    width:8px;height:8px;border-radius:50%;flex-shrink:0;
+  }
+  .threat-dot.high{background:var(--red)}
+  .threat-dot.medium{background:var(--amber)}
+  .threat-dot.low{background:rgba(255,255,255,0.30)}
+  .comp-name{font-size:16px;font-weight:500;letter-spacing:0.01em}
+  .comp-pills{display:flex;gap:6px;margin-left:auto;flex-shrink:0}
+
+  .pill{
+    display:inline-flex;align-items:center;
+    padding:2px 7px;border-radius:2px;
+    font-size:10px;font-weight:500;
+    letter-spacing:0.06em;text-transform:uppercase;line-height:1.4;
+  }
+  .pill--red{background:var(--red-dim);color:#f87171;border:1px solid var(--red-border)}
+  .pill--amber{background:var(--amber-dim);color:#fbbf24;border:1px solid var(--amber-border)}
+  .pill--muted{background:rgba(255,255,255,0.06);color:var(--text-3);border:1px solid transparent}
+  .pill--blue{background:var(--blue-dim);color:#8b9fff;border:1px solid var(--blue-border)}
+  .pill--green{background:rgba(16,185,129,0.12);color:#34d399;border:1px solid transparent}
+
+  .comp-pos{font-size:13px;color:var(--text-2);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .comp-diff{font-size:12px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .comp-updated{font-size:10px;color:var(--text-3);margin-top:10px;letter-spacing:0.06em;text-transform:uppercase}
+
+  /* Accordion expansion */
+  .comp-card-body{
+    max-height:0;overflow:hidden;
+    transition:max-height 350ms cubic-bezier(0.4,0,0.2,1);
+  }
+  .comp-card.open .comp-card-body{max-height:1200px}
+  .comp-card-body-inner{
+    padding:0 22px 22px;
+    border-top:1px solid var(--border);
+    padding-top:18px;
+  }
+  .detail-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-bottom:16px;
+  }
+  .detail-field .detail-label{
+    font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;
+    color:var(--text-3);margin-bottom:6px;
+  }
+  .detail-field .detail-value{font-size:13px;color:var(--text-2);line-height:1.5}
+  .recent-moves{width:100%}
+  .recent-moves-title{
+    font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;
+    color:var(--text-3);margin-bottom:10px;
+  }
+  .recent-moves ul{margin:0;padding-left:18px}
+  .recent-moves li{font-size:13px;color:var(--text-2);margin-bottom:6px;line-height:1.5}
+
+  .methodology-block{
+    margin-top:32px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:24px 28px;
+  }
+  .methodology-block h3{
+    font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;
+    color:var(--text-3);margin:0 0 12px;
+  }
+  .methodology-block p{font-size:13px;color:var(--text-2);margin:0;line-height:1.65}
+
+  /* ==== TRAJECTORIES TAB ==== */
+  .traj-controls{margin-bottom:24px}
+  .traj-select{
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:9px 14px;
+    border-radius:2px;
+    font-size:13px;
+    cursor:pointer;
+    min-width:200px;
+  }
+  .traj-select:focus{border-color:rgba(70,91,255,0.50);outline:none}
+  .era-list{display:flex;flex-direction:column;gap:16px;max-width:740px}
+  .era-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:22px 26px;
+  }
+  .era-period{
+    font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;
+    color:var(--blue);margin-bottom:8px;
+  }
+  .era-theme{font-size:16px;font-weight:500;margin-bottom:6px}
+  .era-positioning{font-size:13px;color:var(--text-2);font-style:italic;margin-bottom:12px}
+  .era-moments{margin:0;padding-left:18px}
+  .era-moments li{font-size:13px;color:var(--text-2);margin-bottom:6px;line-height:1.5}
+
+  .inflection-card{
+    background:linear-gradient(135deg,rgba(70,91,255,0.06) 0%,var(--surface) 100%);
+    border:1px solid var(--blue-border);
+    border-radius:2px;
+    padding:22px 26px;
+  }
+  .inflection-card h3{
+    font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;
+    color:var(--blue);margin:0 0 12px;
+  }
+  .inflection-card ul{margin:0;padding-left:18px}
+  .inflection-card li{font-size:13px;color:var(--text-2);margin-bottom:6px;line-height:1.5}
+
+  .traj-summary{
+    margin-top:16px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:22px 26px;
+  }
+  .traj-summary h3{
+    font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;
+    color:var(--text-3);margin:0 0 10px;
+  }
+  .traj-summary p{font-size:14px;color:var(--text-2);margin:0;line-height:1.6}
+
+  .empty-state{
+    text-align:center;
+    padding:48px 24px;
+    color:var(--text-3);
+    font-size:14px;
+  }
+  .empty-state .empty-icon{font-size:28px;margin-bottom:12px;opacity:0.4}
+
+  /* ==== LIVE SIGNALS TAB ==== */
+  .signals-layout{display:grid;grid-template-columns:220px 1fr;gap:24px}
+  .signal-filters{display:flex;flex-direction:column;gap:16px}
+  .filter-group-title{
+    font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;
+    color:var(--text-3);margin-bottom:8px;
+  }
+  .filter-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .filter-chip{
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:5px 10px;
+    font-size:11px;
+    color:var(--text-3);
+    cursor:pointer;
+    transition:all 150ms;
+    text-transform:capitalize;
+  }
+  .filter-chip:hover{border-color:var(--border-strong);color:var(--text-2)}
+  .filter-chip.active{background:var(--blue-dim);border-color:var(--blue-border);color:#8b9fff}
+
+  .signal-feed{display:flex;flex-direction:column;gap:12px}
+  .signal-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:18px 22px;
+    transition:border-color 150ms;
+  }
+  .signal-card:hover{border-color:var(--border-strong)}
+  .signal-card-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+  .signal-card .comp-label{font-size:12px;font-weight:500;color:var(--text)}
+  .signal-card .time-ago{font-size:11px;color:var(--text-3);margin-left:auto}
+  .signal-card .summary{font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:8px}
+  .signal-card .source-link{
+    font-size:11px;color:var(--blue);text-decoration:none;
+    letter-spacing:0.04em;
+  }
+  .signal-card .source-link:hover{text-decoration:underline}
+
+  /* ==== RESPONSIVE ==== */
+  @media(max-width:900px){
+    .stat-cards{grid-template-columns:repeat(2,1fr)}
+    .stat-card{border-left:none;border-top:1px solid rgba(255,255,255,0.08)}
+    .stat-card:nth-child(-n+2){border-top:2px solid transparent}
+    .hero{padding:28px 20px 24px}
+    .stat-cards{margin:20px 20px 0}
+    .tab-bar{padding:0 20px}
+    .tab-panel{padding:20px}
+    .signals-layout{grid-template-columns:1fr}
+    .detail-grid{grid-template-columns:1fr}
+  }
+  @media(max-width:600px){
+    .stat-cards{grid-template-columns:1fr}
+    .comp-grid{grid-template-columns:1fr}
+    header{padding:0 16px}
+    .nav-links{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg class="logo" width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path fill="#F5F5F5" d="M2 2h2v2H2V2Zm3 2h3V2H5v2Zm4-2v2h5V2H9ZM2 8h2V5H2v3Zm3 0h3V5H5v3Zm4 0h5V5H9v3Zm-7 6h2V9H2v5Zm3 0h3V9H5v5Zm4 0h5V9H9v5Z"/>
+    </svg>
+    <span class="name"></span>
+    <span class="sub">Signal Engine</span>
+    <span class="eyebrow">Competitive Intelligence</span>
+  </div>
+  <nav class="nav-links">
+    <a href="analytics.html">Analytics</a>
+    <span class="nav-sep">&middot;</span>
+    <a href="ops.html">Pipeline Ops</a>
+    <span class="nav-sep">&middot;</span>
+    <a href="methodology.html">Methodology</a>
+    <span class="nav-sep">&middot;</span>
+    <a href="competitive.html" class="active">Competitive</a>
+    <span class="nav-sep">&middot;</span>
+    <a href="index.html">&larr; Contacts</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-eyebrow">COMPETITIVE INTELLIGENCE</div>
+  <h1 class="hero-title">The competitive perimeter.</h1>
+  <p class="hero-sub" id="hero-sub">Loading competitive data...</p>
+</section>
+
+<!-- Stat Cards -->
+<div class="stat-cards" id="stat-cards">
+  <div class="stat-card c-blue">
+    <div class="lbl">Competitors</div>
+    <div class="val" id="st-competitors">--</div>
+    <div class="sub">Tracked tier-1 companies</div>
+  </div>
+  <div class="stat-card c-amber">
+    <div class="lbl">Signals This Week</div>
+    <div class="val" id="st-signals">--</div>
+    <div class="sub">Detected from monitored sources</div>
+  </div>
+  <div class="stat-card c-red">
+    <div class="lbl">High Threat</div>
+    <div class="val" id="st-threat">--</div>
+    <div class="sub">Competitors rated high threat</div>
+  </div>
+  <div class="stat-card c-muted">
+    <div class="lbl">Last Updated</div>
+    <div class="val" id="st-updated" style="font-size:18px;font-weight:400">--</div>
+    <div class="sub">Data generation timestamp</div>
+  </div>
+</div>
+
+<!-- Tab Bar -->
+<div class="tab-bar">
+  <button class="active" data-tab="briefs">Briefs</button>
+  <button data-tab="trajectories">Trajectories</button>
+  <button data-tab="signals">Live Signals</button>
+</div>
+
+<!-- Tab: Briefs -->
+<div class="tab-panel active" id="tab-briefs">
+  <div class="comp-grid" id="comp-grid"></div>
+  <div class="methodology-block">
+    <h3>Methodology</h3>
+    <p>Competitive briefs are generated by ingesting each competitor's public web presence, product documentation, and recent announcements. Content is analyzed by Claude to extract positioning, pricing signals, strengths, weaknesses, and threat assessments relative to . Briefs are refreshed weekly; signals are detected daily from monitored sources.</p>
+  </div>
+</div>
+
+<!-- Tab: Trajectories -->
+<div class="tab-panel" id="tab-trajectories">
+  <div class="traj-controls">
+    <select class="traj-select" id="traj-select">
+      <option value="">Select a competitor...</option>
+    </select>
+  </div>
+  <div id="traj-content"></div>
+</div>
+
+<!-- Tab: Live Signals -->
+<div class="tab-panel" id="tab-signals">
+  <div id="signals-content"></div>
+</div>
+
+</main>
+
+<script>
+/* === Helpers === */
+function esc(s){
+  if(!s) return '';
+  var d=document.createElement('div');
+  d.appendChild(document.createTextNode(String(s)));
+  return d.innerHTML;
+}
+
+function ago(dt){
+  if(!dt) return '';
+  var d=new Date(dt), now=new Date(), diff=Math.floor((now-d)/1000);
+  if(diff<60) return 'just now';
+  if(diff<3600) return Math.floor(diff/60)+'m ago';
+  if(diff<86400) return Math.floor(diff/3600)+'h ago';
+  return Math.floor(diff/86400)+'d ago';
+}
+
+function formatDate(dt){
+  if(!dt) return '--';
+  try{
+    var d=new Date(dt);
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  }catch(e){return '--'}
+}
+
+function threatLevel(brief){
+  if(!brief) return 'low';
+  var t=(brief.threat_level||'').toLowerCase();
+  if(t==='high') return 'high';
+  if(t==='medium') return 'medium';
+  return 'low';
+}
+
+function tierLabel(tier){
+  return 'Tier '+tier;
+}
+
+/* === Data === */
+var DATA=null;
+
+fetch('competitive_data.json')
+  .then(function(r){return r.json()})
+  .then(function(d){DATA=d; render()})
+  .catch(function(e){
+    document.getElementById('hero-sub').textContent='Failed to load competitive data.';
+    console.error(e);
+  });
+
+/* === Render === */
+function render(){
+  var s=DATA.stats||{};
+  var comps=DATA.competitors||[];
+  var sigs=DATA.signals||[];
+
+  // Hero sub
+  document.getElementById('hero-sub').textContent=
+    s.total_competitors+' companies actively competing for \'s buyer. Briefs refreshed weekly. Signals detected daily.';
+
+  // Stats
+  document.getElementById('st-competitors').textContent=s.total_competitors||0;
+  document.getElementById('st-signals').textContent=s.signals_this_week||0;
+  document.getElementById('st-threat').textContent=s.high_threat||0;
+  document.getElementById('st-updated').textContent=formatDate(DATA.generated_at);
+
+  // Briefs
+  renderBriefs(comps);
+
+  // Trajectories dropdown
+  renderTrajSelect(comps);
+
+  // Signals
+  renderSignals(sigs,comps);
+}
+
+/* --- Briefs --- */
+function renderBriefs(comps){
+  var grid=document.getElementById('comp-grid');
+  if(!comps.length){
+    grid.innerHTML='<div class="empty-state"><div class="empty-icon">--</div><div>No competitors tracked yet.</div></div>';
+    return;
+  }
+  var html='';
+  comps.forEach(function(c){
+    var tl=threatLevel(c.brief);
+    var b=c.brief||{};
+    var hasBrief=!!c.brief;
+    var threatPill=tl==='high'?'pill--red':tl==='medium'?'pill--amber':'pill--muted';
+    var threatText=tl==='high'?'High Threat':tl==='medium'?'Medium':'Low';
+
+    html+='<div class="comp-card" data-slug="'+esc(c.slug)+'">';
+    html+='<div class="comp-card-header" onclick="toggleCard(this)">';
+    html+='<div class="comp-card-top">';
+    html+='<span class="threat-dot '+tl+'"></span>';
+    html+='<span class="comp-name">'+esc(c.name)+'</span>';
+    html+='<div class="comp-pills">';
+    html+='<span class="pill '+threatPill+'">'+threatText+'</span>';
+    html+='<span class="pill pill--muted">'+esc(tierLabel(c.tier))+'</span>';
+    html+='</div></div>';
+
+    if(hasBrief){
+      html+='<div class="comp-pos">'+esc(b.positioning_actual||c.positioning||'--')+'</div>';
+      html+='<div class="comp-diff">'+esc(b.key_differentiation||'--')+'</div>';
+    } else {
+      html+='<div class="comp-pos">'+esc(c.positioning||'Positioning pending...')+'</div>';
+      html+='<div class="comp-diff" style="font-style:italic;opacity:0.5">Brief pending...</div>';
+    }
+
+    html+='<div class="comp-updated">Updated '+esc(c.brief_generated_at?ago(c.brief_generated_at):'--')+'</div>';
+    html+='</div>'; // header
+
+    // Accordion body
+    html+='<div class="comp-card-body"><div class="comp-card-body-inner">';
+    if(hasBrief){
+      html+='<div class="detail-grid">';
+      html+=detailField('Self-positioning',b.self_positioning||b.positioning_actual||'--');
+      html+=detailField('Target ICP',b.target_icp||'--');
+      html+=detailField('Pricing Signals',b.pricing_signals||'--');
+      html+=detailField('Threat Reasoning',b.threat_reasoning||'--');
+      html+=detailField('Weakness vs ',b.weakness_vs_||'--');
+      html+=detailField('Strength vs ',b.strength_vs_||'--');
+      html+='</div>';
+
+      // Recent moves
+      var moves=b.recent_moves||[];
+      if(moves.length){
+        html+='<div class="recent-moves">';
+        html+='<div class="recent-moves-title">Recent Moves</div>';
+        html+='<ul>';
+        moves.forEach(function(m){html+='<li>'+esc(m)+'</li>'});
+        html+='</ul></div>';
+      }
+    } else {
+      html+='<div class="empty-state" style="padding:24px 0"><div>Brief not yet generated. Run the competitive pipeline to generate briefs.</div></div>';
+    }
+    html+='</div></div>'; // body inner + body
+    html+='</div>'; // card
+  });
+  grid.innerHTML=html;
+}
+
+function detailField(label,value){
+  return '<div class="detail-field"><div class="detail-label">'+esc(label)+'</div><div class="detail-value">'+esc(value)+'</div></div>';
+}
+
+function toggleCard(headerEl){
+  var card=headerEl.closest('.comp-card');
+  card.classList.toggle('open');
+}
+
+/* --- Trajectories --- */
+function renderTrajSelect(comps){
+  var sel=document.getElementById('traj-select');
+  comps.forEach(function(c){
+    var opt=document.createElement('option');
+    opt.value=c.slug;
+    opt.textContent=c.name;
+    sel.appendChild(opt);
+  });
+
+  // Default to F2.ai if available
+  var f2=comps.find(function(c){return c.slug==='f2'});
+  if(f2) sel.value='f2';
+
+  sel.addEventListener('change',function(){renderTrajectory(sel.value)});
+  if(sel.value) renderTrajectory(sel.value);
+}
+
+function renderTrajectory(slug){
+  var container=document.getElementById('traj-content');
+  var comp=(DATA.competitors||[]).find(function(c){return c.slug===slug});
+  if(!comp){container.innerHTML='';return}
+
+  var traj=comp.trajectory;
+  if(!traj){
+    container.innerHTML='<div class="empty-state"><div class="empty-icon">--</div><div>Trajectory not yet generated for '+esc(comp.name)+'. Run the competitive pipeline to build trajectories.</div></div>';
+    return;
+  }
+
+  var html='';
+
+  // Eras
+  var eras=traj.eras||[];
+  if(eras.length){
+    html+='<div class="era-list">';
+    eras.forEach(function(era){
+      html+='<div class="era-card">';
+      html+='<div class="era-period">'+esc(era.period||'--')+'</div>';
+      html+='<div class="era-theme">'+esc(era.dominant_theme||era.theme||'--')+'</div>';
+      html+='<div class="era-positioning">'+esc(era.positioning||'')+'</div>';
+      var moments=era.key_moments||[];
+      if(moments.length){
+        html+='<ul class="era-moments">';
+        moments.forEach(function(m){html+='<li>'+esc(m)+'</li>'});
+        html+='</ul>';
+      }
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+
+  // Inflection points
+  var inflections=traj.inflection_points||[];
+  if(inflections.length){
+    html+='<div class="inflection-card" style="margin-top:16px">';
+    html+='<h3>Inflection Points</h3>';
+    html+='<ul>';
+    inflections.forEach(function(ip){
+      html+='<li>'+esc(typeof ip==='string'?ip:(ip.description||ip.event||JSON.stringify(ip)))+'</li>';
+    });
+    html+='</ul></div>';
+  }
+
+  // Summary
+  var summary=traj.summary||traj.trajectory_summary||'';
+  if(summary){
+    html+='<div class="traj-summary">';
+    html+='<h3>Trajectory Summary</h3>';
+    html+='<p>'+esc(summary)+'</p>';
+    html+='</div>';
+  }
+
+  if(!html){
+    html='<div class="empty-state"><div>Trajectory data is empty for '+esc(comp.name)+'.</div></div>';
+  }
+
+  container.innerHTML=html;
+}
+
+/* --- Signals --- */
+function renderSignals(sigs,comps){
+  var container=document.getElementById('signals-content');
+
+  // Collect all signals from competitors too
+  var allSigs=sigs.slice();
+  comps.forEach(function(c){
+    (c.recent_signals||[]).forEach(function(s){
+      s._comp_name=c.name;
+      s._comp_slug=c.slug;
+      allSigs.push(s);
+    });
+  });
+
+  if(!allSigs.length){
+    container.innerHTML='<div class="empty-state" style="padding:64px 24px"><div class="empty-icon" style="font-size:32px;opacity:0.3">--</div><div style="margin-top:8px">Live signals start appearing after 24h of monitoring.</div><div style="margin-top:4px;font-size:12px;color:var(--text-3)">The system monitors competitor web pages, announcements, and public data sources.</div></div>';
+    return;
+  }
+
+  // Gather unique categories, relevances, competitor names
+  var categories={},relevances={},compNames={};
+  allSigs.forEach(function(s){
+    if(s.category) categories[s.category]=1;
+    if(s.relevance) relevances[s.relevance]=1;
+    var cn=s._comp_name||s.competitor||'';
+    if(cn) compNames[cn]=1;
+  });
+
+  var html='<div class="signals-layout">';
+
+  // Sidebar filters
+  html+='<div class="signal-filters">';
+  html+=filterGroup('Category',Object.keys(categories),'category');
+  html+=filterGroup('Relevance',Object.keys(relevances),'relevance');
+  html+=filterGroup('Competitor',Object.keys(compNames),'competitor');
+  html+='</div>';
+
+  // Feed
+  html+='<div class="signal-feed" id="signal-feed">';
+  allSigs.forEach(function(s){
+    var cat=s.category||'general';
+    var rel=s.relevance||'low';
+    var comp=s._comp_name||s.competitor||'Unknown';
+    var relPill=rel==='high'?'pill--red':rel==='medium'?'pill--amber':'pill--muted';
+
+    html+='<div class="signal-card" data-category="'+esc(cat)+'" data-relevance="'+esc(rel)+'" data-competitor="'+esc(comp)+'">';
+    html+='<div class="signal-card-top">';
+    html+='<span class="pill pill--blue">'+esc(cat)+'</span>';
+    html+='<span class="comp-label">'+esc(comp)+'</span>';
+    html+='<span class="pill '+relPill+'">'+esc(rel)+'</span>';
+    html+='<span class="time-ago">'+esc(ago(s.detected_at||s.date||''))+'</span>';
+    html+='</div>';
+    html+='<div class="summary">'+esc(s.summary||s.title||'--')+'</div>';
+    if(s.source_url||s.url){
+      html+='<a class="source-link" href="'+esc(s.source_url||s.url)+'" target="_blank" rel="noopener">View source &rarr;</a>';
+    }
+    html+='</div>';
+  });
+  html+='</div>';
+  html+='</div>';
+
+  container.innerHTML=html;
+
+  // Bind filter chips
+  container.querySelectorAll('.filter-chip').forEach(function(chip){
+    chip.addEventListener('click',function(){
+      chip.classList.toggle('active');
+      applySignalFilters();
+    });
+  });
+}
+
+function filterGroup(title,items,attr){
+  if(!items.length) return '';
+  var h='<div><div class="filter-group-title">'+esc(title)+'</div><div class="filter-chips">';
+  items.forEach(function(item){
+    h+='<button class="filter-chip" data-filter-attr="'+esc(attr)+'" data-filter-val="'+esc(item)+'">'+esc(item)+'</button>';
+  });
+  h+='</div></div>';
+  return h;
+}
+
+function applySignalFilters(){
+  var active={};
+  document.querySelectorAll('.filter-chip.active').forEach(function(chip){
+    var attr=chip.getAttribute('data-filter-attr');
+    var val=chip.getAttribute('data-filter-val');
+    if(!active[attr]) active[attr]=[];
+    active[attr].push(val);
+  });
+
+  document.querySelectorAll('.signal-card').forEach(function(card){
+    var show=true;
+    Object.keys(active).forEach(function(attr){
+      if(active[attr].length){
+        var cardVal=card.getAttribute('data-'+attr)||'';
+        if(active[attr].indexOf(cardVal)===-1) show=false;
+      }
+    });
+    card.style.display=show?'':'none';
+  });
+}
+
+/* === Tab switching === */
+document.querySelectorAll('.tab-bar button').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('.tab-bar button').forEach(function(b){b.classList.remove('active')});
+    btn.classList.add('active');
+    var tab=btn.getAttribute('data-tab');
+    document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active')});
+    document.getElementById('tab-'+tab).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
