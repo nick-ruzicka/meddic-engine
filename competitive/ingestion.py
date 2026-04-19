@@ -4,6 +4,7 @@ Provides sitemap parsing, HTML text extraction, page-type classification,
 rate-limited fetching, and full competitor ingestion orchestration.
 """
 
+import hashlib
 import logging
 import os
 import re
@@ -308,7 +309,11 @@ def ingest_competitor(slug: str, base_url: str) -> int:
             if html is None:
                 continue
             text = extract_text_from_html(html)
-            save_page(slug, url, "blog", content=text, lastmod=entry["lastmod"])
+            if len(text.strip()) < 200:
+                logger.debug("Skipping %s — only %d chars (SPA shell)", url, len(text.strip()))
+                continue
+            text_hash = hashlib.sha256(text.encode()).hexdigest()[:16]
+            save_page(slug, url, "blog", content=text, content_hash=text_hash, lastmod=entry["lastmod"])
             count += 1
 
         # Fetch non-blog pages
@@ -319,7 +324,11 @@ def ingest_competitor(slug: str, base_url: str) -> int:
             if html is None:
                 continue
             text = extract_text_from_html(html)
-            save_page(slug, url, ptype, content=text, lastmod=entry["lastmod"])
+            if len(text.strip()) < 200:
+                logger.debug("Skipping %s — only %d chars (SPA shell)", url, len(text.strip()))
+                continue
+            text_hash = hashlib.sha256(text.encode()).hexdigest()[:16]
+            save_page(slug, url, ptype, content=text, content_hash=text_hash, lastmod=entry["lastmod"])
             count += 1
 
     else:
@@ -355,7 +364,11 @@ def ingest_competitor(slug: str, base_url: str) -> int:
             if html is None:
                 continue
             text = extract_text_from_html(html)
-            save_page(slug, url, ptype, content=text)
+            if len(text.strip()) < 200:
+                logger.debug("Skipping %s — only %d chars (SPA shell)", url, len(text.strip()))
+                continue
+            text_hash = hashlib.sha256(text.encode()).hexdigest()[:16]
+            save_page(slug, url, ptype, content=text, content_hash=text_hash)
             count += 1
 
     update_last_ingested(slug)

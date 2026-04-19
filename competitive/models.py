@@ -46,10 +46,16 @@ def init_competitive_db() -> None:
             page_type       TEXT,
             lastmod         TEXT,
             content         TEXT,
+            content_hash    TEXT,
             fetched_at      TEXT DEFAULT (datetime('now')),
             UNIQUE(competitor_slug, url)
         )
     """)
+
+    # Migration: add content_hash column if table exists without it
+    page_cols = {row[1] for row in c.execute("PRAGMA table_info(competitor_pages)").fetchall()}
+    if "content_hash" not in page_cols:
+        c.execute("ALTER TABLE competitor_pages ADD COLUMN content_hash TEXT")
 
     # competitor_news — news/press items per competitor
     c.execute("""
@@ -179,24 +185,44 @@ def save_page(
     page_type: str,
     *,
     content: Optional[str] = None,
+    content_hash: Optional[str] = None,
     lastmod: Optional[str] = None,
-) -> None:
-    """Upsert a crawled page. Keyed on (competitor_slug, url)."""
+) -> bool:
+    """Upsert a crawled page. Keyed on (competitor_slug, url).
+
+    Returns True if this was a new page or content changed (hash differs),
+    False if the content is unchanged.
+    """
     conn = get_db()
+
+    # Check existing hash for this page
+    existing = conn.execute(
+        "SELECT content_hash FROM competitor_pages WHERE competitor_slug = ? AND url = ?",
+        (competitor_slug, url),
+    ).fetchone()
+
+    changed = True
+    if existing is not None and content_hash is not None:
+        old_hash = existing[0] if existing[0] else None
+        if old_hash == content_hash:
+            changed = False
+
     conn.execute(
         """
-        INSERT INTO competitor_pages (competitor_slug, url, page_type, lastmod, content)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO competitor_pages (competitor_slug, url, page_type, lastmod, content, content_hash)
+        VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT(competitor_slug, url) DO UPDATE SET
-            page_type   = excluded.page_type,
-            lastmod     = excluded.lastmod,
-            content     = excluded.content,
-            fetched_at  = datetime('now')
+            page_type    = excluded.page_type,
+            lastmod      = excluded.lastmod,
+            content      = excluded.content,
+            content_hash = excluded.content_hash,
+            fetched_at   = datetime('now')
         """,
-        (competitor_slug, url, page_type, lastmod, content),
+        (competitor_slug, url, page_type, lastmod, content, content_hash),
     )
     conn.commit()
     conn.close()
+    return changed
 
 
 def get_pages(competitor_slug: str) -> list:

@@ -12,6 +12,7 @@ Usage
 import argparse
 import logging
 import sys
+import traceback
 from typing import List, Optional
 
 logging.basicConfig(
@@ -77,33 +78,59 @@ def run(
     logger.info("Verifying URLs for %d competitor(s) …", len(competitors))
     verify_urls(slugs=selected_slugs)
 
-    # 4. Ingest each competitor
+    # 4. Record pre-run last_ingested state (for baseline detection)
+    pre_run_ingested = {c["slug"]: c["last_ingested"] for c in competitors}
+
+    # 5. Ingest + analyse each competitor (with per-competitor error isolation)
+    run_analysis = not (ingest_only or skip_analysis)
+    succeeded: list[str] = []
+    failed: dict[str, str] = {}
+
     for comp in competitors:
         slug = comp["slug"]
         url = comp["url"]
         name = comp["name"]
-        logger.info("[%s] Ingesting pages from %s …", slug, url)
-        ingest_competitor(slug, url)
-        logger.info("[%s] Searching news for '%s' …", slug, name)
-        search_news(name, slug)
+        positioning = comp["positioning"] or ""
 
-    # 5. Claude analysis (unless skipped)
-    run_analysis = not (ingest_only or skip_analysis)
-    if run_analysis:
-        for comp in competitors:
-            slug = comp["slug"]
-            name = comp["name"]
-            positioning = comp["positioning"] or ""
-            logger.info("[%s] Generating brief …", slug)
-            generate_brief(slug, name, force=force)
-            logger.info("[%s] Generating trajectory …", slug)
-            generate_trajectory(slug, name, force=force)
-            logger.info("[%s] Detecting signals …", slug)
-            detect_signals(slug, name, positioning)
-    else:
+        try:
+            # Ingestion
+            logger.info("[%s] Ingesting pages from %s …", slug, url)
+            ingest_competitor(slug, url)
+            logger.info("[%s] Searching news for '%s' …", slug, name)
+            search_news(name, slug)
+
+            # Claude analysis (unless skipped)
+            if run_analysis:
+                logger.info("[%s] Generating brief …", slug)
+                generate_brief(slug, name, force=force)
+                logger.info("[%s] Generating trajectory …", slug)
+                generate_trajectory(slug, name, force=force)
+
+                # Skip signal detection on first ingestion (baseline run)
+                if pre_run_ingested.get(slug) is None:
+                    logger.info("Skipping signal detection for %s — first ingestion (baseline)", name)
+                else:
+                    logger.info("[%s] Detecting signals …", slug)
+                    detect_signals(slug, name, positioning)
+
+            succeeded.append(slug)
+
+        except Exception:
+            logger.error("[%s] Pipeline failed:\n%s", slug, traceback.format_exc())
+            failed[slug] = traceback.format_exc()
+            continue
+
+    if not run_analysis:
         logger.info("Analysis phase skipped (ingest_only=%s, skip_analysis=%s).", ingest_only, skip_analysis)
 
-    logger.info("Pipeline complete for %d competitor(s).", len(competitors))
+    # Summary
+    logger.info(
+        "Pipeline complete: %d succeeded, %d failed out of %d competitor(s).",
+        len(succeeded), len(failed), len(competitors),
+    )
+    if failed:
+        logger.warning("Failed competitors: %s", ", ".join(sorted(failed.keys())))
+
     return 0
 
 

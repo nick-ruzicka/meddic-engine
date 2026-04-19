@@ -92,7 +92,7 @@ class TestInitCompetitiveDb:
         conn = sqlite3.connect(os.environ["DB_PATH"])
         cols = {row[1] for row in conn.execute("PRAGMA table_info(competitor_pages)").fetchall()}
         conn.close()
-        required = {"id", "competitor_slug", "url", "page_type", "lastmod", "content", "fetched_at"}
+        required = {"id", "competitor_slug", "url", "page_type", "lastmod", "content", "content_hash", "fetched_at"}
         assert required <= cols
 
     def test_competitor_news_columns(self, models):

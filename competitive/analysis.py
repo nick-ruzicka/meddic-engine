@@ -30,30 +30,63 @@ logger = logging.getLogger(__name__)
 # ── Constants ──────────────────────────────────────────────────────────────────
 
 MODEL = os.getenv("COMPETITIVE_MODEL", "claude-sonnet-4-6")
-MAX_TOKENS = 2000
+MAX_TOKENS = 4000
 TEMPERATURE = 0
 PAGE_CONTENT_LIMIT = 3000
 
 BRIEF_CACHE_DAYS = 7
 TRAJECTORY_CACHE_DAYS = 30
 
-_SYSTEM_CONTEXT = """You are a competitive intelligence analyst for , an enterprise AI platform for institutional finance (PE, IB, asset management, credit funds). 's flagship product is Matrix, which processes unstructured documents (financial filings, contracts, research reports, legal documents) to answer complex multi-step questions at scale. Major customers include KKR, Blackstone, Carlyle, Centerview, and BlackRock.  differentiates through deep document reasoning, precision for high-stakes workflows, and its focus on institutional finance use cases rather than general-purpose AI."""
+_SYSTEM_CONTEXT = """You are a senior competitive intelligence analyst at , an enterprise AI platform for institutional finance (PE, IB, asset management, credit funds). 's flagship product Matrix processes unstructured documents (CIMs, VDRs, 10-Ks, earnings transcripts, IC memos) with multi-agent reasoning and strong data sovereignty (private cloud, SOC2 Type II, zero data retention). Major customers: KKR, Blackstone, Carlyle, Centerview, BlackRock."""
 
 BRIEF_SYSTEM_PROMPT = f"""{_SYSTEM_CONTEXT}
 
-Your task is to analyze a competitor and produce a structured competitive intelligence brief.
+Produce a structured competitive brief. EVERY claim MUST cite a specific source URL from the material provided. If you cannot cite a source for a claim, do not make it.
 
-Respond with ONLY a JSON object (no markdown wrapping, no explanation). The JSON must have exactly these fields:
-- positioning_self: string — how the competitor describes themselves
-- positioning_actual: string — what they actually do / who they actually serve
-- target_icp: string — their ideal customer profile
-- pricing_signals: string — any pricing information or signals
-- key_differentiation: string — their main differentiating claims
-- weakness_vs_: string — where they are weaker than 
-- strength_vs_: string — where they are stronger than 
-- recent_moves: string — notable recent product/go-to-market moves
-- threat_level: string — one of: low | medium | high | critical
-- threat_reasoning: string — brief explanation of the threat level"""
+Respond with ONLY a JSON object (no markdown wrapping). Schema:
+
+{{
+  "positioning_self": {{
+    "text": "How they describe themselves, in their own words (2 sentences)",
+    "sources": ["url1", "url2"]
+  }},
+  "positioning_actual": {{
+    "text": "How they actually compete — the real story (2-3 sentences)",
+    "sources": ["url1"]
+  }},
+  "target_icp": {{
+    "text": "Who they sell to (specific segments)",
+    "sources": ["url1"]
+  }},
+  "pricing_signals": {{
+    "text": "Any public signal on pricing, packaging, or contract size. Say 'None found' if nothing concrete.",
+    "sources": ["url1"]
+  }},
+  "key_differentiation": {{
+    "text": "The one thing they say makes them different",
+    "sources": ["url1"]
+  }},
+  "weakness_vs_": {{
+    "text": "Where  likely wins (cite specific capability gap)",
+    "sources": ["url1"]
+  }},
+  "strength_vs_": {{
+    "text": "Where they may be ahead of  (cite specific capability)",
+    "sources": ["url1"]
+  }},
+  "recent_moves": [
+    {{"text": "Specific recent move with date", "source": "url"}},
+    {{"text": "Another move", "source": "url"}}
+  ],
+  "threat_level": "high | medium | low",
+  "threat_reasoning": "One sentence on why threat is rated that way"
+}}
+
+Rules:
+- Every "sources" array must contain at least one URL from the source material
+- recent_moves must be an array of objects, each with "text" and "source" fields
+- 3-5 recent_moves, newest first
+- Be specific and concrete — no vague claims without evidence"""
 
 TRAJECTORY_SYSTEM_PROMPT = f"""{_SYSTEM_CONTEXT}
 
@@ -71,7 +104,12 @@ Your task is to classify a piece of content about a competitor as a competitive 
 Respond with ONLY a JSON object (no markdown wrapping, no explanation). The JSON must have exactly these fields:
 - signal_type: one of: product-launch | customer-win | funding | positioning-shift | hiring | cosmetic | other
 - relevance: one of: high | medium | low
-- summary: string — 1-2 sentence summary of the signal and its competitive implications for """
+- summary: string — 1-2 sentence summary of the signal and its competitive implications for 
+
+Relevance definitions:
+- high = direct competitive threat: product launch in 's segment, customer win at a named  customer/prospect (KKR, Blackstone, Carlyle, Centerview, BlackRock, or PE/IB/credit firms), positioning shift that directly attacks 's differentiation
+- medium = indirect pressure: funding round, hiring surge, expansion into adjacent vertical, partnership announcement
+- low = cosmetic: website copy change, blog post about industry trends, testimonial from non-PE/IB/credit customer, navigation/design changes"""
 
 
 # ── Prompt Builders ────────────────────────────────────────────────────────────
