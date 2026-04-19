@@ -369,3 +369,73 @@ class TestUpdateLastIngested:
         models.update_last_ingested("cursor", "2024-03-15T12:00:00")
         row = models.get_competitor("cursor")
         assert row["last_ingested"] == "2024-03-15T12:00:00"
+
+
+# ── Competitors list + seed ────────────────────────────────────────────────────
+
+@pytest.fixture()
+def competitors_mod(db_path):
+    """Import (or re-import) competitive.competitors after DB_PATH is set."""
+    import importlib
+    import database as db_module
+
+    importlib.reload(db_module)
+
+    import competitive.models as m
+    importlib.reload(m)
+
+    import competitive.competitors as c
+    importlib.reload(c)
+
+    # init the schema so seed_competitors has tables to write to
+    m.init_competitive_db()
+    return c
+
+
+class TestCompetitors:
+    def test_v1_has_five_entries(self, competitors_mod):
+        """COMPETITORS_V1 contains exactly 5 tier-1 tuples."""
+        assert len(competitors_mod.COMPETITORS_V1) == 5
+
+    def test_v1_slugs_are_correct(self, competitors_mod):
+        """Each entry in COMPETITORS_V1 has the expected slug as first element."""
+        expected_slugs = {"alphasense", "rogo", "f2", "blueflame", "keye"}
+        actual_slugs = {entry[0] for entry in competitors_mod.COMPETITORS_V1}
+        assert actual_slugs == expected_slugs
+
+    def test_v1_all_tier_one(self, competitors_mod):
+        """All COMPETITORS_V1 entries have tier == 1 (index 3)."""
+        for entry in competitors_mod.COMPETITORS_V1:
+            assert entry[3] == 1, f"{entry[0]} should be tier 1, got {entry[3]}"
+
+    def test_v2_has_ten_entries(self, competitors_mod):
+        """COMPETITORS_V2 contains exactly 10 entries."""
+        assert len(competitors_mod.COMPETITORS_V2) == 10
+
+    def test_seed_populates_db(self, competitors_mod):
+        """seed_competitors() inserts all 5 v1 entries into the DB."""
+        competitors_mod.seed_competitors()
+        import competitive.models as m
+        importlib.reload(m)
+        rows = m.get_all_competitors()
+        slugs = {row["slug"] for row in rows}
+        expected = {"alphasense", "rogo", "f2", "blueflame", "keye"}
+        assert expected <= slugs
+        assert len(rows) == 5
+
+    def test_seed_is_idempotent(self, competitors_mod):
+        """Calling seed_competitors() twice still results in exactly 5 entries."""
+        competitors_mod.seed_competitors()
+        competitors_mod.seed_competitors()
+        import competitive.models as m
+        importlib.reload(m)
+        rows = m.get_all_competitors()
+        assert len(rows) == 5
+
+    def test_seed_v2_adds_all_entries(self, competitors_mod):
+        """seed_competitors(v2=True) seeds v1 + v2, totalling 15 entries."""
+        competitors_mod.seed_competitors(v2=True)
+        import competitive.models as m
+        importlib.reload(m)
+        rows = m.get_all_competitors()
+        assert len(rows) == 15
