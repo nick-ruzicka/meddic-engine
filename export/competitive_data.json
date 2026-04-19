@@ -1,0 +1,81 @@
+{
+  "generated_at": "2026-04-19T15:53:35+00:00",
+  "stats": {
+    "total_competitors": 5,
+    "signals_this_week": 0,
+    "high_threat": 0
+  },
+  "competitors": [
+    {
+      "slug": "alphasense",
+      "name": "AlphaSense",
+      "url": "https://www.alphasense.com",
+      "tier": 1,
+      "positioning": "Incumbent, acquired Tegus 2024",
+      "url_ok": 1,
+      "last_ingested": null,
+      "brief": null,
+      "brief_generated_at": null,
+      "trajectory": null,
+      "trajectory_generated_at": null,
+      "recent_signals": []
+    },
+    {
+      "slug": "blueflame",
+      "name": "Blueflame AI",
+      "url": "https://blueflame.ai",
+      "tier": 1,
+      "positioning": "Acquired by Datasite, embedded in VDR",
+      "url_ok": 1,
+      "last_ingested": null,
+      "brief": null,
+      "brief_generated_at": null,
+      "trajectory": null,
+      "trajectory_generated_at": null,
+      "recent_signals": []
+    },
+    {
+      "slug": "f2",
+      "name": "F2.ai",
+      "url": "https://f2.ai",
+      "tier": 1,
+      "positioning": "Deterministic spreadsheet computation, explicit  challenger",
+      "url_ok": 0,
+      "last_ingested": "2026-04-19T15:51:11.266821+00:00",
+      "brief": null,
+      "brief_generated_at": null,
+      "trajectory": null,
+      "trajectory_generated_at": null,
+      "recent_signals": []
+    },
+    {
+      "slug": "keye",
+      "name": "Keye",
+      "url": "https://keye.co",
+      "tier": 1,
+      "positioning": "YC F24, Odin co-pilot, built by investors",
+      "url_ok": 1,
+      "last_ingested": null,
+      "brief": null,
+      "brief_generated_at": null,
+      "trajectory": null,
+      "trajectory_generated_at": null,
+      "recent_signals": []
+    },
+    {
+      "slug": "rogo",
+      "name": "Rogo",
+      "url": "https://rogo.ai",
+      "tier": 1,
+      "positioning": "Dominant in sell-side IB, $75M Series C",
+      "url_ok": 1,
+      "last_ingested": null,
+      "brief": null,
+      "brief_generated_at": null,
+      "trajectory": null,
+      "trajectory_generated_at": null,
+      "recent_signals": []
+    }
+  ],
+  "signals": []
+}
