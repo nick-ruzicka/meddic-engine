@@ -546,3 +546,201 @@ class TestIngestion:
         # Other
         assert classify_page_type("https://example.com/some-random-page") == "other"
         assert classify_page_type("https://example.com/contact") == "other"
+
+
+# ── Analysis ───────────────────────────────────────────────────────────────────
+
+class TestAnalysis:
+    """Tests for competitive/analysis.py — prompt builders and JSON parsers (no API calls)."""
+
+    # ── build_brief_prompt ─────────────────────────────────────────────────────
+
+    def test_build_brief_prompt_includes_competitor_name(self):
+        """build_brief_prompt() includes the competitor name in the output."""
+        from competitive.analysis import build_brief_prompt
+
+        pages = [
+            {"url": "https://example.com/pricing", "content": "Pricing content here", "page_type": "pricing"},
+        ]
+        news = [
+            {"title": "Example raises $50M", "url": "https://tc.com/ex", "published_at": "2024-01-01", "snippet": "Big raise"},
+        ]
+        result = build_brief_prompt("ExampleCorp", pages, news)
+
+        assert "ExampleCorp" in result
+        assert "## Website pages" in result
+        assert "## News and announcements" in result
+        assert "https://example.com/pricing" in result
+        assert "Example raises $50M" in result
+
+    def test_build_brief_prompt_truncates_content(self):
+        """build_brief_prompt() truncates page content to 3000 chars."""
+        from competitive.analysis import build_brief_prompt
+
+        long_content = "x" * 5000
+        pages = [{"url": "https://example.com/", "content": long_content, "page_type": "homepage"}]
+        result = build_brief_prompt("Acme", pages, [])
+
+        # The content in the prompt should be at most 3000 chars of 'x'
+        assert "x" * 3000 in result
+        assert "x" * 3001 not in result
+
+    def test_build_brief_prompt_empty_pages_and_news(self):
+        """build_brief_prompt() handles empty pages and news gracefully."""
+        from competitive.analysis import build_brief_prompt
+
+        result = build_brief_prompt("Acme", [], [])
+        assert "## Website pages" in result
+        assert "## News and announcements" in result
+        assert "no pages available" in result
+        assert "no news available" in result
+
+    # ── build_trajectory_prompt ────────────────────────────────────────────────
+
+    def test_build_trajectory_prompt_chronological(self):
+        """build_trajectory_prompt() sorts items oldest first (by date ascending)."""
+        from competitive.analysis import build_trajectory_prompt
+
+        pages = [
+            {"url": "https://example.com/blog/new", "content": "new post", "page_type": "blog", "lastmod": "2024-12-01"},
+            {"url": "https://example.com/blog/old", "content": "old post", "page_type": "blog", "lastmod": "2022-01-01"},
+            {"url": "https://example.com/blog/mid", "content": "mid post", "page_type": "blog", "lastmod": "2023-06-15"},
+        ]
+        news = []
+        result = build_trajectory_prompt("Acme", pages, news)
+
+        pos_old = result.index("2022-01-01")
+        pos_mid = result.index("2023-06-15")
+        pos_new = result.index("2024-12-01")
+
+        assert pos_old < pos_mid < pos_new, "Pages must appear oldest-first"
+
+    def test_build_trajectory_prompt_unknown_dates_sort_first(self):
+        """Items with unknown/missing dates sort before dated items."""
+        from competitive.analysis import build_trajectory_prompt
+
+        pages = [
+            {"url": "https://example.com/blog/dated", "content": "dated post", "page_type": "blog", "lastmod": "2024-01-01"},
+            {"url": "https://example.com/blog/no-date", "content": "no date post", "page_type": "blog", "lastmod": None},
+        ]
+        result = build_trajectory_prompt("Acme", pages, [])
+
+        pos_no_date = result.index("example.com/blog/no-date")
+        pos_dated = result.index("example.com/blog/dated")
+
+        assert pos_no_date < pos_dated, "Unknown-date items must appear before dated items"
+
+    def test_build_trajectory_prompt_filters_non_blog_pages(self):
+        """build_trajectory_prompt() only includes blog-type pages."""
+        from competitive.analysis import build_trajectory_prompt
+
+        pages = [
+            {"url": "https://example.com/blog/post", "content": "blog content", "page_type": "blog", "lastmod": "2024-01-01"},
+            {"url": "https://example.com/pricing", "content": "pricing content", "page_type": "pricing", "lastmod": "2024-01-01"},
+            {"url": "https://example.com/about", "content": "about content", "page_type": "about", "lastmod": "2024-01-01"},
+        ]
+        result = build_trajectory_prompt("Acme", pages, [])
+
+        assert "blog content" in result
+        assert "pricing content" not in result
+        assert "about content" not in result
+
+    # ── parse_brief_json ───────────────────────────────────────────────────────
+
+    def test_parse_brief_json_valid(self):
+        """parse_brief_json() parses valid JSON with all required fields."""
+        from competitive.analysis import parse_brief_json
+
+        data = {
+            "positioning_self": "The AI platform for finance",
+            "positioning_actual": "Document search for PE firms",
+            "target_icp": "Private equity associates",
+            "pricing_signals": "Enterprise pricing, no public pricing",
+            "key_differentiation": "Fast document processing",
+            "weakness_vs_": "Narrower document types",
+            "strength_vs_": "Lower price point",
+            "recent_moves": "Launched new dashboard",
+            "threat_level": "medium",
+            "threat_reasoning": "Strong in SMB, weak in enterprise",
+        }
+        result = parse_brief_json(json.dumps(data))
+        assert result["threat_level"] == "medium"
+        assert result["positioning_self"] == "The AI platform for finance"
+
+    def test_parse_brief_json_extracts_from_markdown(self):
+        """parse_brief_json() handles ```json...``` markdown wrapping."""
+        from competitive.analysis import parse_brief_json
+
+        data = {
+            "positioning_self": "AI search",
+            "positioning_actual": "Document AI",
+            "target_icp": "Finance teams",
+            "pricing_signals": "Unknown",
+            "key_differentiation": "Speed",
+            "weakness_vs_": "Less accurate",
+            "strength_vs_": "Cheaper",
+            "recent_moves": "New integrations",
+            "threat_level": "low",
+            "threat_reasoning": "Not enterprise focused",
+        }
+        wrapped = f"```json\n{json.dumps(data)}\n```"
+        result = parse_brief_json(wrapped)
+        assert result["threat_level"] == "low"
+
+    def test_parse_brief_json_missing_fields_raises(self):
+        """parse_brief_json() raises ValueError when required fields are missing."""
+        from competitive.analysis import parse_brief_json
+
+        incomplete = json.dumps({"positioning_self": "something"})
+        with pytest.raises(ValueError, match="missing required fields"):
+            parse_brief_json(incomplete)
+
+    def test_parse_brief_json_invalid_json_raises(self):
+        """parse_brief_json() raises json.JSONDecodeError on invalid JSON."""
+        from competitive.analysis import parse_brief_json
+
+        with pytest.raises(json.JSONDecodeError):
+            parse_brief_json("not valid json at all {{{")
+
+    # ── parse_trajectory_json ──────────────────────────────────────────────────
+
+    def test_parse_trajectory_json_valid(self):
+        """parse_trajectory_json() parses valid JSON with all required fields."""
+        from competitive.analysis import parse_trajectory_json
+
+        data = {
+            "eras": [
+                {"period": "2020-2022", "theme": "Early growth", "description": "Started as a search tool"},
+                {"period": "2023-present", "theme": "Enterprise pivot", "description": "Shifted to enterprise"},
+            ],
+            "inflection_points": [
+                "Raised Series B in 2022",
+                "Launched enterprise tier in 2023",
+            ],
+            "trajectory_summary": "Moving upmarket toward enterprise finance customers.",
+        }
+        result = parse_trajectory_json(json.dumps(data))
+        assert len(result["eras"]) == 2
+        assert len(result["inflection_points"]) == 2
+        assert "enterprise" in result["trajectory_summary"]
+
+    def test_parse_trajectory_json_extracts_from_markdown(self):
+        """parse_trajectory_json() handles ```json...``` markdown wrapping."""
+        from competitive.analysis import parse_trajectory_json
+
+        data = {
+            "eras": [{"period": "2021-present", "theme": "Growth", "description": "Fast growth"}],
+            "inflection_points": ["Series A"],
+            "trajectory_summary": "Steady growth",
+        }
+        wrapped = f"```json\n{json.dumps(data)}\n```"
+        result = parse_trajectory_json(wrapped)
+        assert result["trajectory_summary"] == "Steady growth"
+
+    def test_parse_trajectory_json_missing_fields_raises(self):
+        """parse_trajectory_json() raises ValueError when required fields are missing."""
+        from competitive.analysis import parse_trajectory_json
+
+        incomplete = json.dumps({"eras": []})
+        with pytest.raises(ValueError, match="missing required fields"):
+            parse_trajectory_json(incomplete)
