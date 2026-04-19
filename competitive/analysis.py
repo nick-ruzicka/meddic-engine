@@ -27,6 +27,30 @@ from competitive.models import (
 
 logger = logging.getLogger(__name__)
 
+# ── Run Stats (module-level token accumulator) ────────────────────────────────
+
+_run_stats = {"claude_calls": 0, "input_tokens": 0, "output_tokens": 0}
+
+
+def reset_run_stats():
+    """Reset the module-level run stats accumulator."""
+    global _run_stats
+    _run_stats = {"claude_calls": 0, "input_tokens": 0, "output_tokens": 0}
+
+
+def get_run_stats():
+    """Return a copy of the current run stats."""
+    return dict(_run_stats)
+
+
+def _record_usage(response):
+    """Extract token usage from a Claude API response and accumulate."""
+    _run_stats["claude_calls"] += 1
+    if hasattr(response, "usage"):
+        _run_stats["input_tokens"] += getattr(response.usage, "input_tokens", 0)
+        _run_stats["output_tokens"] += getattr(response.usage, "output_tokens", 0)
+
+
 # ── Constants ──────────────────────────────────────────────────────────────────
 
 MODEL = os.getenv("COMPETITIVE_MODEL", "claude-sonnet-4-6")
@@ -375,6 +399,7 @@ def generate_brief(
             system=BRIEF_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
         )
+        _record_usage(response)
         response_text = response.content[0].text
     except Exception as e:
         logger.error(f"Claude API error generating brief for {competitor_slug}: {e}")
@@ -449,6 +474,7 @@ def generate_trajectory(
             system=TRAJECTORY_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
         )
+        _record_usage(response)
         response_text = response.content[0].text
     except Exception as e:
         logger.error(f"Claude API error generating trajectory for {competitor_slug}: {e}")
@@ -555,6 +581,7 @@ def detect_signals(
                 system=SIGNAL_SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": content_text}],
             )
+            _record_usage(response)
             response_text = response.content[0].text
             raw = _extract_json_from_text(response_text)
             signal_data = json.loads(raw)

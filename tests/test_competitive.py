@@ -807,7 +807,7 @@ class TestCLI:
         import competitive_intel
         importlib.reload(competitive_intel)
 
-        result = competitive_intel.run(slugs=["f2"], force=False)
+        result = competitive_intel.run(slugs=["f2"])
 
         assert result == 0, f"run() should return 0 on success, got {result}"
         assert ingest_calls == ["f2"], (

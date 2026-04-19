@@ -2,11 +2,12 @@
 
 Usage
 -----
-    python competitive_intel.py                   # run full pipeline for all competitors
-    python competitive_intel.py --slug f2         # single competitor
-    python competitive_intel.py --force           # regenerate cached briefs/trajectories
-    python competitive_intel.py --ingest-only     # ingest only, skip Claude analysis
-    python competitive_intel.py --seed-only       # seed competitors to DB and exit
+    python competitive_intel.py                       # run full pipeline for all competitors
+    python competitive_intel.py --slug f2             # single competitor
+    python competitive_intel.py --force-ingest        # re-fetch pages even if recently ingested
+    python competitive_intel.py --regenerate-briefs   # regenerate cached briefs/trajectories
+    python competitive_intel.py --ingest-only         # ingest only, skip Claude analysis
+    python competitive_intel.py --seed-only           # seed competitors to DB and exit
 """
 
 import argparse
@@ -26,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 def run(
     slugs: Optional[List[str]] = None,
-    force: bool = False,
+    force_ingest: bool = False,
+    regenerate_briefs: bool = False,
     skip_analysis: bool = False,
     ingest_only: bool = False,
 ) -> int:
@@ -37,7 +39,9 @@ def run(
     slugs:
         Optional list of competitor slugs to process.  When *None* all
         seeded competitors are processed.
-    force:
+    force_ingest:
+        Re-fetch pages even if they were recently ingested.
+    regenerate_briefs:
         Regenerate cached briefs and trajectories even if they already exist.
     skip_analysis:
         Skip the Claude analysis phase (brief / trajectory / signals).
@@ -49,15 +53,26 @@ def run(
     int
         0 on success, non-zero on error.
     """
-    from competitive.models import init_competitive_db, get_all_competitors, get_competitor
+    from competitive.models import (
+        init_competitive_db, get_all_competitors, get_competitor,
+        create_pipeline_run, update_pipeline_run,
+    )
     from competitive.competitors import seed_competitors, verify_urls
     from competitive.ingestion import ingest_competitor, search_news
-    from competitive.analysis import generate_brief, generate_trajectory, detect_signals
+    from competitive.analysis import (
+        generate_brief, generate_trajectory, detect_signals,
+        reset_run_stats, get_run_stats,
+    )
+
+    # 0. Reset cost tracking and create pipeline run record
+    reset_run_stats()
 
     # 1. Initialise schema and seed default competitors
     logger.info("Initialising competitive database …")
     init_competitive_db()
     seed_competitors()
+
+    run_id = create_pipeline_run()
 
     # 2. Load the target competitor set
     all_competitors = get_all_competitors()
@@ -102,9 +117,9 @@ def run(
             # Claude analysis (unless skipped)
             if run_analysis:
                 logger.info("[%s] Generating brief …", slug)
-                generate_brief(slug, name, force=force)
+                generate_brief(slug, name, force=regenerate_briefs)
                 logger.info("[%s] Generating trajectory …", slug)
-                generate_trajectory(slug, name, force=force)
+                generate_trajectory(slug, name, force=regenerate_briefs)
 
                 # Skip signal detection on first ingestion (baseline run)
                 if pre_run_ingested.get(slug) is None:
@@ -131,6 +146,29 @@ def run(
     if failed:
         logger.warning("Failed competitors: %s", ", ".join(sorted(failed.keys())))
 
+    # Cost logging
+    stats = get_run_stats()
+    input_cost = stats["input_tokens"] * 3.0 / 1_000_000
+    output_cost = stats["output_tokens"] * 15.0 / 1_000_000
+    total_cost = input_cost + output_cost
+    logger.info(
+        "Claude usage: %d calls, %d input tokens, %d output tokens, $%.2f",
+        stats["claude_calls"], stats["input_tokens"], stats["output_tokens"], total_cost,
+    )
+
+    from datetime import datetime, timezone
+    update_pipeline_run(
+        run_id,
+        completed_at=datetime.now(timezone.utc).isoformat(),
+        competitors_processed=len(succeeded),
+        competitors_failed=len(failed),
+        claude_calls=stats["claude_calls"],
+        claude_input_tokens=stats["input_tokens"],
+        claude_output_tokens=stats["output_tokens"],
+        claude_cost_usd=total_cost,
+        status="completed" if not failed else "partial",
+    )
+
     return 0
 
 
@@ -147,7 +185,13 @@ def main() -> None:
         help="Run for a single competitor (by slug).",
     )
     parser.add_argument(
-        "--force",
+        "--force-ingest",
+        action="store_true",
+        default=False,
+        help="Re-fetch pages even if they were recently ingested.",
+    )
+    parser.add_argument(
+        "--regenerate-briefs",
         action="store_true",
         default=False,
         help="Force regeneration of cached briefs and trajectories.",
@@ -179,7 +223,8 @@ def main() -> None:
     slugs = [args.slug] if args.slug else None
     exit_code = run(
         slugs=slugs,
-        force=args.force,
+        force_ingest=args.force_ingest,
+        regenerate_briefs=args.regenerate_briefs,
         ingest_only=args.ingest_only,
     )
     sys.exit(exit_code)

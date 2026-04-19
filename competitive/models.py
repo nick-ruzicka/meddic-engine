@@ -108,6 +108,24 @@ def init_competitive_db() -> None:
         )
     """)
 
+    # pipeline_runs — cost and usage tracking per pipeline execution
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS pipeline_runs (
+            id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+            started_at            TEXT DEFAULT (datetime('now')),
+            completed_at          TEXT,
+            competitors_processed INTEGER DEFAULT 0,
+            competitors_failed    INTEGER DEFAULT 0,
+            pages_ingested        INTEGER DEFAULT 0,
+            signals_classified    INTEGER DEFAULT 0,
+            claude_calls          INTEGER DEFAULT 0,
+            claude_input_tokens   INTEGER DEFAULT 0,
+            claude_output_tokens  INTEGER DEFAULT 0,
+            claude_cost_usd       REAL DEFAULT 0.0,
+            status                TEXT DEFAULT 'running'
+        )
+    """)
+
     conn.commit()
     conn.close()
     logger.info("Competitive DB tables initialized.")
@@ -379,3 +397,42 @@ def get_recent_signals(competitor_slug: str, *, limit: int = 50) -> list:
     ).fetchall()
     conn.close()
     return list(rows)
+
+
+# ── Pipeline Runs ─────────────────────────────────────────────────────────────
+
+def create_pipeline_run() -> int:
+    """Insert a new pipeline_runs row and return its id."""
+    conn = get_db()
+    cursor = conn.execute("INSERT INTO pipeline_runs DEFAULT VALUES")
+    run_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return run_id
+
+
+def update_pipeline_run(run_id: int, **kwargs) -> None:
+    """Update arbitrary fields on a pipeline_runs row."""
+    if not kwargs:
+        return
+    set_clause = ", ".join(f"{k} = ?" for k in kwargs)
+    values = list(kwargs.values()) + [run_id]
+    conn = get_db()
+    conn.execute(
+        f"UPDATE pipeline_runs SET {set_clause} WHERE id = ?",
+        values,
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_pipeline_run() -> Optional[dict]:
+    """Return the most recent pipeline_runs row as a dict, or None."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM pipeline_runs ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+    conn.close()
+    if row is None:
+        return None
+    return dict(row)
