@@ -68,8 +68,8 @@ competitors:
     name: "Harvey AI"
     domain: harvey.ai
     sitemap_url: https://www.harvey.ai/sitemap.xml
-    jobs_url: null  # Harvey doesn't use standard Greenhouse/Ashby boards
-    jobs_source: null
+    jobs_url: https://api.ashbyhq.com/posting-api/job-board/harvey
+    jobs_source: ashby
     dns_root: harvey.ai
     github_orgs: []
     exa_queries:
