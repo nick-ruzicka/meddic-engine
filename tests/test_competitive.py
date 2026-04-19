@@ -744,3 +744,75 @@ class TestAnalysis:
         incomplete = json.dumps({"eras": []})
         with pytest.raises(ValueError, match="missing required fields"):
             parse_trajectory_json(incomplete)
+
+
+# ── CLI Entrypoint ─────────────────────────────────────────────────────────────
+
+class TestCLI:
+    """Tests for competitive_intel.py — CLI entrypoint and run() orchestrator."""
+
+    def test_import_works(self):
+        """competitive_intel module is importable and exposes a `run` attribute."""
+        import importlib
+        ci = importlib.import_module("competitive_intel")
+        assert hasattr(ci, "run"), "competitive_intel must expose a `run` function"
+
+    def test_run_single_competitor(self, db_path, monkeypatch):
+        """run(slugs=['f2']) calls ingest_competitor exactly once, for f2."""
+        import importlib
+        import database as db_module
+
+        # Reload database so it uses the temp DB path
+        importlib.reload(db_module)
+
+        import competitive.models as m
+        importlib.reload(m)
+
+        import competitive.competitors as c
+        importlib.reload(c)
+
+        # Track calls to the ingestion / analysis functions
+        ingest_calls = []
+        search_calls = []
+        brief_calls = []
+        trajectory_calls = []
+        signal_calls = []
+
+        def fake_ingest(slug, url):
+            ingest_calls.append(slug)
+
+        def fake_search(name, slug):
+            search_calls.append(slug)
+
+        def fake_brief(slug, force=False):
+            brief_calls.append(slug)
+
+        def fake_trajectory(slug, force=False):
+            trajectory_calls.append(slug)
+
+        def fake_signals(slug):
+            signal_calls.append(slug)
+
+        def fake_verify(slugs=None):
+            pass  # skip real HTTP calls
+
+        # Patch at the module level that competitive_intel imports from
+        monkeypatch.setattr("competitive.ingestion.ingest_competitor", fake_ingest)
+        monkeypatch.setattr("competitive.ingestion.search_news", fake_search)
+        monkeypatch.setattr("competitive.analysis.generate_brief", fake_brief)
+        monkeypatch.setattr("competitive.analysis.generate_trajectory", fake_trajectory)
+        monkeypatch.setattr("competitive.analysis.detect_signals", fake_signals)
+        monkeypatch.setattr("competitive.competitors.verify_urls", fake_verify)
+
+        import competitive_intel
+        importlib.reload(competitive_intel)
+
+        result = competitive_intel.run(slugs=["f2"], force=False)
+
+        assert result == 0, f"run() should return 0 on success, got {result}"
+        assert ingest_calls == ["f2"], (
+            f"ingest_competitor should be called once for 'f2', got: {ingest_calls}"
+        )
+        assert search_calls == ["f2"], (
+            f"search_news should be called once for 'f2', got: {search_calls}"
+        )
