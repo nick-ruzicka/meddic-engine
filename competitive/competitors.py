@@ -45,16 +45,16 @@ COMPETITORS_V1: list[tuple] = [
 
 # Tier 2-3: monitored competitors staged for future ingestion rounds.
 COMPETITORS_V2: list[tuple] = [
-    ("aumni", "Aumni", "https://aumni.fund", 2, "VC portfolio analytics, acquired by JPMorgan"),
-    ("luminance", "Luminance", "https://www.luminance.com", 2, "AI contract review, legal focus"),
-    ("kensho", "Kensho", "https://kensho.com", 2, "S&P Global AI, NLP for financial data"),
-    ("visible-alpha", "Visible Alpha", "https://visiblealpha.com", 2, "Consensus estimates platform"),
-    ("tegus", "Tegus", "https://www.tegus.com", 2, "Expert network + primary research, acquired by AlphaSense"),
-    ("grata", "Grata", "https://grata.com", 3, "Private company intelligence for deal sourcing"),
-    ("oria", "Oria", "https://oria.ai", 3, "AI for credit underwriting"),
-    ("hyperplane", "Hyperplane", "https://hyperplane.co", 3, "Behavioral data platform for financial services"),
-    ("daloopa", "Daloopa", "https://www.daloopa.com", 3, "AI-driven financial model automation"),
-    ("quasr", "Quasr", "https://quasr.io", 3, "Regulatory intelligence and compliance AI"),
+    ("brightwave", "Brightwave", "https://brightwave.io", 2, "Autonomous research agents"),
+    ("metal", "Metal", "https://metal.ai", 2, "Proprietary knowledge graph for PE"),
+    ("toltiq", "ToltIQ", "https://toltiq.com", 2, "Ex-KKR founder, H.I.G. exclusive"),
+    ("73strings", "73 Strings", "https://www.73strings.com", 2, "Middle-office, valuations, portfolio monitoring"),
+    ("dili", "Dili", "https://dili.com", 2, "VDR compliance, automated checklists"),
+    ("diligencesquared", "DiligenceSquared", "https://diligencesquared.com", 3, "Voice-agent commercial DD, YC F25"),
+    ("glean", "Glean", "https://glean.com", 3, "Horizontal enterprise search, expanding to finance"),
+    ("harvey", "Harvey AI", "https://harvey.ai", 3, "Legal-first, adjacent to finance"),
+    ("benchmark", "Benchmark (Gumloop)", "https://benchmark.ai", 3, "$50M Series B, ~$1T AUM customer base"),
+    ("linq", "Linq / LinqAlpha", "https://linqalpha.com", 3, "Programmatic messaging + financial research"),
 ]
 
 
