@@ -112,6 +112,12 @@ def build_competitive_data() -> dict:
                             brief_data[field] = _normalize_sourced_field(brief_data[field])
                     if "recent_moves" in brief_data:
                         brief_data["recent_moves"] = _normalize_recent_moves(brief_data["recent_moves"])
+                    # Normalize right_now — has headline+detail+sources (not text+sources)
+                    rn = brief_data.get("right_now")
+                    if isinstance(rn, str):
+                        brief_data["right_now"] = {"headline": rn, "detail": "", "sources": []}
+                    elif isinstance(rn, dict) and "sources" not in rn:
+                        rn["sources"] = []
 
                     # Count high-threat briefs
                     threat = brief_data.get("threat_level", "")

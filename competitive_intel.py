@@ -88,10 +88,15 @@ def run(
         logger.warning("No competitors matched the given slugs; nothing to do.")
         return 0
 
-    # 3. Verify URLs for selected competitors
-    selected_slugs = [c["slug"] for c in competitors]
-    logger.info("Verifying URLs for %d competitor(s) …", len(competitors))
-    verify_urls(slugs=selected_slugs)
+    # If --regenerate-briefs only, skip ingestion entirely — just re-run Claude
+    # against stored pages/news.
+    briefs_only = regenerate_briefs and not force_ingest and not ingest_only
+
+    if not briefs_only:
+        # 3. Verify URLs for selected competitors
+        selected_slugs = [c["slug"] for c in competitors]
+        logger.info("Verifying URLs for %d competitor(s) …", len(competitors))
+        verify_urls(slugs=selected_slugs)
 
     # 4. Record pre-run last_ingested state (for baseline detection)
     pre_run_ingested = {c["slug"]: c["last_ingested"] for c in competitors}
@@ -108,14 +113,15 @@ def run(
         positioning = comp["positioning"] or ""
 
         try:
-            # Ingestion
-            logger.info("[%s] Ingesting pages from %s …", slug, url)
-            ingest_competitor(slug, url)
-            logger.info("[%s] Searching news for '%s' …", slug, name)
-            search_news(name, slug)
+            # Ingestion (skip if --regenerate-briefs only)
+            if not briefs_only:
+                logger.info("[%s] Ingesting pages from %s …", slug, url)
+                ingest_competitor(slug, url)
+                logger.info("[%s] Searching news for '%s' …", slug, name)
+                search_news(name, slug)
 
             # Claude analysis (unless skipped)
-            if run_analysis:
+            if run_analysis or briefs_only:
                 logger.info("[%s] Generating brief …", slug)
                 generate_brief(slug, name, force=regenerate_briefs)
                 logger.info("[%s] Generating trajectory …", slug)

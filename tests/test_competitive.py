@@ -652,6 +652,7 @@ class TestAnalysis:
         from competitive.analysis import parse_brief_json
 
         data = {
+            "right_now": "They just launched a new product",
             "positioning_self": "The AI platform for finance",
             "positioning_actual": "Document search for PE firms",
             "target_icp": "Private equity associates",
@@ -675,6 +676,7 @@ class TestAnalysis:
         from competitive.analysis import parse_brief_json
 
         data = {
+            "right_now": {"headline": "Just launched", "detail": "Details here", "sources": ["https://example.com/launch"]},
             "positioning_self": {"text": "The AI platform for finance", "sources": ["https://example.com"]},
             "positioning_actual": {"text": "Document search for PE firms", "sources": ["https://example.com/about"]},
             "target_icp": {"text": "Private equity associates", "sources": ["https://example.com/customers"]},
@@ -701,6 +703,7 @@ class TestAnalysis:
         from competitive.analysis import parse_brief_json
 
         data = {
+            "right_now": "Nothing major",
             "positioning_self": "AI search",
             "positioning_actual": "Document AI",
             "target_icp": "Finance teams",
@@ -723,6 +726,7 @@ class TestAnalysis:
         from competitive.analysis import parse_brief_json
 
         data = {
+            "right_now": {"headline": "Quiet period", "detail": "", "sources": []},
             "positioning_self": {"text": "AI search", "sources": ["https://example.com"]},
             "positioning_actual": {"text": "Document AI", "sources": []},
             "target_icp": {"text": "Finance teams", "sources": []},

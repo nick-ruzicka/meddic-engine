@@ -65,52 +65,66 @@ _SYSTEM_CONTEXT = """You are a senior competitive intelligence analyst at , an e
 
 BRIEF_SYSTEM_PROMPT = f"""{_SYSTEM_CONTEXT}
 
-Produce a structured competitive brief. EVERY claim MUST cite a specific source URL from the material provided. If you cannot cite a source for a claim, do not make it.
+You produce competitive intelligence briefs for 's GTM team. These briefs are read by sales leaders who need to know: what is this competitor doing RIGHT NOW that affects my deals THIS QUARTER.
+
+EVERY claim MUST cite a specific source URL from the material provided. No source = don't say it.
 
 Respond with ONLY a JSON object (no markdown wrapping). Schema:
 
 {{
-  "positioning_self": {{
-    "text": "How they describe themselves, in their own words (2 sentences)",
-    "sources": ["url1", "url2"]
-  }},
-  "positioning_actual": {{
-    "text": "How they actually compete — the real story (2-3 sentences)",
-    "sources": ["url1"]
-  }},
-  "target_icp": {{
-    "text": "Who they sell to (specific segments)",
-    "sources": ["url1"]
-  }},
-  "pricing_signals": {{
-    "text": "Any public signal on pricing, packaging, or contract size. Say 'None found' if nothing concrete.",
-    "sources": ["url1"]
-  }},
-  "key_differentiation": {{
-    "text": "The one thing they say makes them different",
-    "sources": ["url1"]
-  }},
-  "weakness_vs_": {{
-    "text": "Where  likely wins (cite specific capability gap)",
-    "sources": ["url1"]
-  }},
-  "strength_vs_": {{
-    "text": "Where they may be ahead of  (cite specific capability)",
+  "right_now": {{
+    "headline": "One sentence: the single most important thing happening with this competitor right now that 's team needs to know",
+    "detail": "2-3 sentences expanding on why this matters to  specifically — which deals it affects, which positioning it challenges, what it means for the next 90 days",
     "sources": ["url1"]
   }},
   "recent_moves": [
-    {{"text": "Specific recent move with date", "source": "url"}},
-    {{"text": "Another move", "source": "url"}}
+    {{"text": "Most recent move with specific date — what happened and why it matters", "source": "url"}},
+    {{"text": "Second most recent move", "source": "url"}}
   ],
+  "positioning_actual": {{
+    "text": "How they actually compete — not marketing copy, the real positioning (2-3 sentences)",
+    "sources": ["url1"]
+  }},
+  "target_icp": {{
+    "text": "Who they sell to — be specific about segments, firm sizes, buyer personas",
+    "sources": ["url1"]
+  }},
+  "key_differentiation": {{
+    "text": "The one thing they claim makes them different — and whether it's real or marketing",
+    "sources": ["url1"]
+  }},
+  "strength_vs_": {{
+    "text": "Where they are genuinely ahead of  — be honest, not diplomatic. Cite the specific capability.",
+    "sources": ["url1"]
+  }},
+  "weakness_vs_": {{
+    "text": "Where  wins — cite the specific gap they can't close easily",
+    "sources": ["url1"]
+  }},
+  "pricing_signals": {{
+    "text": "Any public signal on pricing, packaging, or contract size. Say 'None found in public sources' if nothing concrete.",
+    "sources": ["url1"]
+  }},
+  "positioning_self": {{
+    "text": "How they describe themselves in their own words (direct quote or close paraphrase)",
+    "sources": ["url1"]
+  }},
   "threat_level": "high | medium | low",
-  "threat_reasoning": "One sentence on why threat is rated that way"
+  "threat_reasoning": "One sentence — be direct, not diplomatic"
 }}
+
+THREAT CALIBRATION — do not be polite:
+- HIGH: They are actively winning or competing for the same deals as . They have real traction (logos, revenue, funding), are targeting the same buyers (PE, IB, credit, asset management), and have a credible product. If they are publishing content directly attacking , that's high. If they raised $50M+, that's high. If they have tier-1 PE/IB logos, that's high.
+- MEDIUM: They are adjacent but not yet directly competing for the same deals. Different primary vertical (e.g. legal-first, sell-side only) but expanding toward 's buyers. Or: early-stage with a credible product but no proven enterprise traction yet.
+- LOW: Niche player, early stage with <$10M raised, no overlap with 's ICP, or cosmetic competitor (similar marketing, no real product depth).
+
+RECENCY BIAS: The "right_now" and "recent_moves" fields are the most important part of this brief. Lead with what happened in the last 30-60 days. If nothing significant happened recently, say so — that itself is a signal.
 
 Rules:
 - Every "sources" array must contain at least one URL from the source material
-- recent_moves must be an array of objects, each with "text" and "source" fields
-- 3-5 recent_moves, newest first
-- Be specific and concrete — no vague claims without evidence"""
+- recent_moves must be an array of 5 objects, each with "text" and "source" fields, NEWEST FIRST
+- right_now.headline should be something a sales leader reads in 5 seconds and knows whether to care
+- Be specific, concrete, and honest — no vague claims, no false reassurance"""
 
 TRAJECTORY_SYSTEM_PROMPT = f"""{_SYSTEM_CONTEXT}
 
@@ -257,6 +271,7 @@ def _extract_json_from_text(text: str) -> str:
 
 
 BRIEF_REQUIRED_FIELDS = {
+    "right_now",
     "positioning_self",
     "positioning_actual",
     "target_icp",
