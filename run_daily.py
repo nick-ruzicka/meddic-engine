@@ -35,6 +35,7 @@ from competitive.classifier.signal_classifier import classify
 from competitive.classifier.predictive_score import score
 from competitive.digest.weekly_digest import generate_digest
 from competitive.digest.email_formatter import format_email
+from competitive.digest.slack_delivery import send_digest as send_slack_digest, send_alert as send_slack_alert
 
 logging.basicConfig(
     level=logging.INFO,
@@ -250,7 +251,8 @@ def main():
     if not raw_signals:
         logger.info("No new signals detected. Pipeline complete.")
         if datetime.now(timezone.utc).weekday() == 0:  # Monday
-            run_digest()
+            digest = run_digest()
+            send_slack_digest(digest)
         return 0
 
     classified, actionable, noise = run_classify(raw_signals)
@@ -285,10 +287,17 @@ def main():
                         s.category, s.competitor, s.tom_takeaway[:80],
                         s.predictive_score, s.lead_time_estimate)
 
+    # Real-time alerts for high-score signals
+    for s in actionable:
+        if s.predictive_score > 0.85:
+            logger.info("HIGH SCORE ALERT: %s %s (%.2f)", s.competitor, s.category, s.predictive_score)
+            send_slack_alert(s)
+
     # Monday digest — suppress if sanity check failed high
     if datetime.now(timezone.utc).weekday() == 0:  # Monday
         if len(actionable) <= SANITY_HIGH:
-            run_digest()
+            digest = run_digest()
+            send_slack_digest(digest)
         else:
             logger.warning("Monday digest SUPPRESSED due to sanity check failure (%d signals). "
                            "Review signals manually before sending.", len(actionable))
