@@ -238,6 +238,23 @@
   .source-link:hover{text-decoration:underline}
 
   /* Threat assessment block */
+  /* Right Now — leads every brief */
+  .right-now{
+    background:linear-gradient(135deg,rgba(70,91,255,0.08) 0%,rgba(70,91,255,0.02) 100%);
+    border:1px solid rgba(70,91,255,0.20);border-radius:2px;
+    padding:20px 24px;margin-bottom:24px;
+  }
+  .right-now-label{
+    font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--blue);margin-bottom:8px;
+  }
+  .right-now-headline{
+    font-size:17px;font-weight:500;color:var(--text);line-height:1.5;margin-bottom:8px;
+  }
+  .right-now-detail{
+    font-size:14px;color:var(--text-2);line-height:1.6;margin:0 0 8px;
+  }
+
   .threat-block{
     background:var(--surface);
     border:1px solid var(--border);
@@ -663,15 +680,29 @@ function renderBriefDetail(comp){
   html+='<div class="brief-updated">Updated '+esc(comp.brief_generated_at?ago(comp.brief_generated_at):'--')+'</div>';
   html+='</div>';
 
+  // Right Now — the most important thing, leads the brief
+  var rn=b.right_now||{};
+  if(typeof rn==='string') rn={headline:rn,detail:'',sources:[]};
+  if(rn.headline){
+    html+='<div class="right-now">';
+    html+='<div class="right-now-label">RIGHT NOW</div>';
+    html+='<div class="right-now-headline">'+esc(rn.headline)+'</div>';
+    if(rn.detail){
+      html+='<p class="right-now-detail">'+esc(rn.detail)+'</p>';
+    }
+    html+=renderSourceLinks(rn.sources||[]);
+    html+='</div>';
+  }
+
   // Brief sections
   var sections=[
-    {key:'positioning_self', label:'POSITIONING (SELF-DESCRIBED)'},
     {key:'positioning_actual', label:'ACTUAL POSITIONING'},
-    {key:'target_icp', label:'TARGET ICP'},
     {key:'key_differentiation', label:'KEY DIFFERENTIATION'},
     {key:'strength_vs_', label:'STRENGTH VS '},
     {key:'weakness_vs_', label:'WEAKNESS VS '},
-    {key:'pricing_signals', label:'PRICING SIGNALS'}
+    {key:'target_icp', label:'TARGET ICP'},
+    {key:'pricing_signals', label:'PRICING SIGNALS'},
+    {key:'positioning_self', label:'POSITIONING (SELF-DESCRIBED)'}
   ];
 
   sections.forEach(function(sec){
