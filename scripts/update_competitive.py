@@ -23,6 +23,11 @@ from competitive.models import (
     get_latest_trajectory,
     get_recent_signals,
 )
+from competitive.analysis import (
+    _normalize_sourced_field,
+    _normalize_recent_moves,
+    _SOURCED_TEXT_FIELDS,
+)
 from database import get_db
 
 OUTPUT = os.path.join(ROOT, "export", "competitive_data.json")
@@ -100,19 +105,13 @@ def build_competitive_data() -> dict:
                 brief_data = json.loads(raw) if raw else None
                 brief_generated_at = brief_dict.get("generated_at")
 
-                # Normalize recent_moves to always be a list
+                # Normalize brief to sourced format for backward compat
                 if isinstance(brief_data, dict):
-                    rm = brief_data.get("recent_moves")
-                    if isinstance(rm, str):
-                        # Claude sometimes returns a string instead of an array.
-                        # Try splitting on numbered patterns like "1) ... 2) ..."
-                        # or "(1) ... (2) ...", then semicolons, then keep as-is.
-                        import re
-                        parts = re.split(r'\s*(?:\d+\)|\(\d+\))\s*', rm)
-                        parts = [p.strip().rstrip('.') for p in parts if p.strip()]
-                        if len(parts) <= 1:
-                            parts = [s.strip() for s in rm.split(";") if s.strip()]
-                        brief_data["recent_moves"] = parts if parts else [rm]
+                    for field in _SOURCED_TEXT_FIELDS:
+                        if field in brief_data:
+                            brief_data[field] = _normalize_sourced_field(brief_data[field])
+                    if "recent_moves" in brief_data:
+                        brief_data["recent_moves"] = _normalize_recent_moves(brief_data["recent_moves"])
 
                     # Count high-threat briefs
                     threat = brief_data.get("threat_level", "")

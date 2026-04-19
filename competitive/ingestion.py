@@ -371,8 +371,85 @@ def ingest_competitor(slug: str, base_url: str) -> int:
             save_page(slug, url, ptype, content=text, content_hash=text_hash)
             count += 1
 
+    # ── Exa fallback for low-yield scrapes ───────────────────────────────────
+    # Count pages with useful content (>200 chars) that were actually stored.
+    # The `count` variable already tracks pages stored (all have >200 chars
+    # because we skip short pages above), so we can use it directly.
+    if count < 3:
+        # Derive competitor_name from slug for the Exa query (best-effort)
+        competitor_name = slug.replace("-", " ").title()
+        logger.info(
+            "Scraping yielded only %d useful pages for %s, supplementing with Exa",
+            count, slug,
+        )
+        count += search_pages_via_exa(competitor_name, slug, base)
+
     update_last_ingested(slug)
     return count
+
+
+# ── Exa page fallback ─────────────────────────────────────────────────────────
+
+def search_pages_via_exa(competitor_name: str, competitor_slug: str, base_url: str) -> int:
+    """Search Exa for supplementary pages when scraping yields little content.
+
+    Runs 3 targeted queries per competitor and saves results via save_page().
+    Requires EXA_API_KEY environment variable. Skips gracefully if not set.
+
+    Returns count of pages saved.
+    """
+    api_key = os.environ.get("EXA_API_KEY", "").strip()
+    if not api_key:
+        logger.info("EXA_API_KEY not set — skipping Exa page fallback for %s", competitor_slug)
+        return 0
+
+    try:
+        from exa_py import Exa  # type: ignore
+
+        exa = Exa(api_key=api_key)
+
+        queries = [
+            f'"{competitor_name}" product OR platform OR features',
+            f'"{competitor_name}" customers OR case study OR testimonial',
+            f'"{competitor_name}" blog OR announcement OR launch 2025 OR 2026',
+        ]
+
+        count = 0
+        for query in queries:
+            try:
+                results = exa.search_and_contents(
+                    query,
+                    num_results=5,
+                    text=True,
+                )
+            except Exception as exc:
+                logger.debug("Exa query failed for %s: %s", competitor_slug, exc)
+                continue
+
+            for result in results.results:
+                url = getattr(result, "url", None) or ""
+                text_content = getattr(result, "text", None) or ""
+
+                if not url or len(text_content.strip()) < 200:
+                    continue
+
+                page_type = classify_page_type(url)
+                text_hash = hashlib.sha256(text_content.encode()).hexdigest()[:16]
+                save_page(
+                    competitor_slug,
+                    url,
+                    page_type,
+                    content=text_content,
+                    content_hash=text_hash,
+                )
+                count += 1
+
+        logger.info("Exa page fallback added %d pages for %s", count, competitor_slug)
+        return count
+
+    except Exception as exc:
+        logger.warning("Exa page fallback failed for %s: %s", competitor_slug, exc)
+        return 0
 
 
 # ── Exa news search ────────────────────────────────────────────────────────────

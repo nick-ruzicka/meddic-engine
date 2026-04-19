@@ -648,7 +648,7 @@ class TestAnalysis:
     # ── parse_brief_json ───────────────────────────────────────────────────────
 
     def test_parse_brief_json_valid(self):
-        """parse_brief_json() parses valid JSON with all required fields."""
+        """parse_brief_json() parses valid JSON with all required fields (old flat format)."""
         from competitive.analysis import parse_brief_json
 
         data = {
@@ -665,10 +665,39 @@ class TestAnalysis:
         }
         result = parse_brief_json(json.dumps(data))
         assert result["threat_level"] == "medium"
-        assert result["positioning_self"] == "The AI platform for finance"
+        # Old flat strings should be normalized to sourced format
+        assert result["positioning_self"] == {"text": "The AI platform for finance", "sources": []}
+        # recent_moves string should be normalized to list of objects
+        assert result["recent_moves"] == [{"text": "Launched new dashboard", "source": ""}]
+
+    def test_parse_brief_json_valid_sourced_format(self):
+        """parse_brief_json() parses valid JSON with new sourced format."""
+        from competitive.analysis import parse_brief_json
+
+        data = {
+            "positioning_self": {"text": "The AI platform for finance", "sources": ["https://example.com"]},
+            "positioning_actual": {"text": "Document search for PE firms", "sources": ["https://example.com/about"]},
+            "target_icp": {"text": "Private equity associates", "sources": ["https://example.com/customers"]},
+            "pricing_signals": {"text": "Enterprise pricing", "sources": []},
+            "key_differentiation": {"text": "Fast document processing", "sources": ["https://example.com/product"]},
+            "weakness_vs_": {"text": "Narrower document types", "sources": ["https://example.com"]},
+            "strength_vs_": {"text": "Lower price point", "sources": ["https://example.com/pricing"]},
+            "recent_moves": [
+                {"text": "Launched new dashboard", "source": "https://example.com/blog/launch"},
+                {"text": "Raised Series B", "source": "https://techcrunch.com/article"},
+            ],
+            "threat_level": "medium",
+            "threat_reasoning": "Strong in SMB, weak in enterprise",
+        }
+        result = parse_brief_json(json.dumps(data))
+        assert result["threat_level"] == "medium"
+        assert result["positioning_self"]["text"] == "The AI platform for finance"
+        assert result["positioning_self"]["sources"] == ["https://example.com"]
+        assert len(result["recent_moves"]) == 2
+        assert result["recent_moves"][0]["source"] == "https://example.com/blog/launch"
 
     def test_parse_brief_json_extracts_from_markdown(self):
-        """parse_brief_json() handles ```json...``` markdown wrapping."""
+        """parse_brief_json() handles ```json...``` markdown wrapping (old flat format)."""
         from competitive.analysis import parse_brief_json
 
         data = {
@@ -686,6 +715,30 @@ class TestAnalysis:
         wrapped = f"```json\n{json.dumps(data)}\n```"
         result = parse_brief_json(wrapped)
         assert result["threat_level"] == "low"
+        # Old flat strings should be normalized to sourced format
+        assert result["positioning_self"] == {"text": "AI search", "sources": []}
+
+    def test_parse_brief_json_extracts_from_markdown_sourced(self):
+        """parse_brief_json() handles ```json...``` with new sourced format."""
+        from competitive.analysis import parse_brief_json
+
+        data = {
+            "positioning_self": {"text": "AI search", "sources": ["https://example.com"]},
+            "positioning_actual": {"text": "Document AI", "sources": []},
+            "target_icp": {"text": "Finance teams", "sources": []},
+            "pricing_signals": {"text": "Unknown", "sources": []},
+            "key_differentiation": {"text": "Speed", "sources": []},
+            "weakness_vs_": {"text": "Less accurate", "sources": []},
+            "strength_vs_": {"text": "Cheaper", "sources": []},
+            "recent_moves": [{"text": "New integrations", "source": "https://example.com/blog"}],
+            "threat_level": "low",
+            "threat_reasoning": "Not enterprise focused",
+        }
+        wrapped = f"```json\n{json.dumps(data)}\n```"
+        result = parse_brief_json(wrapped)
+        assert result["threat_level"] == "low"
+        assert result["positioning_self"]["text"] == "AI search"
+        assert result["positioning_self"]["sources"] == ["https://example.com"]
 
     def test_parse_brief_json_missing_fields_raises(self):
         """parse_brief_json() raises ValueError when required fields are missing."""

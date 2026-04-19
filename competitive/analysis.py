@@ -276,16 +276,68 @@ TRAJECTORY_REQUIRED_FIELDS = {
 }
 
 
+_SOURCED_TEXT_FIELDS = {
+    "positioning_self",
+    "positioning_actual",
+    "target_icp",
+    "pricing_signals",
+    "key_differentiation",
+    "weakness_vs_",
+    "strength_vs_",
+}
+
+
+def _normalize_sourced_field(value):
+    """Normalize a brief field to the sourced format {"text": ..., "sources": [...]}.
+
+    Accepts either a plain string (old format) or a dict with text+sources (new format).
+    """
+    if isinstance(value, str):
+        return {"text": value, "sources": []}
+    if isinstance(value, dict) and "text" in value:
+        if "sources" not in value:
+            value["sources"] = []
+        return value
+    return value
+
+
+def _normalize_recent_moves(value):
+    """Normalize recent_moves to a list of {"text": ..., "source": ...} objects.
+
+    Accepts:
+    - A list of {"text": ..., "source": ...} objects (new format, pass through)
+    - A list of plain strings (old format, wrap each)
+    - A plain string (old format, wrap as single-item list)
+    """
+    if isinstance(value, str):
+        return [{"text": value, "source": ""}]
+    if isinstance(value, list):
+        normalized = []
+        for item in value:
+            if isinstance(item, str):
+                normalized.append({"text": item, "source": ""})
+            elif isinstance(item, dict) and "text" in item:
+                if "source" not in item:
+                    item["source"] = ""
+                normalized.append(item)
+            else:
+                normalized.append(item)
+        return normalized
+    return value
+
+
 def parse_brief_json(text: str) -> dict:
     """Parse Claude response for a competitive brief.
 
     Handles markdown code blocks as a safety net. Validates required fields.
+    Normalizes both old flat format (string values) and new sourced format
+    (object values with text+sources) to the new sourced format.
 
     Args:
         text: Raw text from Claude response
 
     Returns:
-        Parsed dict with all required brief fields
+        Parsed dict with all required brief fields, normalized to sourced format
 
     Raises:
         ValueError: If text cannot be parsed as JSON or required fields are missing
@@ -297,6 +349,15 @@ def parse_brief_json(text: str) -> dict:
     missing = BRIEF_REQUIRED_FIELDS - set(data.keys())
     if missing:
         raise ValueError(f"Brief JSON missing required fields: {sorted(missing)}")
+
+    # Normalize sourced text fields
+    for field in _SOURCED_TEXT_FIELDS:
+        if field in data:
+            data[field] = _normalize_sourced_field(data[field])
+
+    # Normalize recent_moves
+    if "recent_moves" in data:
+        data["recent_moves"] = _normalize_recent_moves(data["recent_moves"])
 
     return data
 
