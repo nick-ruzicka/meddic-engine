@@ -439,3 +439,110 @@ class TestCompetitors:
         importlib.reload(m)
         rows = m.get_all_competitors()
         assert len(rows) == 15
+
+
+# ── Ingestion ──────────────────────────────────────────────────────────────────
+
+class TestIngestion:
+    """Tests for competitive/ingestion.py — pure-logic functions only (no network)."""
+
+    def test_parse_sitemap_xml_extracts_urls(self):
+        """Valid sitemap XML with 2 URLs is parsed into 2 dicts with loc + lastmod."""
+        from competitive.ingestion import parse_sitemap_xml
+
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://example.com/</loc>
+    <lastmod>2024-01-15</lastmod>
+  </url>
+  <url>
+    <loc>https://example.com/blog/post-1</loc>
+    <lastmod>2024-03-20</lastmod>
+  </url>
+</urlset>"""
+
+        result = parse_sitemap_xml(xml)
+        assert len(result) == 2
+
+        locs = [r["loc"] for r in result]
+        assert "https://example.com/" in locs
+        assert "https://example.com/blog/post-1" in locs
+
+        # Verify lastmod values are present
+        by_loc = {r["loc"]: r for r in result}
+        assert by_loc["https://example.com/"]["lastmod"] == "2024-01-15"
+        assert by_loc["https://example.com/blog/post-1"]["lastmod"] == "2024-03-20"
+
+    def test_parse_sitemap_handles_empty(self):
+        """Empty string, whitespace-only, and malformed XML all return []."""
+        from competitive.ingestion import parse_sitemap_xml
+
+        assert parse_sitemap_xml("") == []
+        assert parse_sitemap_xml("   ") == []
+        assert parse_sitemap_xml("not xml at all <<<") == []
+        assert parse_sitemap_xml("<broken><xml>") == []
+
+    def test_extract_text_strips_tags(self):
+        """script tags (and content) are stripped; visible text is kept."""
+        from competitive.ingestion import extract_text_from_html
+
+        html = """<html>
+<head><title>Page Title</title></head>
+<body>
+  <script>var x = 1; alert('hidden');</script>
+  <style>body { color: red; }</style>
+  <h1>Hello World</h1>
+  <p>Some <strong>bold</strong> text here.</p>
+  <noscript>No JS fallback hidden</noscript>
+</body>
+</html>"""
+
+        result = extract_text_from_html(html)
+
+        # Visible text should be present
+        assert "Hello World" in result
+        assert "Some" in result
+        assert "bold" in result
+        assert "text here" in result
+
+        # Script/style content must NOT appear
+        assert "var x = 1" not in result
+        assert "alert" not in result
+        assert "color: red" not in result
+        # noscript content should be stripped
+        assert "No JS fallback hidden" not in result
+
+    def test_classify_page_type(self):
+        """URL paths are classified into the correct page type."""
+        from competitive.ingestion import classify_page_type
+
+        # Blog variants
+        assert classify_page_type("https://example.com/blog/my-post") == "blog"
+        assert classify_page_type("https://example.com/blog") == "blog"
+        assert classify_page_type("https://example.com/news/article") == "blog"
+
+        # About variants
+        assert classify_page_type("https://example.com/about") == "about"
+        assert classify_page_type("https://example.com/about-us") == "about"
+        assert classify_page_type("https://example.com/company") == "about"
+
+        # Pricing
+        assert classify_page_type("https://example.com/pricing") == "pricing"
+        assert classify_page_type("https://example.com/plans") == "pricing"
+
+        # Customers
+        assert classify_page_type("https://example.com/customers") == "customers"
+        assert classify_page_type("https://example.com/case-studies") == "customers"
+
+        # Careers
+        assert classify_page_type("https://example.com/careers") == "careers"
+        assert classify_page_type("https://example.com/jobs") == "careers"
+
+        # Homepage
+        assert classify_page_type("https://example.com/") == "homepage"
+        assert classify_page_type("https://example.com") == "homepage"
+
+        # Other
+        assert classify_page_type("https://example.com/some-random-page") == "other"
+        assert classify_page_type("https://example.com/contact") == "other"
