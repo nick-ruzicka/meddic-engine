@@ -100,8 +100,21 @@ def build_competitive_data() -> dict:
                 brief_data = json.loads(raw) if raw else None
                 brief_generated_at = brief_dict.get("generated_at")
 
-                # Count high-threat briefs
+                # Normalize recent_moves to always be a list
                 if isinstance(brief_data, dict):
+                    rm = brief_data.get("recent_moves")
+                    if isinstance(rm, str):
+                        # Claude sometimes returns a string instead of an array.
+                        # Try splitting on numbered patterns like "1) ... 2) ..."
+                        # or "(1) ... (2) ...", then semicolons, then keep as-is.
+                        import re
+                        parts = re.split(r'\s*(?:\d+\)|\(\d+\))\s*', rm)
+                        parts = [p.strip().rstrip('.') for p in parts if p.strip()]
+                        if len(parts) <= 1:
+                            parts = [s.strip() for s in rm.split(";") if s.strip()]
+                        brief_data["recent_moves"] = parts if parts else [rm]
+
+                    # Count high-threat briefs
                     threat = brief_data.get("threat_level", "")
                     if isinstance(threat, str) and threat.lower() == "high":
                         high_threat += 1
