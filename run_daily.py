@@ -256,6 +256,25 @@ def main():
     classified, actionable, noise = run_classify(raw_signals)
     logger.info("Classification: %d actionable, %d noise", len(actionable), len(noise))
 
+    # Sanity bounds: 2-15 actionable signals per day is normal.
+    # Outside this band = something is wrong (broken collector or noisy source).
+    SANITY_LOW = 2
+    SANITY_HIGH = 15
+    if len(actionable) == 0:
+        logger.warning("SANITY CHECK: 0 actionable signals. All %d signals were noise. "
+                        "Check if collectors are working or if classification is too aggressive.", len(raw_signals))
+    elif len(actionable) < SANITY_LOW:
+        logger.warning("SANITY CHECK: Only %d actionable signals (expected %d-%d). "
+                        "Collectors may be under-reporting.", len(actionable), SANITY_LOW, SANITY_HIGH)
+    elif len(actionable) > SANITY_HIGH:
+        logger.warning("SANITY CHECK: %d actionable signals (expected %d-%d). "
+                        "Possible noise leak — review classification rules. "
+                        "NOT sending digest until reviewed.",
+                        len(actionable), SANITY_LOW, SANITY_HIGH)
+    else:
+        logger.info("Sanity check passed: %d actionable signals within expected band (%d-%d).",
+                    len(actionable), SANITY_LOW, SANITY_HIGH)
+
     if not args.dry_run:
         saved, skipped = save_signals(classified)
         logger.info("Storage: %d saved, %d duplicates skipped", saved, skipped)
@@ -266,9 +285,13 @@ def main():
                         s.category, s.competitor, s.tom_takeaway[:80],
                         s.predictive_score, s.lead_time_estimate)
 
-    # Monday digest
+    # Monday digest — suppress if sanity check failed high
     if datetime.now(timezone.utc).weekday() == 0:  # Monday
-        run_digest()
+        if len(actionable) <= SANITY_HIGH:
+            run_digest()
+        else:
+            logger.warning("Monday digest SUPPRESSED due to sanity check failure (%d signals). "
+                           "Review signals manually before sending.", len(actionable))
 
     logger.info("Pipeline complete.")
     return 0
