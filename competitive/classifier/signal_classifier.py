@@ -151,16 +151,31 @@ def _categorize(signal: RawSignal) -> str:
             return "launch_signal"
 
         if page_type == "blog":
-            if _url_contains_comparison(url) or _text_contains_any(
-                url, _COMPARISON_KEYWORDS
-            ):
-                return "content_signal"
+            return "content_signal"
 
         # Case study URLs
         if "case-study" in url or "case_study" in url or "customer" in url:
             return "content_signal"
 
-        return "noise"
+        # Glossary, resources, guides — low-signal content
+        if "glossary" in url or "faq" in url:
+            return "noise"
+
+        return "content_signal"
+
+    # ------------------------------------------------------------------
+    # content_change signals (from sitemap — page content hash changed)
+    # ------------------------------------------------------------------
+    if stype == "content_change":
+        page_type = (payload.get("page_type") or "").lower()
+        url = (payload.get("url") or signal.raw_url or "").lower()
+        if page_type in ("product", "platform", "pricing"):
+            return "launch_signal"
+        if page_type == "blog":
+            return "content_signal"
+        if "glossary" in url or "faq" in url:
+            return "noise"
+        return "content_signal"
 
     # ------------------------------------------------------------------
     # job_posting signals (from jobs collector)
