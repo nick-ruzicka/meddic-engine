@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pipeline Ops · MEDDIC Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared.css">
+<link rel="preload" as="fetch" href="ops_data.json" crossorigin>
+<link rel="preload" as="fetch" href="contacts_data.json" crossorigin>
+<style>
+  :root{
+    /* Warm sand — shared with analytics */
+    --bg:#F2EFE1;
+    --bg-deep:#EAE4CF;
+    --surface:#E8E3D0;
+    --surface-2:#DED5B8;
+    --surface-3:#D0C4A2;
+    --ink:#1E1A14;
+    --ink-2:#4D4334;
+    --ink-3:rgba(77,67,52,0.60);
+    --ink-4:rgba(77,67,52,0.32);
+    --border:#D4CAAE;
+    --border-soft:#DFD6BB;
+    --umber:#8B6F4E;
+    --umber-deep:#5B4129;
+    --umber-light:#C4A77A;
+    --umber-glow:rgba(139,111,78,0.12);
+    --blue:#465BFF;
+    --blue-soft:rgba(70,91,255,0.12);
+    --green:#4F7A3B;
+    --amber:#B07D1A;
+    --orange:#C25A1E;
+    --red:#A8321C;
+    --font-ui:'Inter',system-ui,-apple-system,sans-serif;
+    --font-display:'Playfair Display',Georgia,serif;
+    --font-mono:'SF Mono','Fira Code',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(ellipse 60% 40% at 20% 0%, rgba(196,167,122,0.22), transparent 70%),
+      radial-gradient(ellipse 40% 30% at 95% 10%, rgba(139,111,78,0.08), transparent 70%);
+    background-attachment:fixed;
+  }
+  a{color:inherit}
+
+  /* ── Header ── */
+  header{position:sticky;top:0;z-index:20;
+    background:rgba(242,239,225,0.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border-soft);height:64px;padding:0 32px;
+    display:flex;align-items:center;gap:20px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .name{font-size:15px;font-weight:500;color:var(--ink)}
+  .brand .sub{color:var(--ink-3);font-size:13px}
+  .brand .eyebrow{margin-left:14px;padding-left:14px;border-left:1px solid var(--border);
+    font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3)}
+  .nav-links{display:flex;align-items:center;gap:12px;margin-left:auto}
+  .nav-links a{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--ink-3);text-decoration:none;transition:color 150ms}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a.active{color:var(--umber-deep)}
+  .nav-links .nav-sep{color:var(--ink-4);font-size:11px}
+
+  main{max-width:1280px;margin:0 auto;padding:48px 32px 96px}
+
+  .eyebrow{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+    color:var(--umber);font-weight:600}
+  .eyebrow::before{content:"";display:inline-block;width:18px;height:1px;
+    background:var(--umber);vertical-align:middle;margin-right:10px;margin-bottom:3px}
+
+  /* ── HERO (compact — ops is diagnostic, not editorial) ── */
+  .hero{
+    position:relative;overflow:hidden;
+    padding:44px 48px 48px;margin-bottom:32px;
+    background:
+      radial-gradient(ellipse 60% 100% at 100% 50%, rgba(139,111,78,0.12), transparent 60%),
+      linear-gradient(135deg, #EEE8D2 0%, #E5DBBB 100%);
+    border:1px solid var(--border);border-radius:3px;
+  }
+  .hero-inner{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:48px;align-items:end}
+  .hero .eyebrow{margin-bottom:18px}
+  .hero-title{font-family:var(--font-display);font-weight:500;
+    font-size:clamp(40px,5vw,62px);line-height:1;letter-spacing:-0.015em;margin:0;color:var(--ink)}
+  .hero-sub{margin-top:14px;font-size:14.5px;color:var(--ink-2);line-height:1.55;max-width:580px}
+  .hero-sub b{color:var(--ink);font-weight:500}
+  .health-pills{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .pill{
+    display:flex;align-items:center;gap:8px;padding:8px 14px;
+    background:rgba(255,255,255,0.42);border:1px solid var(--border);border-radius:2px;
+    font-size:11px;letter-spacing:0.04em;color:var(--ink-2);
+  }
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+  .pill.warn .dot{background:var(--amber)}
+  .pill.err .dot{background:var(--red)}
+  .pill .v{font-family:var(--font-mono);color:var(--ink);font-weight:500}
+  @media (max-width:860px){
+    .hero{padding:32px 28px}
+    .hero-inner{grid-template-columns:1fr}
+    .health-pills{justify-content:flex-start}
+  }
+
+  /* ── Section chrome ── */
+  .sec-head{margin:36px 0 16px;display:flex;align-items:baseline;gap:16px}
+  .sec-title{font-family:var(--font-display);font-size:26px;font-weight:500;
+    letter-spacing:-0.005em;color:var(--ink);margin:0}
+  .sec-sub{font-size:13px;color:var(--ink-3)}
+  .sec-upd{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--ink-3);letter-spacing:0.02em}
+
+  /* ── Bento grid ── */
+  .bento{display:grid;grid-template-columns:repeat(6, 1fr);gap:16px}
+  .tile{
+    background:var(--surface);border:1px solid var(--border);border-radius:3px;
+    padding:24px 26px;transition:border-color 220ms, box-shadow 220ms;
+  }
+  .tile:hover{border-color:var(--umber-light);box-shadow:0 6px 20px rgba(91,65,41,0.06)}
+  .tile-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}
+  .tile-hd .lbl{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--umber);font-weight:600}
+  .tile-hd .hint{font-size:10px;letter-spacing:0.06em;color:var(--ink-3)}
+  .t-span-4{grid-column:span 4}
+  .t-span-3{grid-column:span 3}
+  .t-span-2{grid-column:span 2}
+  .t-span-6{grid-column:span 6}
+  @media (max-width:960px){.t-span-4,.t-span-3,.t-span-2{grid-column:span 6}}
+
+  /* ── Waterfall ── */
+  .hbar{display:grid;grid-template-columns:minmax(0,220px) 1fr 210px;gap:18px;align-items:center;margin-bottom:16px}
+  .hbar:last-child{margin-bottom:0}
+  .hbar .lbl{font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-2);font-weight:500;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hbar .lbl-wrap{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .hbar .lbl-desc{font-size:10px;letter-spacing:0.02em;text-transform:none;color:var(--ink-3);
+    font-weight:400;line-height:1.35;white-space:normal;overflow:hidden}
+  .hbar .track{height:8px;background:rgba(139,111,78,0.10);border-radius:2px;overflow:hidden}
+  .hbar .track > div{height:100%;border-radius:2px;transition:width 600ms cubic-bezier(.22,.75,.31,1)}
+  .hbar .meta{display:grid;grid-template-columns:52px 52px 78px;gap:14px;align-items:end;text-align:right}
+  .hbar .meta .cell{display:flex;flex-direction:column;gap:3px;align-items:flex-end;line-height:1}
+  .hbar .meta .cell .v{font-family:var(--font-mono);color:var(--ink);font-weight:500;font-size:14px;font-variant-numeric:tabular-nums}
+  .hbar .meta .cell.pct .v{color:var(--ink-3)}
+  .hbar .meta .cell.vf  .v{color:var(--green)}
+  .hbar .meta .cell .k{font-size:8.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);font-family:var(--font-ui);font-weight:500}
+
+  .summary{display:flex;gap:28px;flex-wrap:wrap;margin-top:20px;padding-top:18px;
+    border-top:1px solid var(--border-soft);font-size:12px;color:var(--ink-2)}
+  .summary span{display:inline-flex;align-items:baseline;gap:6px}
+  .summary span b{color:var(--umber-deep);font-weight:600;font-family:var(--font-mono)}
+
+  /* ── Fallthrough ── */
+  .fall-row{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;
+    padding:16px 0;border-bottom:1px solid var(--border-soft)}
+  .fall-row:last-child{border-bottom:none}
+  .fall-row .reason{font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:4px}
+  .fall-row .action{font-size:12px;color:var(--ink-3);font-style:italic}
+  .fall-row .num{
+    justify-self:end;padding-left:24px;min-width:80px;text-align:right;
+    border-left:1px solid var(--border);
+    font-family:var(--font-display);font-size:28px;font-weight:500;line-height:1;
+    color:var(--ink);letter-spacing:-0.01em;font-variant-numeric:tabular-nums;
+  }
+  .ft-lede{margin-bottom:16px;padding:14px 18px;border-radius:2px;
+    background:var(--umber-glow);border-left:3px solid var(--umber);
+    font-size:13px;color:var(--ink-2);line-height:1.55}
+  .ft-lede b{color:var(--umber-deep);font-weight:600}
+
+  /* ── DB health / API keys ── */
+  .kv{display:flex;flex-direction:column;gap:10px}
+  .kv-row{display:flex;justify-content:space-between;align-items:baseline;
+    padding-bottom:9px;border-bottom:1px solid var(--border-soft)}
+  .kv-row:last-child{border-bottom:none;padding-bottom:0}
+  .kv-row .k{font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+  .kv-row .v{font-family:var(--font-mono);font-size:14px;color:var(--ink);font-weight:500;
+    font-variant-numeric:tabular-nums}
+
+  .key-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+    padding:10px 0;border-bottom:1px solid var(--border-soft)}
+  .key-row:last-child{border-bottom:none}
+  .key-row .nm{font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-2);font-weight:500}
+  .key-row .pv{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-3)}
+  .key-row .status{display:flex;align-items:center;gap:6px}
+  .key-row .status .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+  .key-row.missing .status .dot{background:var(--red)}
+  .key-row .status .lbl{font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--green);font-weight:600}
+  .key-row.missing .status .lbl{color:var(--red)}
+
+  /* ── Pipeline cadence ── */
+  .cadence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+  .cad-row{padding:18px 20px;background:rgba(255,255,255,0.35);
+    border:1px solid var(--border);border-left:3px solid var(--umber);border-radius:2px;
+    transition:border-left-color 150ms}
+  .cad-row:hover{border-left-color:var(--umber-deep)}
+  .cad-row .lbl{font-size:10px;color:var(--ink-3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;font-weight:600}
+  .cad-row .val{font-family:var(--font-display);font-size:30px;color:var(--ink);font-weight:500;line-height:1;letter-spacing:-0.01em;font-variant-numeric:tabular-nums}
+  .cad-row .sub{font-size:11.5px;color:var(--ink-3);margin-top:6px;font-family:var(--font-mono)}
+
+  /* ── Recent activity tables ── */
+  .ed-table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .ed-table th{font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);
+    font-weight:500;text-align:left;padding:10px 12px 10px 0;border-bottom:1px solid var(--border)}
+  .ed-table td{padding:11px 12px 11px 0;border-bottom:1px solid var(--border-soft);color:var(--ink-2)}
+  .ed-table td.num{font-family:var(--font-mono);text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+  .ed-table td.mono{font-family:var(--font-mono);color:var(--ink-3);font-size:11px}
+  .ed-table tr:last-child td{border-bottom:none}
+  .ed-table .firm{color:var(--ink);font-weight:500}
+  .ed-table .contact{color:var(--ink-2)}
+  .score-pill{display:inline-block;padding:2px 8px;border-radius:2px;font-family:var(--font-mono);
+    font-size:11px;font-weight:500;font-variant-numeric:tabular-nums}
+  .score-pill.strong{background:rgba(91,65,41,0.14);color:var(--umber-deep);border:1px solid rgba(91,65,41,0.32)}
+  .score-pill.good  {background:rgba(139,111,78,0.14);color:var(--umber);border:1px solid rgba(139,111,78,0.32)}
+  .score-pill.mod   {background:rgba(194,90,30,0.12);color:var(--orange);border:1px solid rgba(194,90,30,0.32)}
+  .score-pill.weak  {background:rgba(168,50,28,0.12);color:var(--red);border:1px solid rgba(168,50,28,0.32)}
+
+  .sig-chip{display:inline-block;padding:2px 8px;border-radius:2px;
+    font-size:10px;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;
+    background:rgba(176,125,26,0.11);color:var(--amber);border:1px solid rgba(176,125,26,0.32)}
+  .sig-chip.press{background:rgba(176,125,26,0.11);color:var(--amber);border-color:rgba(176,125,26,0.32)}
+  .sig-chip.hiring{background:rgba(79,122,59,0.11);color:var(--green);border-color:rgba(79,122,59,0.32)}
+  .sig-chip.twitter{background:rgba(194,90,30,0.11);color:var(--orange);border-color:rgba(194,90,30,0.32)}
+  .sig-chip.linkedin{background:rgba(70,91,255,0.10);color:var(--blue);border-color:rgba(70,91,255,0.28)}
+
+  /* ── Source health ── */
+  .src-row{display:grid;grid-template-columns:120px 70px 1fr 70px 90px;gap:14px;align-items:center;
+    padding:13px 0;border-bottom:1px solid var(--border-soft)}
+  .src-row:last-child{border-bottom:none}
+  .src-row .nm{font-size:11px;letter-spacing:0.10em;text-transform:uppercase;color:var(--ink);font-weight:500}
+  .src-row .status{display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+  .src-row .status .dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+  .src-row.stale  .status .dot{background:var(--amber)}
+  .src-row.silent .status .dot{background:var(--red)}
+  .src-row.quiet  .status .dot{background:var(--amber,#f59e0b)}
+  .src-row.not_wired .status .dot{background:rgba(139,111,78,0.28)}
+  .src-row.stale  .status{color:var(--amber)}
+  .src-row.silent .status{color:var(--red)}
+  .src-row.quiet  .status{color:var(--amber,#f59e0b)}
+  .src-row.not_wired{opacity:0.55}
+  .src-row.not_wired .status{color:var(--ink-3,rgba(0,0,0,0.45));text-transform:none;letter-spacing:0.02em}
+  .src-row.not_wired .nm{color:var(--ink-3,rgba(0,0,0,0.50))}
+  .src-row .spark{height:32px;width:100%}
+  .src-row .total{font-family:var(--font-mono);font-size:13px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+  .src-row .last{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-3);text-align:right}
+
+  /* ── Signal quality ── */
+  .sq-row{display:grid;grid-template-columns:100px 1fr 80px 80px;gap:14px;align-items:center;
+    padding:13px 0;border-bottom:1px solid var(--border-soft)}
+  .sq-row:last-child{border-bottom:none}
+  .sq-row .nm{font-size:11px;letter-spacing:0.10em;text-transform:uppercase;color:var(--ink);font-weight:500}
+  .sq-row .metric{text-align:right;font-family:var(--font-mono);font-size:13px;color:var(--ink);
+    font-variant-numeric:tabular-nums;font-weight:500}
+  .sq-row .metric small{display:block;font-size:8.5px;letter-spacing:0.10em;text-transform:uppercase;
+    color:var(--ink-3);font-family:var(--font-ui);font-weight:500;margin-bottom:2px}
+  .sq-row .metric.dim{color:var(--ink-3);font-weight:400}
+
+  /* ── Signal quality interpretation ── */
+  .sq-interp{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  @media (max-width:860px){.sq-interp{grid-template-columns:1fr}}
+  .sq-interp .col-hd{font-size:9px;letter-spacing:0.16em;text-transform:uppercase;
+    color:var(--umber);font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .sq-interp .col-hd::before{content:"";width:14px;height:1px;background:var(--umber)}
+  .sq-finding{padding:10px 14px;margin-bottom:8px;font-size:12.5px;color:var(--ink-2);
+    line-height:1.55;border-left:2px solid var(--border);background:rgba(255,255,255,0.25);border-radius:0 2px 2px 0}
+  .sq-opt{padding:10px 14px;margin-bottom:8px;font-size:12.5px;color:var(--ink-2);
+    line-height:1.55;border-left:2px solid var(--umber);background:var(--umber-glow);border-radius:0 2px 2px 0}
+  .sq-opt strong,.sq-finding strong{color:var(--ink);font-weight:500}
+
+  /* ── Enrichment timing ── */
+  .et-hero{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px;
+    padding-bottom:18px;border-bottom:1px solid var(--border-soft)}
+  .et-hero .stat .k{font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:6px}
+  .et-hero .stat .v{font-family:var(--font-display);font-size:30px;color:var(--ink);letter-spacing:-0.01em;line-height:1;font-variant-numeric:tabular-nums}
+  .et-hero .stat .v small{font-size:13px;color:var(--ink-3);margin-left:4px;font-family:var(--font-ui);font-weight:400}
+  .et-hero .stat .sub{margin-top:4px;font-size:11px;color:var(--ink-3);font-family:var(--font-mono)}
+  .et-row{display:grid;grid-template-columns:110px 1fr 60px 60px;gap:14px;align-items:center;
+    padding:10px 0;border-bottom:1px solid var(--border-soft)}
+  .et-row:last-child{border-bottom:none}
+  .et-row .nm{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);font-weight:500}
+  .et-row .bar{height:6px;background:rgba(139,111,78,0.10);border-radius:2px;overflow:hidden;position:relative}
+  .et-row .bar .fill{height:100%;background:linear-gradient(90deg, var(--umber), var(--umber-light));border-radius:2px}
+  .et-row .v{font-family:var(--font-mono);font-size:12px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+  .et-row .v em{font-style:normal;color:var(--ink-3);font-size:10px;display:block;margin-top:1px}
+  .et-note{margin-top:14px;padding:10px 14px;background:var(--umber-glow);border-left:2px solid var(--umber);
+    border-radius:2px;font-size:11.5px;color:var(--ink-2);line-height:1.55}
+
+  /* ── Firm velocity ── */
+  .fv-row{display:grid;grid-template-columns:1.4fr 90px 1fr 50px;gap:16px;align-items:center;
+    padding:12px 0;border-bottom:1px solid var(--border-soft)}
+  .fv-row:last-child{border-bottom:none}
+  .fv-row .nm{font-size:13px;color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fv-row .stage{font-size:9.5px;letter-spacing:0.10em;text-transform:uppercase;color:var(--ink-3);
+    padding:3px 7px;border:1px solid var(--border);border-radius:2px;background:rgba(255,255,255,0.3);
+    display:inline-block;font-weight:500}
+  .fv-row .stage.deploying{color:var(--green);border-color:rgba(79,122,59,0.4);background:rgba(79,122,59,0.08)}
+  .fv-row .stage.evaluating{color:var(--amber);border-color:rgba(176,125,26,0.4);background:rgba(176,125,26,0.08)}
+  .fv-row .stage.exploring{color:var(--orange);border-color:rgba(194,90,30,0.4);background:rgba(194,90,30,0.08)}
+  .fv-row .spark{height:30px;width:100%}
+  .fv-row .total{font-family:var(--font-mono);font-size:13px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+
+  /* ── Parse errors ── */
+  .err-row{padding:11px 15px;border-left:3px solid var(--red);
+    background:rgba(168,50,28,0.05);margin-bottom:8px;font-family:var(--font-mono);
+    font-size:11.5px;color:var(--ink-2);border-radius:0 2px 2px 0}
+  .err-empty{padding:28px;text-align:center;color:var(--ink-3);font-style:italic;
+    background:rgba(79,122,59,0.05);border:1px dashed rgba(79,122,59,0.3);border-radius:2px}
+
+  .state{padding:40px;text-align:center;color:var(--ink-3);font-style:italic}
+  footer{max-width:1280px;margin:0 auto;padding:32px 32px 48px;font-size:10px;
+    letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);border-top:1px solid var(--border-soft)}
+
+  /* entrance */
+  .fade-in{opacity:0;transform:translateY(8px);animation:rise 560ms ease forwards}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  .fade-in.d1{animation-delay:60ms}
+  .fade-in.d2{animation-delay:120ms}
+  .fade-in.d3{animation-delay:180ms}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path fill="#1E1A14" d="M2 2h2v2H2V2Zm3 2h3V2H5v2Zm4-2v2h5V2H9ZM2 8h2V5H2v3Zm3 0h3V5H5v3Zm4 0h5V5H9v3Zm-7 6h2V9H2v5Zm3 0h3V9H5v5Zm4 0h5V9H9v5Z"/>
+    </svg>
+    <span class="name"></span>
+    <span class="sub">Signal Engine</span>
+    <span class="eyebrow">Pipeline Ops</span>
+  </div>
+  <nav class="nav-links">
+    <a href="analytics.html">Analytics</a><span class="nav-sep">·</span>
+    <a href="ops.html" class="active">Pipeline Ops</a><span class="nav-sep">·</span>
+    <a href="methodology.html">Methodology</a><span class="nav-sep">·</span>
+    <a href="competitive.html">Competitive</a><span class="nav-sep">·</span>
+    <a href="index.html">← Contacts</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero fade-in">
+    <div class="hero-inner">
+      <div>
+        <div class="eyebrow">System health · live</div>
+        <h1 class="hero-title">Pipeline ops.</h1>
+        <div class="hero-sub" id="h-sub">Loading system health…</div>
+      </div>
+      <div class="health-pills" id="health-pills"></div>
+    </div>
+  </section>
+
+  <!-- ROW 1: Waterfall (4) + DB Health (2) -->
+  <div class="sec-head">
+    <h2 class="sec-title">Enrichment topology</h2>
+    <span class="sec-sub">Where tier-1 contacts come from, and where the DB stands</span>
+    <span class="sec-upd" id="upd-waterfall">—</span>
+  </div>
+  <div class="bento">
+    <div class="tile t-span-4 fade-in d1">
+      <div class="tile-hd">
+        <span class="lbl">Contact waterfall</span>
+        <span class="hint" id="waterfall-sub">Where contacts come from</span>
+      </div>
+      <div id="waterfall"><div class="state">Loading…</div></div>
+      <div class="summary" id="waterfall-summary"></div>
+    </div>
+
+    <div class="tile t-span-2 fade-in d2">
+      <div class="tile-hd">
+        <span class="lbl">Data store — what's in the pipeline DB</span>
+        <span class="hint" id="db-size">—</span>
+      </div>
+      <div class="kv" id="db-rows"><div class="state">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Fallthrough (4) + API keys (2) -->
+  <div class="sec-head">
+    <h2 class="sec-title">Flow diagnostics</h2>
+    <span class="sec-sub">Why contacts stall, and which APIs are wired up</span>
+    <span class="sec-upd" id="upd-fallthrough">—</span>
+  </div>
+  <div class="bento">
+    <div class="tile t-span-4 fade-in d1">
+      <div class="tile-hd">
+        <span class="lbl">Fallthrough analysis</span>
+        <span class="hint">Tier 1 · threshold 50</span>
+      </div>
+      <div id="fallthrough"><div class="state">Loading…</div></div>
+    </div>
+
+    <div class="tile t-span-2 fade-in d2">
+      <div class="tile-hd">
+        <span class="lbl">API keys</span>
+        <span class="hint">Env wiring</span>
+      </div>
+      <div id="api-keys"><div class="state">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- Cadence -->
+  <div class="sec-head">
+    <h2 class="sec-title">Pipeline cadence</h2>
+    <span class="sec-sub">What the pipeline did last run</span>
+    <span class="sec-upd" id="upd-cadence">—</span>
+  </div>
+  <section class="fade-in">
+    <div id="cadence" class="cadence"><div class="state">Loading…</div></div>
+  </section>
+
+  <!-- ROW 3: Recent scoring + Recent signals -->
+  <div class="sec-head">
+    <h2 class="sec-title">Recent activity</h2>
+    <span class="sec-sub">Last 10 scores · last 10 signals</span>
+  </div>
+  <div class="bento">
+    <div class="tile t-span-3 fade-in d1">
+      <div class="tile-hd">
+        <span class="lbl">Scoring activity</span>
+        <span class="hint">Most recent 10</span>
+      </div>
+      <table class="ed-table" id="recent-scores">
+        <thead><tr><th>Firm</th><th>Contact</th><th style="text-align:right">Score</th></tr></thead>
+        <tbody><tr><td colspan="3" class="state">Loading…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="tile t-span-3 fade-in d2">
+      <div class="tile-hd">
+        <span class="lbl">Signals ingested</span>
+        <span class="hint">Most recent 10</span>
+      </div>
+      <table class="ed-table" id="recent-signals">
+        <thead><tr><th>Type</th><th>Firm</th><th style="text-align:right">Age</th></tr></thead>
+        <tbody><tr><td colspan="3" class="state">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ROW 4: Signal source health + firm velocity -->
+  <div class="sec-head">
+    <h2 class="sec-title">Collector telemetry</h2>
+    <span class="sec-sub">14-day source activity · which tier-1 firms are generating heat</span>
+  </div>
+  <div class="bento">
+    <div class="tile t-span-3 fade-in d1">
+      <div class="tile-hd">
+        <span class="lbl">Signal source health</span>
+        <span class="hint">Last 14 days</span>
+      </div>
+      <div id="source-health"><div class="state">Loading…</div></div>
+    </div>
+
+    <div class="tile t-span-3 fade-in d2">
+      <div class="tile-hd">
+        <span class="lbl">Firm velocity</span>
+        <span class="hint">Top tier-1 · signals / day</span>
+      </div>
+      <div id="firm-velocity"><div class="state">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- ROW 4b: Signal quality -->
+  <div class="sec-head">
+    <h2 class="sec-title">Signal quality</h2>
+    <span class="sec-sub">Which sources produce the best signals</span>
+  </div>
+  <div class="bento">
+    <div class="tile t-span-3 fade-in d1">
+      <div class="tile-hd">
+        <span class="lbl">By source</span>
+        <span class="hint">Ranked by avg score</span>
+      </div>
+      <div id="signal-quality"><div class="state">Loading…</div></div>
+    </div>
+    <div class="tile t-span-3 fade-in d2">
+      <div class="tile-hd">
+        <span class="lbl">Top signals</span>
+        <span class="hint">Best signal per firm</span>
+      </div>
+      <table class="ed-table" id="sq-top-signals">
+        <thead><tr><th>Source</th><th>Firm</th><th>Signal</th><th style="text-align:right">Score</th></tr></thead>
+        <tbody><tr><td colspan="4" class="state">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="bento" style="margin-top:16px">
+    <div class="tile t-span-6 fade-in">
+      <div class="tile-hd">
+        <span class="lbl">Analysis</span>
+      </div>
+      <div id="sq-interpretation"><div class="state">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- ROW 5: Signal-to-reach cadence -->
+  <div class="sec-head">
+    <h2 class="sec-title">Conversion cadence</h2>
+    <span class="sec-sub">How fast the pipeline turns raw signal into a reachable human</span>
+  </div>
+  <div class="bento">
+    <div class="tile t-span-6 fade-in">
+      <div class="tile-hd">
+        <span class="lbl">Signal → reachable contact</span>
+        <span class="hint">Tier-1 firms · median days, first signal → first verified contact</span>
+      </div>
+      <div id="signal-to-reach"><div class="state">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- Parse errors -->
+  <div class="sec-head">
+    <h2 class="sec-title">Parse errors</h2>
+    <span class="sec-sub">Claude responses the scorer couldn't parse</span>
+    <span class="sec-upd" id="upd-errors">—</span>
+  </div>
+  <section class="fade-in">
+    <div class="tile t-span-6">
+      <div id="parse-errors"><div class="state">Loading…</div></div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="footer">Loading…</footer>
+
+<script>
+(() => {
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmt = n => (n||0).toLocaleString();
+  const formatAUM = val => {
+    if (!val || val === 0) return '—';
+    const n = Number(val);
+    if (!isFinite(n)) return '—';
+    if (n >= 1e12) return '$' + (n/1e12).toFixed(1) + 'T';
+    if (n >= 1e9)  return '$' + (n/1e9).toFixed(0) + 'B';
+    if (n >= 1e6)  return '$' + (n/1e6).toFixed(0) + 'M';
+    return '$' + n.toLocaleString();
+  };
+  const prettyKey = k => k.replace('_API_KEY','').replace('_API_TOKEN','').replace('_',' ');
+  const scorePill = s => s>=75?'strong': s>=55?'good': s>=35?'mod':'weak';
+
+  // Source palette — umber spectrum, red for "no email"
+  const SOURCE_COLORS = {
+    exa_team_page:    '#5B4129',
+    team_page_direct: '#8B6F4E',
+    hunter:           '#B0895F',
+    pattern:          '#C4A77A',
+    linkedin:         '#465BFF',
+    manual:           '#B5A889',
+    none:             '#C25A1E',
+  };
+
+  function formatUpdated(ts){
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return '—';
+    const now = new Date();
+    const diff = now - d;
+    const hours = diff / 3600000;
+    const hm = d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+    if (hours < 1) return 'just now';
+    if (hours < 24 && d.toDateString() === now.toDateString()) return `Today ${hm}`;
+    const y = new Date(now); y.setDate(y.getDate() - 1);
+    if (d.toDateString() === y.toDateString()) return `Yesterday ${hm}`;
+    return d.toLocaleDateString('en-US', {month:'short', day:'numeric'}) + ' ' + hm;
+  }
+  function timeAgo(iso){
+    if (!iso) return '—';
+    const t = new Date(iso).getTime();
+    if (isNaN(t)) return '—';
+    const mins = Math.round((Date.now() - t) / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.round(mins/60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.round(hrs/24);
+    return `${days}d ago`;
+  }
+
+  // ── Hero / health pills ─────────────────────────────
+  function renderHero(od, stats){
+    const h = od.health || {}, rc = h.row_counts || {}, e = od.enrichment || {};
+    const errs = (od.parse_errors || []).length;
+    const latestSignal = stats?.latest_signal || null;
+    const pe = document.getElementById('health-pills');
+    const pills = [
+      {lbl:'DB', v: `${h.db_size_kb||0} KB`, status:'ok'},
+      {lbl:'Verified rate', v: `${e.hit_rate_pct||0}%`, status: (e.hit_rate_pct||0) >= 70 ? 'ok' : 'warn'},
+      {lbl:'Parse errors', v: errs, status: errs === 0 ? 'ok' : errs < 5 ? 'warn' : 'err'},
+      {lbl:'Latest signal', v: timeAgo(latestSignal), status:'ok'},
+    ];
+    pe.innerHTML = pills.map(p =>
+      `<div class="pill ${p.status==='warn'?'warn':p.status==='err'?'err':''}">
+        <span class="dot"></span>
+        <span>${esc(p.lbl)}</span>
+        <span class="v">${esc(String(p.v))}</span>
+      </div>`).join('');
+    const sub = document.getElementById('h-sub');
+    sub.innerHTML = `<b>${fmt(rc.firms||0)}</b> firms · <b>${fmt(rc.contacts||0)}</b> contacts · <b>${fmt(rc.signals||0)}</b> signals · <b>${fmt(rc.scores||0)}</b> scoring decisions.`;
+  }
+
+  // ── Waterfall ────────────────────────────────────────
+  function renderWaterfall(data){
+    const sources = (data.stats && data.stats.email_sources) || null;
+    const buckets = [
+      {k:'exa_team_page',    lbl:'Exa Team Page',     desc:'Exa semantic search locates the firm\u2019s team/leadership page; Claude extracts names + titles from the returned content.'},
+      {k:'team_page_direct', lbl:'Direct Team Page',  desc:'requests.get() on a known team-page URL, parsed with BeautifulSoup, then Claude extracts contacts from the stripped HTML.'},
+      {k:'hunter',           lbl:'Hunter Verified',   desc:'Hunter.io Email Finder + Verifier API \u2014 name + domain \u2192 verified mailbox.'},
+      {k:'pattern',          lbl:'Pattern Guess',     desc:'Fallback: first.last@domain style inference when no verifier returns a hit. Unverified.'},
+      {k:'linkedin',         lbl:'LinkedIn',          desc:'Proxycurl LinkedIn lookup for profile metadata; email resolved via Hunter. Collector not yet connected.'},
+      {k:'manual',           lbl:'Manual',            desc:'Hand-entered via seed data or the review queue \u2014 bypasses the enrichment pipeline.'},
+      {k:'none',             lbl:'No Email',          desc:'Contact discovered but no resolvable email through any source in the waterfall.'},
+    ];
+    let rows;
+    if (sources){
+      rows = buckets
+        .map(b => ({...b, color: SOURCE_COLORS[b.k] || '#B5A889',
+          n: sources[b.k]?.n || 0, verified: sources[b.k]?.verified || 0}))
+        .filter(b => b.n > 0 || b.k === 'none');
+      for (const [k, v] of Object.entries(sources)){
+        if (!buckets.some(b => b.k === k) && v.n > 0){
+          rows.push({k, lbl: k.replace(/_/g,' '), color:'#B5A889', n:v.n, verified:v.verified || 0});
+        }
+      }
+    } else {
+      rows = [];
+    }
+    const total = Math.max(1, rows.reduce((a,b) => a + b.n, 0));
+    const wfEl  = document.getElementById('waterfall');
+    const subEl = document.getElementById('waterfall-sub');
+    const sumEl = document.getElementById('waterfall-summary');
+    if (!wfEl) return;
+    if (subEl) subEl.textContent = `${total} tier-1 contacts`;
+    wfEl.innerHTML = rows.map(b => {
+      const pct = (b.n / total) * 100;
+      const vCell = (b.verified && b.k !== 'none')
+        ? `<div class="cell vf"><div class="v">${b.verified}</div><div class="k">verified</div></div>`
+        : `<div class="cell vf"><div class="v">—</div><div class="k">verified</div></div>`;
+      return `<div class="hbar">
+        <div class="lbl-wrap">
+          <div class="lbl" title="${esc(b.desc || '')}">${esc(b.lbl)}</div>
+          ${b.desc ? `<div class="lbl-desc">${esc(b.desc)}</div>` : ''}
+        </div>
+        <div class="track"><div style="width:${Math.max(1.5,pct)}%;background:${b.color}"></div></div>
+        <div class="meta">
+          <div class="cell"><div class="v">${b.n}</div><div class="k">count</div></div>
+          <div class="cell pct"><div class="v">${pct.toFixed(0)}%</div><div class="k">share</div></div>
+          ${vCell}
+        </div>
+      </div>`;
+    }).join('');
+
+    const verified = rows.reduce((a,b) => a + (b.verified || 0), 0);
+    const withEmail = rows.filter(b => b.k !== 'none').reduce((a,b) => a + b.n, 0);
+    const missing  = rows.find(b => b.k === 'none')?.n || 0;
+    if (sumEl) sumEl.innerHTML = `
+      <span><b>${Math.round(verified/total*100)}%</b> verified</span>
+      <span><b>${Math.round((withEmail - verified)/total*100)}%</b> found, unverified</span>
+      <span><b>${Math.round(missing/total*100)}%</b> no email</span>`;
+  }
+
+  // ── Fallthrough ──────────────────────────────────────
+  function renderFallthrough(opsData){
+    const el = document.getElementById('fallthrough');
+    if (!el) return;
+    const ft = (opsData && opsData.fallthrough) || null;
+    const rows = ft ? [
+      {reason:'Score below threshold (50)', count:ft.below_threshold, action:'Collect more signals or expand ICP criteria'},
+      {reason:'No verified email',          count:ft.no_email,        action:'Queue into Hunter.io enrichment batch'},
+      {reason:'No signal attached',         count:ft.no_signal,       action:'Run collectors or attach manual signal'},
+      {reason:'Buying stage: exploring',    count:ft.exploring,       action:'Deprioritize this cycle, re-score next run'},
+    ] : [];
+    let lede = '';
+    const top = rows.filter(r => r.count).sort((a,b) => b.count - a.count)[0];
+    if (top){
+      lede = `<div class="ft-lede"><b>${top.count}</b> tier-1 contacts stalled at <b>${esc(top.reason.toLowerCase())}</b>. ${esc(top.action)}.</div>`;
+    }
+    el.innerHTML = lede + (rows.length
+      ? rows.map(r => `
+        <div class="fall-row">
+          <div>
+            <div class="reason">${esc(r.reason)}</div>
+            <div class="action">${esc(r.action)}</div>
+          </div>
+          <div class="num">${r.count}</div>
+        </div>`).join('')
+      : `<div class="state">Run scripts/update_ops.py to populate fallthrough counts.</div>`);
+  }
+
+  // ── DB health ───────────────────────────────────────
+  function renderDbHealth(od){
+    const h = od.health || {};
+    const rc = h.row_counts || {};
+    const dbsize = document.getElementById('db-size');
+    if (dbsize) dbsize.textContent = `${(h.db_size_kb || 0).toFixed(1)} KB`;
+    const el = document.getElementById('db-rows');
+    if (!el) return;
+    const tables = [
+      {k:'firms',            desc:'Target institutions (tier-1 active + tier-2 watchlist)'},
+      {k:'contacts',         desc:'People at target firms with verified emails'},
+      {k:'signals',          desc:'AI/hiring/press mentions scraped from LinkedIn, X, press'},
+      {k:'scores',           desc:'Claude ICP-fit decisions per contact'},
+      {k:'outreach_queue',   desc:'Contacts ready for rep review and send'},
+      {k:'review_decisions', desc:'Approve/skip/flag actions taken by reps'},
+    ];
+    el.innerHTML = tables.map(t => `
+      <div class="kv-row">
+        <span class="k">
+          <span style="display:block">${esc(t.k)}</span>
+          <span style="display:block;font-size:10px;color:var(--ink-3);letter-spacing:0;text-transform:none;margin-top:2px;font-weight:400">${esc(t.desc)}</span>
+        </span>
+        <span class="v">${fmt(rc[t.k] ?? 0)}</span>
+      </div>`).join('');
+  }
+
+  // ── API keys ────────────────────────────────────────
+  function renderApiKeys(od){
+    const keys = od.api_keys || [];
+    const el = document.getElementById('api-keys');
+    if (!el) return;
+    el.innerHTML = keys.map(k => `
+      <div class="key-row ${k.set ? '' : 'missing'}">
+        <div>
+          <div class="nm">${esc(prettyKey(k.name))}</div>
+          <div class="pv">${esc(k.preview || '—')}</div>
+        </div>
+        <div class="status">
+          <span class="dot"></span>
+          <span class="lbl">${k.set ? 'Set' : 'Missing'}</span>
+        </div>
+      </div>`).join('');
+  }
+
+  // ── Cadence ─────────────────────────────────────────
+  function renderCadence(od){
+    const rc = (od.health || {}).row_counts || {};
+    const e = od.enrichment || {};
+    const lastDay = (od.pipeline_cadence || [])[0] || {};
+    const errs = (od.parse_errors || []).length;
+    const el = document.getElementById('cadence');
+    if (!el) return;
+    el.innerHTML = [
+      {lbl:'Signals collected', val: fmt(rc.signals ?? 0), sub:'total in DB'},
+      {lbl:'Contacts enriched', val: fmt(e.verified ?? 0), sub:`${e.hit_rate_pct||0}% hit rate`},
+      {lbl:'Scoring runs (today)', val: fmt(lastDay.n ?? 0), sub:`avg ${lastDay.avg_score ?? '—'}`},
+      {lbl:'Parse errors', val: fmt(errs), sub: errs ? 'see below' : 'clean'},
+    ].map(c => `<div class="cad-row"><div class="lbl">${esc(c.lbl)}</div><div class="val">${esc(c.val)}</div><div class="sub">${esc(c.sub)}</div></div>`).join('');
+  }
+
+  // ── Recent scoring activity ─────────────────────────
+  function renderRecentScores(od){
+    const rows = (od.recent_scores || []).slice(0, 10);
+    const tb = document.querySelector('#recent-scores tbody');
+    if (!tb) return;
+    tb.innerHTML = rows.length ? rows.map(r => `
+      <tr>
+        <td class="firm">${esc(r.firm)}</td>
+        <td class="contact">${esc(r.contact)}</td>
+        <td class="num"><span class="score-pill ${scorePill(r.score)}">${Math.round(r.score)}</span></td>
+      </tr>`).join('') : `<tr><td colspan="3" class="state">No recent scores</td></tr>`;
+  }
+
+  // ── Recent signals ──────────────────────────────────
+  function renderRecentSignals(od){
+    const rows = (od.recent_signals || []).slice(0, 10);
+    const tb = document.querySelector('#recent-signals tbody');
+    if (!tb) return;
+    tb.innerHTML = rows.length ? rows.map(r => `
+      <tr>
+        <td><span class="sig-chip ${esc(r.signal_type||'')}">${esc(r.signal_type || '—')}</span></td>
+        <td class="firm">${esc(r.firm || '—')}</td>
+        <td class="mono" style="text-align:right">${esc(timeAgo(r.signal_date || r.created_at))}</td>
+      </tr>`).join('') : `<tr><td colspan="3" class="state">No recent signals</td></tr>`;
+  }
+
+  // ── Sparkline helper ────────────────────────────────
+  function sparkBars(series, w=160, h=30, color='#8B6F4E'){
+    const max = Math.max(1, ...series);
+    const n = series.length;
+    const barW = w / n;
+    const gap = 1.2;
+    const bars = series.map((v, i) => {
+      const bh = Math.max(v > 0 ? 2 : 0, (v / max) * (h - 2));
+      const x = i * barW;
+      const y = h - bh;
+      const opacity = v === 0 ? 0.18 : 1;
+      return `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${(barW - gap).toFixed(2)}" height="${bh.toFixed(2)}" fill="${color}" opacity="${opacity}" rx="0.8"/>`;
+    }).join('');
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${bars}</svg>`;
+  }
+
+  // ── Source health ───────────────────────────────────
+  function renderSourceHealth(od){
+    const el = document.getElementById('source-health');
+    if (!el) return;
+    const data = od.source_health || {};
+    const sources = data.sources || [];
+    if (!sources.length){ el.innerHTML = `<div class="state">No signal activity</div>`; return; }
+    const fmtDay = iso => iso ? new Date(iso).toLocaleDateString([], {month:'short', day:'numeric'}) : '—';
+    const colors = {press:'#B07D1A', twitter:'#C25A1E', hiring:'#4F7A3B', linkedin:'#465BFF', exa:'#8B6F4E', unknown:'#B5A889'};
+    // Map status → short label shown next to the row. "not_wired" distinguishes
+    // "we never configured this collector" from "the collector ran but found nothing."
+    const shortLabels = {active: 'active', stale: 'stale', quiet: 'quiet', not_wired: 'not wired'};
+    el.innerHTML = sources.map(s => {
+      const color = s.status === 'not_wired' ? 'rgba(139,111,78,0.22)' : (colors[s.signal_type] || '#8B6F4E');
+      const lbl = shortLabels[s.status] || s.status;
+      const totalCell = s.status === 'not_wired'
+        ? `<span style="color:var(--ink-3,rgba(0,0,0,0.4))">—</span>`
+        : s.total;
+      const lastCell = s.status === 'not_wired'
+        ? `<span style="color:var(--ink-3,rgba(0,0,0,0.4));font-style:italic">collector not configured</span>`
+        : esc(fmtDay(s.last_active));
+      const everNote = (s.status === 'quiet' && s.ever_total)
+        ? `<span style="color:var(--ink-3,rgba(0,0,0,0.4));font-size:10px;margin-left:6px">· ${s.ever_total} all-time</span>`
+        : '';
+      return `<div class="src-row ${s.status}" title="${esc(s.status_label || lbl)}">
+        <div class="nm">${esc(s.signal_type)}</div>
+        <div class="status"><span class="dot"></span>${esc(lbl)}${everNote}</div>
+        <div>${sparkBars(s.series, 180, 32, color)}</div>
+        <div class="total">${totalCell}</div>
+        <div class="last">${lastCell}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Firm velocity ───────────────────────────────────
+  function renderFirmVelocity(od){
+    const el = document.getElementById('firm-velocity');
+    if (!el) return;
+    const data = od.firm_velocity || {};
+    const firms = data.firms || [];
+    if (!firms.length){
+      el.innerHTML = `<div class="state">No recent signals on tier-1 firms.<br/>Run <code style="background:rgba(77,67,52,0.08);padding:1px 5px;border-radius:2px;font-family:var(--font-mono)">main.py --collect</code> to populate.</div>`;
+      return;
+    }
+    el.innerHTML = firms.map(f => {
+      const stage = (f.stage || '').toLowerCase();
+      return `<div class="fv-row">
+        <div class="nm">${esc(f.firm)}</div>
+        <div><span class="stage ${esc(stage)}">${esc(f.stage || '—')}</span></div>
+        <div>${sparkBars(f.series, 160, 30, '#5B4129')}</div>
+        <div class="total">${f.total}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Signal → reach cadence ──────────────────────────
+  function prettySource(s){
+    return ({exa_team_page:'Exa Team', team_page_direct:'Direct Scrape', hunter:'Hunter', pattern:'Pattern', linkedin:'LinkedIn', manual:'Manual'}[s] || s.replace(/_/g,' '));
+  }
+  function renderSignalToReach(od){
+    const el = document.getElementById('signal-to-reach');
+    if (!el) return;
+    const c = od.signal_to_reach || {};
+    if (!c.firms_measured){
+      el.innerHTML = `<div class="state">No tier-1 firms yet with both a signal and a verified contact</div>`;
+      return;
+    }
+    el.innerHTML = `
+      <div class="et-hero">
+        <div class="stat">
+          <div class="k">Median days · signal → reach</div>
+          <div class="v">${c.median_days != null ? c.median_days.toFixed(1) : '—'}<small>days</small></div>
+          <div class="sub">p90 ${c.p90_days != null ? c.p90_days.toFixed(1) : '—'}d · n=${c.firms_measured} firms</div>
+        </div>
+        <div class="stat">
+          <div class="k">Coverage</div>
+          <div class="v">${fmt(c.firms_measured)}<small>/ ${fmt(c.tier1_firms)} tier-1</small></div>
+          <div class="sub">${c.coverage_pct != null ? c.coverage_pct.toFixed(0) : 0}% have both a signal and a verified contact</div>
+        </div>
+      </div>
+      <div class="et-note">
+        <b>Methodology:</b> For each tier-1 firm with both a scraped signal and a verified contact, elapsed days between the firm's earliest <code style="font-family:var(--font-mono)">signal_date</code> and the earliest <code style="font-family:var(--font-mono)">created_at</code> on any <code style="font-family:var(--font-mono)">email_verified=1</code> contact. Reports the distribution across firms — a real, schema-defensible pipeline cadence metric.
+      </div>`;
+  }
+
+  // ── Signal quality ───────────────────────────────────
+  function renderSignalQuality(od){
+    const sq = od.signal_quality || {};
+
+    // Source ranking — simple: source, signals, firms, avg score
+    const el = document.getElementById('signal-quality');
+    if (el){
+      const sources = sq.sources || [];
+      if (!sources.length){
+        el.innerHTML = `<div class="state">No scored signals yet</div>`;
+      } else {
+        el.innerHTML = sources.map(s => `<div class="sq-row">
+          <div class="nm"><span class="sig-chip ${esc(s.signal_type)}">${esc(s.signal_type)}</span></div>
+          <div class="metric dim"><small>Firms</small>${fmt(s.firms_touched)}</div>
+          <div class="metric dim"><small>Signals</small>${fmt(s.total_signals)}</div>
+          <div class="metric"><small>Avg score</small>${s.avg_score != null ? s.avg_score.toFixed(1) : '—'}</div>
+        </div>`).join('');
+      }
+    }
+
+    // Interpretation
+    const intEl = document.getElementById('sq-interpretation');
+    if (intEl){
+      const interp = sq.interpretation || {};
+      const findings = interp.findings || [];
+      const opts = interp.optimizations || [];
+      if (!findings.length && !opts.length){
+        intEl.innerHTML = `<div class="state">No analysis available</div>`;
+      } else {
+        const safeBold = s => {
+          const parts = s.split(/(\*\*[^*]+\*\*)/g);
+          return parts.map(p => {
+            const m = p.match(/^\*\*(.+)\*\*$/);
+            return m ? `<strong>${esc(m[1])}</strong>` : esc(p);
+          }).join('');
+        };
+        intEl.innerHTML = `<div class="sq-interp">
+          <div>
+            <div class="col-hd">Findings</div>
+            ${findings.map(f => `<div class="sq-finding">${esc(f)}</div>`).join('')}
+          </div>
+          ${opts.length ? `<div>
+            <div class="col-hd">Suggestions</div>
+            ${opts.map(o => `<div class="sq-opt">${safeBold(o)}</div>`).join('')}
+          </div>` : ''}
+        </div>`;
+      }
+    }
+
+    // Top signals table
+    const tb = document.querySelector('#sq-top-signals tbody');
+    if (tb){
+      const top = (sq.top_signals || []).slice(0, 15);
+      tb.innerHTML = top.length ? top.map(r => `
+        <tr>
+          <td><span class="sig-chip ${esc(r.signal_type||'')}">${esc(r.signal_type || '—')}</span></td>
+          <td class="firm">${esc(r.firm || '—')}</td>
+          <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.content)}">${esc((r.content || '').slice(0, 80))}</td>
+          <td class="num"><span class="score-pill ${scorePill(r.contact_score)}">${r.contact_score != null ? Math.round(r.contact_score) : '—'}</span></td>
+        </tr>`).join('') : `<tr><td colspan="4" class="state">No scored signals yet</td></tr>`;
+    }
+  }
+
+  // ── Parse errors ────────────────────────────────────
+  function renderParseErrors(od){
+    const el = document.getElementById('parse-errors');
+    if (!el) return;
+    const errs = od.parse_errors || [];
+    el.innerHTML = errs.length
+      ? errs.slice(-10).map(er => `<div class="err-row">${esc((er.raw || JSON.stringify(er)).slice(0,300))}</div>`).join('')
+      : `<div class="err-empty">No parse errors in the last run. Scorer output is clean.</div>`;
+  }
+
+  async function load(){
+    let data = null, od = null;
+    try{
+      const r = await fetch('contacts_data.json', {cache:'no-store'});
+      if (r.ok) data = await r.json();
+    } catch(_){}
+    try{
+      const rx = await fetch('ops_data.json', {cache:'no-store'});
+      if (rx.ok) od = await rx.json();
+    } catch(_){}
+
+    if (data) renderWaterfall(data);
+    if (od){
+      renderHero(od, data?.stats || {});
+      renderFallthrough(od);
+      renderDbHealth(od);
+      renderApiKeys(od);
+      renderCadence(od);
+      renderRecentScores(od);
+      renderRecentSignals(od);
+      renderSourceHealth(od);
+      renderSignalQuality(od);
+      renderFirmVelocity(od);
+      renderSignalToReach(od);
+      renderParseErrors(od);
+      const ts = od.generated_at ? formatUpdated(od.generated_at) : '—';
+      ['upd-waterfall','upd-fallthrough','upd-cadence','upd-errors'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.textContent = 'Updated ' + ts;
+      });
+      const ts2 = od.generated_at ? new Date(od.generated_at).toLocaleString() : '—';
+      document.getElementById('footer').textContent = `Generated ${ts2}`;
+    } else if (!data) {
+      document.getElementById('waterfall').innerHTML = `<div class="state">Failed to load ops data — run scripts/update_ops.py</div>`;
+    }
+  }
+  load();
+})();
+</script>
+</body>
+</html>

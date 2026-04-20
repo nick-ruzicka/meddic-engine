@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Analytics · MEDDIC Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared.css">
+<link rel="preload" as="fetch" href="analytics_data.json" crossorigin>
+<style>
+  :root{
+    /* Warm sand palette — editorial, layered */
+    --bg:#F2EFE1;
+    --bg-deep:#EAE4CF;
+    --surface:#E8E3D0;
+    --surface-2:#DED5B8;
+    --surface-3:#D0C4A2;
+    --ink:#1E1A14;
+    --ink-2:#4D4334;
+    --ink-3:rgba(77,67,52,0.60);
+    --ink-4:rgba(77,67,52,0.32);
+    --border:#D4CAAE;
+    --border-soft:#DFD6BB;
+    --umber:#8B6F4E;
+    --umber-deep:#5B4129;
+    --umber-light:#C4A77A;
+    --umber-glow:rgba(139,111,78,0.12);
+    --blue:#465BFF;
+    --blue-soft:rgba(70,91,255,0.12);
+    --green:#4F7A3B;
+    --amber:#B07D1A;
+    --orange:#C25A1E;
+    --red:#A8321C;
+    --font-ui:'Inter',system-ui,-apple-system,sans-serif;
+    --font-display:'Playfair Display',Georgia,serif;
+    --font-mono:'SF Mono','Fira Code',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(ellipse 60% 40% at 20% 0%, rgba(196,167,122,0.22), transparent 70%),
+      radial-gradient(ellipse 40% 30% at 95% 10%, rgba(139,111,78,0.08), transparent 70%);
+    background-attachment:fixed;
+  }
+  a{color:inherit}
+
+  /* ── Header ── */
+  header{position:sticky;top:0;z-index:20;
+    background:rgba(242,239,225,0.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border-soft);height:64px;padding:0 32px;
+    display:flex;align-items:center;gap:20px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .name{font-size:15px;font-weight:500;color:var(--ink)}
+  .brand .sub{color:var(--ink-3);font-size:13px}
+  .brand .eyebrow{margin-left:14px;padding-left:14px;border-left:1px solid var(--border);
+    font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3)}
+  .nav-links{display:flex;align-items:center;gap:12px;margin-left:auto}
+  .nav-links a{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--ink-3);text-decoration:none;transition:color 150ms}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a.active{color:var(--umber-deep)}
+  .nav-links .nav-sep{color:var(--ink-4);font-size:11px}
+
+  main{max-width:1280px;margin:0 auto;padding:48px 32px 96px}
+
+  /* ── Editorial eyebrow ── */
+  .eyebrow{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+    color:var(--umber);font-weight:600}
+  .eyebrow::before{content:"";display:inline-block;width:18px;height:1px;
+    background:var(--umber);vertical-align:middle;margin-right:10px;margin-bottom:3px}
+
+  /* ── HERO ── */
+  .hero{
+    position:relative;overflow:hidden;
+    padding:72px 56px 80px;margin-bottom:32px;
+    background:
+      radial-gradient(ellipse 70% 100% at 100% 50%, rgba(139,111,78,0.14), transparent 60%),
+      linear-gradient(135deg, #EEE8D2 0%, #E5DBBB 60%, #D9CBA4 100%);
+    border:1px solid var(--border);
+    border-radius:3px;
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(77,67,52,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(77,67,52,0.035) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image:radial-gradient(ellipse 80% 60% at 50% 50%, #000 30%, transparent 80%);
+    -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 50%, #000 30%, transparent 80%);
+  }
+  .hero-inner{position:relative;z-index:1;display:grid;grid-template-columns:1.5fr 1fr;gap:56px;align-items:end}
+  .hero .eyebrow{margin-bottom:22px}
+  .hero-title{
+    font-family:var(--font-display);font-weight:500;
+    font-size:clamp(56px,7vw,104px);line-height:0.96;letter-spacing:-0.02em;
+    margin:0;color:var(--ink);
+  }
+  .hero-title .num{
+    font-weight:700;
+    background:linear-gradient(135deg, var(--umber-deep) 0%, var(--umber) 55%, var(--umber-light) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    font-variant-numeric:tabular-nums;display:inline-block;
+  }
+  .hero-sub{margin-top:24px;font-size:16px;color:var(--ink-2);line-height:1.6;max-width:580px}
+  .hero-sub b{color:var(--ink);font-weight:500}
+
+  /* KPI typographic column */
+  .kpi-col{display:flex;flex-direction:column;gap:24px;border-left:1px solid var(--border-strong, #C2B794);padding-left:32px}
+  .kpi-line{display:flex;flex-direction:column;gap:4px}
+  .kpi-line .l{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+  .kpi-line .v{font-family:var(--font-display);font-size:34px;font-weight:500;line-height:1;
+    letter-spacing:-0.01em;color:var(--ink);font-variant-numeric:tabular-nums}
+  .kpi-line .v small{font-size:14px;color:var(--ink-3);margin-left:4px;font-weight:400}
+  .kpi-line.accent .v{color:var(--umber-deep)}
+  @media (max-width:920px){
+    .hero{padding:52px 32px 56px}
+    .hero-inner{grid-template-columns:1fr;gap:40px}
+    .kpi-col{border-left:0;border-top:1px solid var(--border);padding-left:0;padding-top:28px;
+      display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  }
+
+  /* ── Sections ── */
+  section{margin-bottom:28px}
+  .sec-head{margin:40px 0 18px;display:flex;align-items:baseline;gap:18px}
+  .sec-title{font-family:var(--font-display);font-size:30px;font-weight:500;
+    letter-spacing:-0.005em;color:var(--ink);margin:0}
+  .sec-sub{font-size:13px;color:var(--ink-3);letter-spacing:0.02em}
+
+  /* ── Bento grid ── */
+  .bento{
+    display:grid;grid-template-columns:repeat(6, 1fr);gap:16px;
+  }
+  .tile{
+    background:var(--surface);border:1px solid var(--border);border-radius:3px;
+    padding:26px 28px;position:relative;overflow:hidden;
+    transition:transform 220ms, box-shadow 220ms, border-color 220ms;
+  }
+  .tile:hover{border-color:var(--umber-light);box-shadow:0 6px 24px rgba(91,65,41,0.08)}
+  .tile-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}
+  .tile-hd .lbl{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--umber);font-weight:600}
+  .tile-hd .hint{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)}
+  .t-span-4{grid-column:span 4}
+  .t-span-3{grid-column:span 3}
+  .t-span-2{grid-column:span 2}
+  .t-span-6{grid-column:span 6}
+  @media (max-width:960px){.t-span-4,.t-span-3,.t-span-2{grid-column:span 6}}
+
+  /* ── Funnel (ribbon) ── */
+  .funnel{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+  .f-group-label{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--text-3,rgba(0,0,0,0.45));font-weight:600;margin:12px 0 4px;padding:0 2px}
+  .f-group-label:first-child{margin-top:0}
+  .f-divider{margin:14px 0 6px;padding:10px 14px;
+    background:rgba(70,91,255,0.06);border-left:3px solid rgba(70,91,255,0.55);
+    font-size:12px;letter-spacing:0.02em;color:var(--text-2,rgba(0,0,0,0.7));font-style:italic}
+  .f-row{display:grid;grid-template-columns:1fr 96px;gap:18px;align-items:center}
+  .f-bar{
+    position:relative;height:60px;padding:0 22px;display:flex;align-items:center;
+    border-radius:2px;color:#fff;white-space:nowrap;
+    transition:transform 240ms;
+  }
+  .f-bar:hover{transform:translateX(4px)}
+  .f-bar .count{font-family:var(--font-display);font-size:26px;font-weight:500;
+    letter-spacing:-0.01em;margin-right:14px;font-variant-numeric:tabular-nums}
+  .f-bar .name{font-size:11px;letter-spacing:0.10em;text-transform:uppercase;font-weight:500;opacity:0.92}
+  .f-conv{text-align:right;font-family:var(--font-mono);font-size:11px;color:var(--ink-3)}
+  .f-conv .v{display:block;font-family:var(--font-display);font-size:17px;color:var(--ink);
+    letter-spacing:-0.01em;font-variant-numeric:tabular-nums}
+  .f-conv .drop{display:block;font-size:9.5px;color:var(--red);margin-top:2px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600}
+  .funnel-lede{
+    margin-top:22px;padding:16px 20px;border-radius:2px;
+    background:var(--umber-glow);border-left:3px solid var(--umber);
+    font-size:13.5px;color:var(--ink-2);line-height:1.6;
+  }
+  .funnel-lede b{color:var(--umber-deep);font-weight:600}
+
+  /* ── Radar (dimensions) ── */
+  .radar-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;margin-top:-4px}
+  .radar-wrap svg{width:100%;max-width:260px;height:auto}
+  .radar-legend{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;width:100%;font-size:11px}
+  .radar-legend .k{color:var(--ink-3);letter-spacing:0.04em;text-transform:uppercase;font-size:9.5px;font-weight:500}
+  .radar-legend .v{font-family:var(--font-display);font-size:19px;color:var(--ink);letter-spacing:-0.01em;font-variant-numeric:tabular-nums}
+
+  /* ── Donut ── */
+  .donut-wrap{display:flex;align-items:center;gap:22px;margin-top:-2px}
+  .donut-wrap svg{flex-shrink:0;width:150px;height:150px}
+  .donut-ctr{pointer-events:none}
+  .donut-ctr .n{font-family:var(--font-display);font-size:30px;fill:var(--ink);font-weight:500}
+  .donut-ctr .l{font-size:9px;fill:var(--ink-3);letter-spacing:0.14em;text-transform:uppercase}
+  .legend{display:flex;flex-direction:column;gap:9px;flex:1;font-size:12.5px}
+  .legend-row{display:grid;grid-template-columns:10px 1fr auto;gap:10px;align-items:center}
+  .legend-row .dot{width:8px;height:8px;border-radius:1px;margin-top:1px}
+  .legend-row .k{color:var(--ink-2)}
+  .legend-row .v{font-family:var(--font-mono);font-size:11.5px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .legend-row .v em{font-style:normal;color:var(--ink-3);margin-left:4px}
+  a.legend-link{text-decoration:none;color:inherit;padding:4px 6px;margin:-4px -6px;border-radius:2px;
+    transition:background 140ms, transform 140ms}
+  a.legend-link:hover{background:var(--umber-glow);transform:translateX(2px)}
+  a.legend-link:hover .k{color:var(--umber-deep)}
+
+  /* ── Firm-type vertical bars ── */
+  .vbars{display:flex;align-items:flex-end;justify-content:space-around;height:180px;gap:14px;padding:0 4px;margin-top:8px}
+  .vbar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;min-width:0}
+  .vbar .col{width:100%;max-width:52px;border-radius:2px 2px 0 0;position:relative;
+    background:linear-gradient(180deg, var(--umber-light) 0%, var(--umber) 100%);
+    transition:transform 220ms}
+  .vbar:hover .col{transform:scaleY(1.03);transform-origin:bottom}
+  .vbar .col .n{position:absolute;top:-22px;left:50%;transform:translateX(-50%);
+    font-family:var(--font-display);font-size:16px;color:var(--ink);letter-spacing:-0.01em;font-variant-numeric:tabular-nums}
+  .vbar .k{font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);text-align:center;line-height:1.2;font-weight:500}
+  .vbar .sub{font-family:var(--font-mono);font-size:10px;color:var(--ink-3)}
+
+  /* ── AUM band ── */
+  .aum-band{
+    padding:56px 48px;margin-top:8px;position:relative;overflow:hidden;
+    background:
+      radial-gradient(ellipse 50% 90% at 100% 50%, rgba(196,167,122,0.35), transparent 60%),
+      linear-gradient(105deg, #E9E0C4 0%, #D6C9A1 100%);
+    border:1px solid var(--border);border-radius:3px;
+    display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center;
+  }
+  .aum-band::before{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:0.5;
+    background-image:
+      linear-gradient(rgba(77,67,52,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(77,67,52,0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image:linear-gradient(90deg, #000 0%, transparent 70%);
+    -webkit-mask-image:linear-gradient(90deg, #000 0%, transparent 70%);
+  }
+  .aum-hero{position:relative;z-index:1}
+  .aum-hero .big{
+    font-family:var(--font-display);font-size:clamp(72px, 10vw, 128px);font-weight:600;
+    line-height:0.96;letter-spacing:-0.03em;color:var(--ink);font-variant-numeric:tabular-nums;
+    background:linear-gradient(160deg, var(--umber-deep) 10%, var(--umber) 90%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .aum-hero .big small{font-size:0.35em;color:var(--umber);margin-left:8px;font-weight:500;-webkit-text-fill-color:var(--umber)}
+  .aum-hero .sub{margin-top:16px;font-size:14px;color:var(--ink-2);line-height:1.6;max-width:460px}
+  .aum-meta{position:relative;z-index:1;display:flex;flex-direction:column;gap:18px}
+  .aum-meta .row{display:flex;justify-content:space-between;align-items:baseline;
+    padding-bottom:14px;border-bottom:1px solid rgba(77,67,52,0.18)}
+  .aum-meta .row:last-child{border-bottom:none}
+  .aum-meta .k{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3)}
+  .aum-meta .v{font-family:var(--font-display);font-size:26px;color:var(--ink);letter-spacing:-0.01em;font-variant-numeric:tabular-nums}
+  @media (max-width:900px){.aum-band{grid-template-columns:1fr;padding:40px 28px;gap:28px}}
+
+  /* ── Signal conversion / competitor tables ── */
+  .ed-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+  .ed-table th{font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);
+    font-weight:500;text-align:left;padding:10px 14px 10px 0;border-bottom:1px solid var(--border)}
+  .ed-table td{padding:14px 14px 14px 0;border-bottom:1px solid var(--border-soft);color:var(--ink-2)}
+  .ed-table td.num{font-family:var(--font-mono);text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+  .ed-table tr:last-child td{border-bottom:none}
+  .ed-table tr.best td{background:var(--umber-glow)}
+  .ed-table tr.best td.num{color:var(--umber-deep);font-weight:500}
+  .ed-table tr.zero td{color:var(--ink-3);font-style:italic}
+  .sig-chip{display:inline-block;padding:2px 8px;border-radius:2px;
+    font-size:10px;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;
+    background:rgba(70,91,255,0.09);color:var(--blue);border:1px solid rgba(70,91,255,0.22)}
+  .sig-chip.press{background:rgba(176,125,26,0.11);color:var(--amber);border-color:rgba(176,125,26,0.32)}
+  .sig-chip.hiring{background:rgba(79,122,59,0.11);color:var(--green);border-color:rgba(79,122,59,0.32)}
+  .sig-chip.twitter{background:rgba(194,90,30,0.11);color:var(--orange);border-color:rgba(194,90,30,0.32)}
+
+  .callout{
+    margin-top:14px;padding:12px 16px;border-radius:2px;
+    background:rgba(176,125,26,0.08);border:1px solid rgba(176,125,26,0.28);border-left:3px solid var(--amber);
+    font-size:12.5px;color:var(--ink-2);line-height:1.55;
+  }
+  .callout code{background:rgba(77,67,52,0.08);padding:1px 5px;border-radius:2px;font-family:var(--font-mono);font-size:11.5px}
+
+  /* ── Competitor cards ── */
+  .comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
+  .comp-card{background:rgba(255,255,255,0.35);border:1px solid var(--border);border-left:3px solid var(--umber);
+    padding:18px 20px;border-radius:2px;transition:border-color 150ms}
+  .comp-card:hover{border-color:var(--umber-deep)}
+  .comp-card .n{font-family:var(--font-display);font-size:20px;color:var(--ink);margin-bottom:4px;letter-spacing:-0.005em}
+  .comp-card .meta{font-family:var(--font-mono);font-size:11px;color:var(--ink-3);margin-bottom:10px}
+  .comp-card .meta b{color:var(--umber-deep);font-weight:600}
+  .comp-card .angle{font-size:13px;color:var(--ink-2);font-style:italic;line-height:1.5}
+
+  /* ── Bottleneck ── */
+  .bottleneck{
+    padding:26px 32px;margin-top:12px;border-radius:3px;
+    background:linear-gradient(135deg, rgba(168,50,28,0.05), rgba(194,90,30,0.08));
+    border:1px solid rgba(194,90,30,0.28);border-left:3px solid var(--orange);
+    display:flex;align-items:flex-start;gap:22px;
+  }
+  .bottleneck .ic{
+    flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+    background:rgba(194,90,30,0.12);border:1px solid rgba(194,90,30,0.35);border-radius:50%;
+    color:var(--orange);font-family:var(--font-display);font-weight:600;font-size:22px;line-height:1;
+  }
+  .bottleneck .body{flex:1}
+  .bottleneck .lbl{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--orange);
+    margin-bottom:6px;font-weight:600}
+  .bottleneck .msg{font-size:15px;color:var(--ink);line-height:1.55}
+  .bottleneck .msg b{color:var(--ink);font-weight:600}
+
+  .state{padding:40px;text-align:center;color:var(--ink-3);font-style:italic}
+  footer{max-width:1280px;margin:0 auto;padding:32px 32px 48px;font-size:10px;
+    letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);border-top:1px solid var(--border-soft)}
+
+  /* entrance */
+  .fade-in{opacity:0;transform:translateY(8px);animation:rise 600ms ease forwards}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  .fade-in.d1{animation-delay:60ms}
+  .fade-in.d2{animation-delay:120ms}
+  .fade-in.d3{animation-delay:180ms}
+  .fade-in.d4{animation-delay:240ms}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path fill="#1E1A14" d="M2 2h2v2H2V2Zm3 2h3V2H5v2Zm4-2v2h5V2H9ZM2 8h2V5H2v3Zm3 0h3V5H5v3Zm4 0h5V5H9v3Zm-7 6h2V9H2v5Zm3 0h3V9H5v5Zm4 0h5V9H9v5Z"/>
+    </svg>
+    <span class="name"></span>
+    <span class="sub">Signal Engine</span>
+    <span class="eyebrow">Analytics</span>
+  </div>
+  <nav class="nav-links">
+    <a href="analytics.html" class="active">Analytics</a><span class="nav-sep">·</span>
+    <a href="ops.html">Pipeline Ops</a><span class="nav-sep">·</span>
+    <a href="methodology.html">Methodology</a><span class="nav-sep">·</span>
+    <a href="competitive.html">Competitive</a><span class="nav-sep">·</span>
+    <a href="index.html">← Contacts</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero fade-in">
+    <div class="hero-inner">
+      <div>
+        <div class="eyebrow">Pipeline intelligence · live</div>
+        <h1 class="hero-title"><span class="num" id="h-ready">—</span><br/>ready for outreach.</h1>
+        <div class="hero-sub" id="h-sub">Loading pipeline state…</div>
+      </div>
+      <div class="kpi-col">
+        <div class="kpi-line accent">
+          <span class="l">Strong matches</span>
+          <span class="v" id="k-strong">—</span>
+        </div>
+        <div class="kpi-line">
+          <span class="l">Avg confidence</span>
+          <span class="v"><span id="k-avg">—</span><small>/100</small></span>
+        </div>
+        <div class="kpi-line">
+          <span class="l">Total contacts</span>
+          <span class="v" id="k-total">—</span>
+        </div>
+        <div class="kpi-line">
+          <span class="l">Cost per lead (loaded)</span>
+          <span class="v" id="k-cost" title="Claude Sonnet + Haiku + Hunter, fully loaded across all ready leads">—</span>
+        </div>
+        <div class="kpi-line" id="kpi-cost-breakdown" style="display:none">
+          <span class="l" style="font-size:11px;color:var(--text-3,rgba(0,0,0,0.45))">Breakdown</span>
+          <span class="v" id="k-cost-breakdown" style="font-size:11px;color:var(--text-3,rgba(0,0,0,0.55));font-weight:400"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENTO ROW: Funnel (wide) + Dimensions Radar + Score Tiers Donut -->
+  <div class="sec-head">
+    <h2 class="sec-title">Pipeline topology</h2>
+    <span class="sec-sub">From 16K firms to a targeted outreach list</span>
+  </div>
+
+  <div class="bento">
+    <div class="tile t-span-4 fade-in d1">
+      <div class="tile-hd">
+        <span class="lbl">Funnel</span>
+        <span class="hint">Firms → signals → scored → queued</span>
+      </div>
+      <div id="funnel" class="funnel"><div class="state">Loading…</div></div>
+    </div>
+
+    <div class="tile t-span-2 fade-in d2">
+      <div class="tile-hd">
+        <span class="lbl">Score signature</span>
+        <span class="hint">4 dims</span>
+      </div>
+      <div class="radar-wrap">
+        <svg viewBox="0 0 260 260" id="radar" aria-hidden="true"></svg>
+        <div class="radar-legend" id="radar-legend"></div>
+        <div id="radar-narrative" style="margin-top:14px;padding:10px 14px;
+             background:rgba(245,158,11,0.08);border-left:3px solid rgba(245,158,11,0.55);
+             font-size:12px;line-height:1.55;color:var(--text-2,rgba(0,0,0,0.7));
+             font-style:italic"></div>
+      </div>
+    </div>
+
+    <div class="tile t-span-3 fade-in d2">
+      <div class="tile-hd">
+        <span class="lbl">Score distribution</span>
+        <span class="hint">4 tiers</span>
+      </div>
+      <div class="donut-wrap">
+        <svg viewBox="0 0 100 100" id="donut-tiers" aria-hidden="true"></svg>
+        <div class="legend" id="tiers-legend"></div>
+      </div>
+    </div>
+
+    <div class="tile t-span-3 fade-in d3">
+      <div class="tile-hd">
+        <span class="lbl">Buying stage</span>
+        <span class="hint">Tier 1 firms</span>
+      </div>
+      <div class="donut-wrap">
+        <svg viewBox="0 0 100 100" id="donut-stages" aria-hidden="true"></svg>
+        <div class="legend" id="stages-legend"></div>
+      </div>
+    </div>
+
+    <div class="tile t-span-6 fade-in d4">
+      <div class="tile-hd">
+        <span class="lbl">By firm type</span>
+        <span class="hint">Average score · count</span>
+      </div>
+      <div class="vbars" id="vbars"></div>
+    </div>
+  </div>
+
+  <!-- AUM BAND -->
+  <div class="sec-head">
+    <h2 class="sec-title">Assets under management</h2>
+    <span class="sec-sub">Institutional AI buying power in the active pipeline</span>
+  </div>
+  <section class="fade-in">
+    <div class="aum-band" id="aum-card">
+      <div class="aum-hero">
+        <div class="big" id="aum-big">—</div>
+        <div class="sub" id="aum-sub">Loading…</div>
+      </div>
+      <div class="aum-meta" id="aum-meta"></div>
+    </div>
+  </section>
+
+  <!-- SIGNAL CONVERSION + COMPETITOR -->
+  <div class="sec-head">
+    <h2 class="sec-title">Sources & positioning</h2>
+    <span class="sec-sub">What converts, and how we talk to each incumbent</span>
+  </div>
+
+  <div class="bento">
+    <div class="tile t-span-3 fade-in">
+      <div class="tile-hd">
+        <span class="lbl">Signal conversion</span>
+        <span class="hint">Qualified (55+) rate</span>
+      </div>
+      <table class="ed-table" id="signal-conv">
+        <thead><tr><th>Source</th><th style="text-align:right">Contacts</th>
+          <th style="text-align:right">Qualified</th><th style="text-align:right">Rate</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div id="signal-callouts"></div>
+    </div>
+
+    <div class="tile t-span-3 fade-in">
+      <div class="tile-hd">
+        <span class="lbl">Competitor landscape</span>
+        <span class="hint">Angle per incumbent</span>
+      </div>
+      <div class="comp-grid" id="comp-grid"></div>
+    </div>
+  </div>
+
+</main>
+
+<footer id="footer">Loading…</footer>
+
+<script>
+(() => {
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const formatAUM = val => {
+    if (!val || val === 0) return '—';
+    const n = Number(val);
+    if (!isFinite(n)) return '—';
+    if (n >= 1e12) return '$' + (n/1e12).toFixed(1) + 'T';
+    if (n >= 1e9)  return '$' + (n/1e9).toFixed(0) + 'B';
+    if (n >= 1e6)  return '$' + (n/1e6).toFixed(0) + 'M';
+    return '$' + n.toLocaleString();
+  };
+  const fmt = n => (n||0).toLocaleString();
+  const prettyType = t => ({pe:'Private Equity',hedge_fund:'Hedge Fund',investment_bank:'Investment Bank',credit_fund:'Credit Fund',credit:'Credit'}[t] || (t||'unknown').replace(/_/g,' '));
+  const prettyComp = t => ({alphasense:'AlphaSense',rogo:'Rogo',bloomberg:'Bloomberg',stack_ai:'Stack AI',none:'Cold ICP'}[t] || (t||'unknown').replace(/_/g,' '));
+  const prettyStage = s => ({deploying:'Deploying',evaluating:'Evaluating',exploring:'Exploring',unknown:'Unknown'}[s] || s);
+
+  // Warm palette — consistent across charts
+  const UMBER = ['#5B4129','#8B6F4E','#B0895F','#C4A77A','#D6BE98'];
+  const STAGE_COLORS = {deploying:'#4F7A3B', evaluating:'#B07D1A', exploring:'#C25A1E', unknown:'#B5A889'};
+  const TIER_COLORS  = {strong:'#5B4129', good:'#8B6F4E', moderate:'#B0895F', weak:'#C25A1E'};
+
+  // Funnel gradient — deep umber → blue endpoint
+  function funnelColor(i, n){
+    const stops = ['#4A3522','#6B4F33','#8B6F4E','#A98863','#C4A77A'];
+    if (i === n - 1) return '#465BFF';
+    return stops[Math.min(i, stops.length - 1)];
+  }
+
+  // ── Hero ────────────────────────────────────────────
+  function renderHero(d){
+    const h = d.hero || {}, s = d.stats || {}, f = d.funnel || {};
+    const ready = f.ready ?? s.ready ?? h.ready ?? 0;
+    document.getElementById('h-ready').textContent = ready;
+    document.getElementById('h-sub').innerHTML =
+      `From <b>${fmt(f.sec_indexed ?? h.sec_total ?? 0)}</b> SEC-registered firms to <b>${ready}</b> ready contacts — every score is explainable.`;
+    document.getElementById('k-strong').textContent = h.strong ?? 0;
+    document.getElementById('k-avg').textContent = Math.round(h.avg_score || 0);
+    document.getElementById('k-total').textContent = fmt(h.contacts);
+    const cost = h.cost_per_lead || 0;
+    document.getElementById('k-cost').textContent = cost > 0
+      ? `$${cost < 1 ? cost.toFixed(3) : cost.toFixed(2)}`
+      : '$0.00';
+    const cb = h.cost_breakdown;
+    if (cb && h.total_cost_usd){
+      document.getElementById('kpi-cost-breakdown').style.display = '';
+      document.getElementById('k-cost-breakdown').textContent =
+        `$${cb.claude_sonnet_usd} score + $${cb.claude_brief_usd} brief + $${cb.claude_fl_usd} opener + $${cb.hunter_usd} Hunter = $${cb.total_usd}`;
+    }
+  }
+
+  // ── Funnel ──────────────────────────────────────────
+  // Renders two sub-funnels (firms → contacts) with a divider between them,
+  // so readers don't read a firm-count → contact-count step as a funnel step.
+  function renderFunnel(d){
+    const stages = (d.funnel && d.funnel.stages) || [];
+    const firmStages    = stages.filter(s => s.unit === 'firms');
+    const contactStages = stages.filter(s => s.unit === 'contacts');
+    // Tier-1 bridge count — used to connect the two sub-funnels in the narrative
+    const tier1 = (firmStages.find(s => s.key === 'tier1_active') || {}).count || 0;
+    const contactsBase = (contactStages[0] || {}).count || 0;
+
+    const renderGroup = (group, groupLabel, offsetIdx) => {
+      const max = Math.max(1, ...group.map(s => s.count));
+      return `<div class="f-group-label">${esc(groupLabel)}</div>` +
+        group.map((s, i) => {
+          const prev = i === 0 ? null : group[i-1].count;
+          const conv = prev ? (s.count / prev) * 100 : null;
+          const pct = Math.max(10, (s.count / max) * 100);
+          const idx = offsetIdx + i;
+          return `<div class="f-row">
+            <div class="f-bar" style="width:${pct}%;background:linear-gradient(90deg, ${funnelColor(idx, stages.length)}, ${funnelColor(Math.min(idx+1, stages.length-1), stages.length)})">
+              <span class="count">${fmt(s.count)}</span><span class="name">${esc(s.label)}</span>
+            </div>
+            <div class="f-conv">
+              ${conv != null ? `<span class="v">${conv.toFixed(0)}%</span>conversion` : `<span class="v">—</span>start`}
+            </div>
+          </div>`;
+        }).join('');
+    };
+
+    const el = document.getElementById('funnel');
+    let html = '';
+    if (firmStages.length)    html += renderGroup(firmStages, 'FIRM FUNNEL · source → curation', 0);
+    if (contactStages.length) html += `<div class="f-divider">↓ each Tier-1 firm fans out into ~${tier1 ? Math.round(contactsBase/tier1) : '—'} scored contacts</div>` + renderGroup(contactStages, 'CONTACT FUNNEL · enrichment → outreach-ready', firmStages.length);
+    el.innerHTML = html;
+
+    const bn = d.bottleneck || {};
+    if (bn.message){
+      const lede = document.createElement('div');
+      lede.className = 'funnel-lede';
+      lede.innerHTML = `<b>${esc(bn.label || 'Conversion Gap')}:</b> ${esc(bn.message)}`;
+      el.appendChild(lede);
+    }
+  }
+
+  // ── Radar (dimensions) ──────────────────────────────
+  function renderRadar(d){
+    const dims = d.dimensions || {};
+    const keys = [
+      {k:'icp_fit',          lbl:'ICP Fit'},
+      {k:'ai_readiness',     lbl:'AI Readiness'},
+      {k:'reachability',     lbl:'Reachability'},
+      {k:'signal_freshness', lbl:'Freshness'},
+    ];
+    const cx = 130, cy = 130, R = 90;
+    const pts = keys.map((kd, i) => {
+      const angle = (Math.PI * 2 * i / keys.length) - Math.PI / 2;
+      const v = (dims[kd.k] || {}).avg || 0;
+      const r = (v / 100) * R;
+      return {
+        lx: cx + Math.cos(angle) * R,
+        ly: cy + Math.sin(angle) * R,
+        x: cx + Math.cos(angle) * r,
+        y: cy + Math.sin(angle) * r,
+        v, lbl: kd.lbl, k: kd.k,
+      };
+    });
+
+    let svg = '';
+    // concentric circles
+    for (let i = 1; i <= 4; i++){
+      svg += `<circle cx="${cx}" cy="${cy}" r="${(R*i)/4}" fill="none" stroke="rgba(139,111,78,0.12)" stroke-width="0.8"/>`;
+    }
+    // axes
+    pts.forEach(p => {
+      svg += `<line x1="${cx}" y1="${cy}" x2="${p.lx}" y2="${p.ly}" stroke="rgba(139,111,78,0.18)" stroke-width="0.8"/>`;
+    });
+    // polygon fill
+    const poly = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    svg += `<polygon points="${poly}" fill="url(#umb-grad)" stroke="#8B6F4E" stroke-width="1.6" stroke-linejoin="round"/>`;
+    // point dots
+    pts.forEach(p => {
+      svg += `<circle cx="${p.x}" cy="${p.y}" r="3.2" fill="#5B4129" stroke="#F2EFE1" stroke-width="1.5"/>`;
+    });
+    // axis labels
+    pts.forEach(p => {
+      const offX = (p.lx - cx) * 0.18;
+      const offY = (p.ly - cy) * 0.18;
+      svg += `<text x="${p.lx + offX}" y="${p.ly + offY + 3}" text-anchor="middle"
+        font-family="Inter" font-size="9" fill="#8B6F4E" letter-spacing="1.1"
+        style="text-transform:uppercase;font-weight:600">${esc(p.lbl.split(' ')[0])}</text>`;
+    });
+    const defs = `<defs><radialGradient id="umb-grad" cx="0.5" cy="0.5" r="0.6">
+      <stop offset="0%" stop-color="#C4A77A" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#8B6F4E" stop-opacity="0.22"/>
+    </radialGradient></defs>`;
+    document.getElementById('radar').innerHTML = defs + svg;
+
+    document.getElementById('radar-legend').innerHTML = pts.map(p => `
+      <div><div class="k">${esc(p.lbl)}</div><div class="v">${Math.round(p.v)}</div></div>
+    `).join('');
+
+    // Weakest-dimension narrative so a reader immediately sees WHY composite
+    // scores look the way they do.
+    const narr = dims._narrative || {};
+    const narrEl = document.getElementById('radar-narrative');
+    if (narrEl){
+      narrEl.textContent = narr.message || '';
+      narrEl.style.display = narr.message ? '' : 'none';
+    }
+  }
+
+  // ── Donut helper ────────────────────────────────────
+  function drawDonut(targetId, segments, centerText){
+    // segments: [{key,label,value,color}]
+    const total = segments.reduce((a,b) => a + b.value, 0) || 1;
+    const R = 42, C = 2 * Math.PI * R;
+    let offset = 0;
+    const arcs = segments.map(s => {
+      const frac = s.value / total;
+      const len = frac * C;
+      const arc = `<circle cx="50" cy="50" r="${R}" fill="none"
+        stroke="${s.color}" stroke-width="12"
+        stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}"
+        stroke-dashoffset="${(-offset).toFixed(2)}"
+        transform="rotate(-90 50 50)"/>`;
+      offset += len;
+      return arc;
+    }).join('');
+    const bg = `<circle cx="50" cy="50" r="${R}" fill="none" stroke="rgba(139,111,78,0.10)" stroke-width="12"/>`;
+    const ctr = centerText ? `<g class="donut-ctr">
+      <text x="50" y="50" text-anchor="middle" class="n" dominant-baseline="middle">${esc(centerText.n)}</text>
+      <text x="50" y="66" text-anchor="middle" class="l">${esc(centerText.l)}</text>
+    </g>` : '';
+    document.getElementById(targetId).innerHTML = bg + arcs + ctr;
+  }
+
+  // ── Score Tiers Donut ───────────────────────────────
+  function renderTiers(d){
+    const bands = d.score_histogram || [];
+    const total = bands.reduce((a,b) => a + b.count, 0);
+    const segs = bands.map(b => ({
+      key:b.key, label:b.label, value:b.count,
+      color: TIER_COLORS[b.key] || '#B5A889', range:b.range, pct:b.pct
+    }));
+    drawDonut('donut-tiers', segs, {n: total, l:'scored'});
+    const tierHref = k => ({
+      strong:   'index.html?min_score=75',
+      good:     'index.html?min_score=55&max_score=74',
+      moderate: 'index.html?min_score=35&max_score=54',
+      weak:     'index.html?max_score=34',
+    }[k] || 'index.html');
+    document.getElementById('tiers-legend').innerHTML = segs.map(s => `
+      <a class="legend-row legend-link" href="${tierHref(s.key)}" title="Filter contacts to ${esc(s.label)}">
+        <div class="dot" style="background:${s.color}"></div>
+        <div class="k">${esc(s.label)}</div>
+        <div class="v">${s.value}<em>${s.pct}%</em></div>
+      </a>`).join('');
+  }
+
+  // ── Buying Stage Donut ──────────────────────────────
+  function renderStages(d){
+    const rows = d.by_buying_stage || [];
+    const order = ['deploying','evaluating','exploring','unknown'];
+    rows.sort((a,b) => order.indexOf(a.stage) - order.indexOf(b.stage));
+    const total = rows.reduce((a,b) => a + (b.firms || 0), 0);
+    const segs = rows.map(r => ({
+      key:r.stage, label:prettyStage(r.stage), value:r.firms || 0,
+      color:STAGE_COLORS[r.stage] || '#B5A889', avg:r.avg_score
+    }));
+    drawDonut('donut-stages', segs, {n: total, l:'firms'});
+    document.getElementById('stages-legend').innerHTML = segs.map(s => `
+      <div class="legend-row">
+        <div class="dot" style="background:${s.color}"></div>
+        <div class="k">${esc(s.label)}</div>
+        <div class="v">${s.value}<em>avg ${Math.round(s.avg||0)}</em></div>
+      </div>`).join('');
+  }
+
+  // ── By Firm Type (vertical bars) ────────────────────
+  function renderFirmType(d){
+    const rows = (d.by_firm_type || []).filter(r => r.avg_score).sort((a,b) => (b.avg_score||0) - (a.avg_score||0));
+    const maxScore = 100;
+    const el = document.getElementById('vbars');
+    if (!rows.length){ el.innerHTML = '<div class="state">No scored contacts</div>'; return; }
+    el.innerHTML = rows.map(r => {
+      const h = Math.max(6, (r.avg_score / maxScore) * 160);
+      return `<div class="vbar">
+        <div class="col" style="height:${h}px"><span class="n">${Math.round(r.avg_score)}</span></div>
+        <div class="k">${esc(prettyType(r.firm_type))}</div>
+        <div class="sub">${r.firms} firms · ${r.scored||0} scored</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── AUM band ────────────────────────────────────────
+  function renderAum(d){
+    const a = d.aum_coverage || {};
+    const big = document.getElementById('aum-big');
+    const sub = document.getElementById('aum-sub');
+    const meta = document.getElementById('aum-meta');
+    if (!a.total_aum){
+      big.style.background = 'none'; big.style.webkitTextFillColor = 'var(--ink-3)';
+      big.textContent = 'AUM pending';
+      sub.textContent = `${a.firms_matched||0} of ${a.firms_total||0} active firms matched. Run --sec-enrich to attach totals.`;
+      meta.innerHTML = '';
+      return;
+    }
+    big.innerHTML = `$${a.display_trillions.toFixed(2)}<small>T</small>`;
+    sub.innerHTML = `Institutional assets under management across the active pipeline — roughly <b>${a.share_pct.toFixed(1)}%</b> of the US institutional AI-buying market.`;
+    meta.innerHTML = `
+      <div class="row"><span class="k">Firms matched</span><span class="v">${a.firms_matched}/${a.firms_total}</span></div>
+      <div class="row"><span class="k">Market share</span><span class="v">${a.share_pct.toFixed(1)}%</span></div>
+      <div class="row"><span class="k">Total AUM</span><span class="v">$${a.display_trillions.toFixed(2)}T</span></div>`;
+  }
+
+  // ── Signal Conversion ───────────────────────────────
+  // Rates are "primary-signal attribution" — each contact counted once under
+  // its most recent signal. The "No Signal" row is an ICP-only fallback, not
+  // a real acquisition channel, so it gets a different visual treatment.
+  function renderSignalConv(d){
+    const rows = d.signal_conversion || [];
+    const channelRows = rows.filter(r => !r.is_fallback);
+    const withData    = channelRows.filter(r => r.contacts > 0);
+    const best = withData.reduce((a, b) => (a && a.rate > b.rate) ? a : b, null);
+    const tb = document.querySelector('#signal-conv tbody');
+    tb.innerHTML = rows.map(r => {
+      const cls = [];
+      if (best && r === best) cls.push('best');
+      if (r.contacts === 0)   cls.push('zero');
+      if (r.is_fallback)      cls.push('fallback');
+      const chipType = r.signal_type === 'no_signal' ? 'none' : r.signal_type;
+      return `<tr class="${cls.join(' ')}">
+        <td><span class="sig-chip ${esc(chipType)}">${esc(r.label || r.signal_type)}</span></td>
+        <td class="num">${fmt(r.contacts)}</td>
+        <td class="num">${fmt(r.qualified)}</td>
+        <td class="num">${r.rate.toFixed(1)}%</td>
+      </tr>`;
+    }).join('');
+    const zero = channelRows.filter(r => r.contacts === 0);
+    document.getElementById('signal-callouts').innerHTML = zero.map(r =>
+      `<div class="callout">${esc(r.label || r.signal_type)} collector not yet wired — 0 signals on record. Run <code>--collect</code> once the source is configured.</div>`
+    ).join('');
+  }
+
+  // ── Competitor landscape cards ──────────────────────
+  function renderCompetitors(d){
+    const rows = (d.competitor_landscape || []).slice().sort((a,b) => {
+      if (a.competitor === 'none') return 1;
+      if (b.competitor === 'none') return -1;
+      return (b.firms || 0) - (a.firms || 0);
+    });
+    const el = document.getElementById('comp-grid');
+    el.innerHTML = rows.length ? rows.map(r => `
+      <div class="comp-card">
+        <div class="n">${esc(prettyComp(r.competitor))}</div>
+        <div class="meta"><b>${r.firms}</b> firms · avg score ${Math.round(r.avg_score || 0)}</div>
+        <div class="angle">${esc(r.angle)}</div>
+      </div>`).join('') : `<div class="state">No competitor data</div>`;
+  }
+
+  // ── Conversion Gap (formerly "Bottleneck") ─────────
+  // Only considers contact-level conversion steps. Firm-level drops
+  // (SEC→ICP, ICP→Tier2) are deliberate caps and not shown as gaps.
+  function renderBottleneck(d){
+    const b = d.bottleneck || {};
+    const wrap = document.getElementById('bottleneck-wrap');
+    if (!b || !b.message){
+      wrap.innerHTML = `<div class="state">No contact-level conversion gap — ready pipeline is healthy.</div>`;
+      return;
+    }
+    const label = b.label || 'Largest Contact-level Conversion Gap';
+    wrap.innerHTML = `<div class="bottleneck">
+      <div class="ic">↗</div>
+      <div class="body">
+        <div class="lbl">${esc(label)} · ${b.rate}% pass-through</div>
+        <div class="msg">${esc(b.message)}</div>
+      </div>
+    </div>`;
+  }
+
+  async function load(){
+    try{
+      const r = await fetch('analytics_data.json', {cache:'no-store'});
+      if (!r.ok) throw new Error('HTTP '+r.status);
+      const d = await r.json();
+      renderHero(d);
+      renderFunnel(d);
+      renderRadar(d);
+      renderTiers(d);
+      renderStages(d);
+      renderFirmType(d);
+      renderAum(d);
+      renderSignalConv(d);
+      renderCompetitors(d);
+      const ts = d.generated_at ? new Date(d.generated_at).toLocaleString() : '—';
+      document.getElementById('footer').textContent = `Generated ${ts}`;
+    } catch(err){
+      document.getElementById('funnel').innerHTML = `<div class="state">Failed to load analytics_data.json — ${esc(err.message)}</div>`;
+    }
+  }
+  load();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Methodology · MEDDIC Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared.css">
+<style>
+  :root{
+    /* Sand theme — 's real tokens from .com/about */
+    --bg:#EEECDD;         /* --color-sand */
+    --surface:#DEDBD4;    /* --color-sand-tint — elevated sections */
+    --elevated:#DEDBD4;
+    --overlay:#FFFFFF;
+    --text:#101010;                   /* headings */
+    --text-2:#3D4046;                 /* --color-sand-grey — body copy */
+    --text-3:rgba(61,64,70,0.65);     /* soft-2 — labels, captions */
+    --border:#DBD9C8;                 /* --color-sand-tint-1 */
+    --border-strong:#C2C1B6;          /* --color-sand-tint-2 */
+    --blue:#465BFF; --blue-dim:rgba(70,91,255,0.10); --blue-border:rgba(70,91,255,0.40);
+    --green:#10b981; --amber:#f59e0b; --orange:#f97316; --red:#ef4444; --violet:#7c3aed; --teal:#0d9488;
+    --font-ui:'Inter',system-ui,-apple-system,sans-serif;
+    --font-display:'Playfair Display',Georgia,serif;
+    --font-mono:'SF Mono','Fira Code',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:var(--font-ui);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+
+  header{position:sticky;top:0;z-index:20;background:rgba(238,236,221,0.95);backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(0,0,0,0.08);height:64px;padding:0 28px;
+    display:flex;align-items:center;gap:20px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .name{font-size:15px;font-weight:500}
+  .brand .sub{color:var(--text-3);font-size:13px;margin-left:2px}
+  .brand .eyebrow{margin-left:14px;padding-left:14px;border-left:1px solid var(--border);
+    font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3)}
+  .nav-links{display:flex;align-items:center;gap:10px;margin-left:auto}
+  .nav-links a{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--text-3);text-decoration:none;transition:color 150ms}
+  .nav-links a:hover{color:var(--text)}
+  .nav-links a.active{color:var(--blue)}
+  .nav-links .nav-sep{color:rgba(0,0,0,0.25);font-size:11px}
+
+  main{max-width:1080px;margin:0 auto;padding:40px 28px 96px;color:var(--text);position:relative}
+  /* Sticky section nav — outside content column, hidden on narrow viewports */
+  .side-nav{
+    position:fixed;top:96px;
+    left:calc((100vw - 1080px) / 2 - 172px);
+    width:152px;display:flex;flex-direction:column;gap:2px;
+    font-size:11.5px;letter-spacing:0.02em;z-index:5;
+  }
+  .side-nav a{
+    display:block;padding:7px 12px 7px 14px;border-left:1px solid var(--border);
+    color:var(--text-3);text-decoration:none;transition:color 140ms, border-color 140ms, background 140ms;
+  }
+  .side-nav a:hover{color:var(--text);background:rgba(70,91,255,0.05)}
+  .side-nav a.active{color:#465BFF;border-left-color:#465BFF;font-weight:500}
+  .side-nav .sn-label{font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;
+    color:var(--text-3);margin-bottom:10px;padding-left:14px;font-weight:600}
+  @media (max-width:1260px){.side-nav{display:none}}
+  main section, main .card, main table{color:inherit}
+  .hb-grid-bg{
+    background-image:
+      linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .page-header{
+    position:relative;overflow:hidden;
+    margin-bottom:56px;padding:40px 32px 40px;border-bottom:1px solid var(--border);
+    background-image:
+      radial-gradient(ellipse 40% 60% at 90% 50%, rgba(70,91,255,0.06), transparent),
+      linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+    background-size: auto, 40px 40px, 40px 40px;
+  }
+  .page-header::after{
+    content:"";position:absolute;inset:0;left:50%;z-index:0;pointer-events:none;
+    background-image:url('https://images.ctfassets.net/bn476u6z5acg/3VwfZEkmoTOENMFolM5udx/ca23ae84ce9dc2873e5c12f741060e98/finance.jpeg');
+    background-size:cover;background-position:center right;background-repeat:no-repeat;
+    opacity:0.08;
+    mask-image:linear-gradient(to right, transparent 0%, #000 30%, #000 100%);
+    -webkit-mask-image:linear-gradient(to right, transparent 0%, #000 30%, #000 100%);
+  }
+  .page-header > *{position:relative;z-index:1}
+
+  /* Product demo video block */
+  .demo-video{
+    margin-top:24px;background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:14px 14px 18px;
+  }
+  .demo-video video{
+    width:100%;border-radius:2px;border:1px solid rgba(0,0,0,0.08);display:block;
+  }
+  .demo-video .cap{
+    margin-top:12px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--text-3);text-align:center;
+  }
+  .demo-video .cap b{color:var(--text-2);font-weight:500}
+  .page-eyebrow{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3);margin-bottom:16px}
+  .page-title{font-family:var(--font-display);font-size:60px;font-weight:500;letter-spacing:0.02em;
+    line-height:0.95;text-transform:uppercase;margin:0}
+  .page-sub{font-size:18px;color:var(--text-2);margin-top:20px;max-width:640px;line-height:1.55;font-weight:400}
+
+  section{margin-bottom:64px}
+  section + section{margin-top:56px}
+  .sec-eyebrow{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#465BFF;margin-bottom:10px;font-weight:500}
+  .sec-title{font-family:var(--font-display);font-size:30px;font-weight:500;letter-spacing:0.015em;
+    text-transform:uppercase;margin:0 0 12px;line-height:1.05}
+  .sec-body{font-size:16px;color:var(--text-2);margin-bottom:28px;max-width:640px;line-height:1.65}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:24px 28px}
+
+  /* Discovery funnel */
+  .discovery{display:flex;align-items:stretch;gap:0}
+  .d-step{
+    flex:1;background:var(--surface);border:1px solid var(--border);
+    padding:22px 20px;position:relative;
+    background-image:
+      linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-color:var(--surface);
+  }
+  .d-step .n{
+    font-family:var(--font-display);font-size:48px;font-weight:500;line-height:1;
+    letter-spacing:-0.01em;color:var(--text);margin-bottom:10px;
+  }
+  .d-step .lbl{font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px}
+  .d-step .body{font-size:13px;color:var(--text-2);line-height:1.55}
+  .d-connector{
+    flex:0 0 28px;position:relative;align-self:stretch;
+  }
+  .d-connector::before{
+    content:"";position:absolute;top:50%;left:0;right:0;height:1px;
+    background:rgba(0,0,0,0.15);
+  }
+  .d-connector::after{
+    content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:4px;height:4px;border-radius:50%;background:rgba(0,0,0,0.35);
+  }
+  @media (max-width:900px){.discovery{flex-direction:column}.d-connector{display:none}}
+
+  /* Signal cards */
+  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:800px){.sig-grid{grid-template-columns:1fr}}
+  .sig-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent,var(--blue));
+    border-radius:2px;padding:22px 24px}
+  .sig-card.pain{--accent:var(--red)}
+  .sig-card.eval{--accent:var(--amber)}
+  .sig-card.transform{--accent:var(--green)}
+  .sig-card.competitor{--accent:var(--violet)}
+  .sig-card .eyebrow{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;
+    color:#465BFF;font-weight:500;margin-bottom:10px}
+  .sig-card .t{font-family:var(--font-display);font-size:20px;font-weight:500;letter-spacing:0.01em;
+    text-transform:uppercase;margin:0 0 10px}
+  .sig-card .desc{font-size:14.5px;color:var(--text-2);line-height:1.6;margin-bottom:16px}
+  .sig-card .ex{
+    font-size:12px;color:var(--text-3);font-style:italic;line-height:1.6;
+    padding:10px 12px;background:rgba(0,0,0,0.03);border-left:2px solid var(--border);
+    border-radius:0 2px 2px 0;
+  }
+  .sig-card .ex::before{content:"“"}
+  .sig-card .ex::after{content:"”"}
+
+  /* Formula */
+  .formula{
+    font-family:var(--font-display);font-size:22px;font-weight:500;letter-spacing:0.01em;
+    padding:28px 32px;background-color:var(--elevated);border:1px solid var(--border);
+    border-left:3px solid var(--blue);border-radius:2px;margin-bottom:24px;
+    color:var(--text-2);text-align:center;
+    background-image:
+      linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .formula b{color:var(--text)}
+  .dim-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media (max-width:900px){.dim-grid{grid-template-columns:1fr 1fr}}
+  .dim-card{background:var(--surface);border:1px solid var(--border);padding:20px;position:relative;border-radius:2px}
+  .dim-card .wt{
+    position:absolute;top:14px;right:14px;
+    font-family:var(--font-mono);font-size:11px;font-weight:500;
+    padding:3px 8px;border-radius:2px;background:rgba(70,91,255,0.14);color:#a7b2ff;
+    border:1px solid var(--blue-border);
+  }
+  .dim-card .t{font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text);
+    font-weight:500;margin-bottom:10px}
+  .dim-card .desc{font-size:13px;color:var(--text-2);line-height:1.55}
+
+  /* Router diagram */
+  .router{display:grid;grid-template-columns:200px 1fr;gap:16px 20px;align-items:center}
+  @media (max-width:720px){.router{grid-template-columns:1fr}}
+  .router .k{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+    padding:10px 0;border-right:1px solid var(--border);padding-right:16px;font-weight:500}
+  @media (max-width:720px){.router .k{border-right:none;border-bottom:1px solid var(--border);padding-bottom:6px}}
+  .router .v{display:flex;flex-wrap:wrap;gap:6px}
+  .router .pill{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:0.02em;
+    padding:4px 10px;background:rgba(0,0,0,0.05);
+    border:1px solid var(--border);border-radius:2px;color:var(--text-2);
+  }
+  .router-note{margin-top:24px;padding:16px 20px;background:var(--elevated);
+    border:1px solid var(--border);border-left:2px solid var(--blue);border-radius:2px;
+    font-size:13px;color:var(--text-2);font-style:italic;line-height:1.6}
+
+  /* Labels table */
+  .labels{width:100%;border-collapse:collapse;font-size:13px}
+  .labels th{font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-3);
+    text-align:left;font-weight:500;padding:12px 14px;border-bottom:1px solid var(--border)}
+  .labels td{padding:16px 14px;border-bottom:1px solid rgba(0,0,0,0.06)}
+  .labels tr:last-child td{border-bottom:none}
+  .labels .score-pill{
+    display:inline-block;padding:4px 10px;border-radius:2px;
+    font-family:var(--font-mono);font-size:12px;font-weight:500;
+    background:rgba(0,0,0,0.04);border:1px solid var(--border);
+  }
+  .labels .score-pill.strong{background:rgba(16,185,129,0.15);color:#047857;border-color:rgba(16,185,129,0.5)}
+  .labels .score-pill.good  {background:rgba(245,158,11,0.15);color:#b45309;border-color:rgba(245,158,11,0.5)}
+  .labels .score-pill.mod   {background:rgba(249,115,22,0.15);color:#c2410c;border-color:rgba(249,115,22,0.5)}
+  .labels .score-pill.weak  {background:rgba(239,68,68,0.15);color:#b91c1c;border-color:rgba(239,68,68,0.5)}
+  .labels .name{color:var(--text);font-weight:500}
+  .labels .action{color:var(--text-2);font-style:italic}
+
+  footer{max-width:1080px;margin:0 auto;padding:24px 28px 40px;
+    font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+    border-top:1px solid var(--border)}
+
+  /* CTA section */
+  .cta-section{padding:56px 0 32px;text-align:center;border-top:1px solid var(--border);margin-top:56px}
+  .cta-section .sec-eyebrow{display:block;margin-bottom:14px}
+  .cta-section .sec-title{margin-bottom:14px}
+  .cta-body{font-size:16px;color:var(--text-2);margin-bottom:28px;line-height:1.55}
+  .cta-body b{color:var(--text);font-weight:500}
+  .btn-primary{
+    display:inline-block;background:#465BFF;color:#fff;text-decoration:none;
+    padding:14px 28px;font-size:13px;font-weight:500;letter-spacing:0.08em;
+    text-transform:uppercase;border-radius:2px;transition:background 150ms;
+  }
+  .btn-primary:hover{background:#3a4ce6}
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path fill="#F5F5F5" d="M2 2h2v2H2V2Zm3 2h3V2H5v2Zm4-2v2h5V2H9ZM2 8h2V5H2v3Zm3 0h3V5H5v3Zm4 0h5V5H9v3Zm-7 6h2V9H2v5Zm3 0h3V9H5v5Zm4 0h5V9H9v5Z"/>
+    </svg>
+    <span class="name"></span>
+    <span class="sub">Signal Engine</span>
+    <span class="eyebrow">Methodology</span>
+  </div>
+  <nav class="nav-links">
+    <a href="analytics.html">Analytics</a><span class="nav-sep">·</span>
+    <a href="ops.html">Pipeline Ops</a><span class="nav-sep">·</span>
+    <a href="methodology.html" class="active">Methodology</a><span class="nav-sep">·</span>
+    <a href="competitive.html">Competitive</a><span class="nav-sep">·</span>
+    <a href="index.html">← Contacts</a>
+  </nav>
+</header>
+
+<nav class="side-nav" id="side-nav" aria-label="Methodology sections">
+  <div class="sn-label">On this page</div>
+  <a href="#discovery">Discovery</a>
+  <a href="#signal-collection">Signals</a>
+  <a href="#sourcing">Sourcing</a>
+  <a href="#meddic">MEDDIC</a>
+  <a href="#scoring-formula">Scoring</a>
+  <a href="#skill-router">Router</a>
+  <a href="#score-labels">Labels</a>
+  <a href="#economics">Economics</a>
+  <a href="#pitch-thesis" style="color:var(--blue);font-weight:600">The Pitch</a>
+</nav>
+
+<main>
+
+  <div class="page-header">
+    <div class="page-eyebrow">Methodology</div>
+    <h1 class="page-title">Every Score Has a Reason.</h1>
+    <div class="page-sub">The system behind the scores — how <span id="m-tier1-sub">40</span> target institutions become your outreach queue.</div>
+  </div>
+
+  <section id="discovery">
+    <div class="sec-eyebrow">Step 1 · Discovery</div>
+    <h2 class="sec-title">From <span id="m-icp-title">7,115</span> ICP firms to <span id="m-tier1-title">40</span> named accounts</h2>
+    <div class="sec-body">We start with <span id="m-icp-qualified">7,115</span> ICP-qualified firms from SEC filings. The top <span id="m-tier2">500</span> by AUM enter Tier 2 monitoring — firmographic scoring only, no contact enrichment. When a Tier 2 firm triggers a signal, it promotes to Tier 1 for full enrichment and contact scoring. The <span id="m-tier1">40</span> Tier 1 firms are hand-curated top-tier institutions with named contacts, verified emails, and full account briefs.</div>
+    <div class="discovery">
+      <div class="d-step"><div class="n" id="meth-icp">7,115</div><div class="lbl">ICP Qualified</div><div class="body">Filtered from <span id="m-sec-indexed">16,639</span> SEC-registered investment advisers.</div></div>
+      <div class="d-connector" aria-hidden="true"></div>
+      <div class="d-step"><div class="n" id="meth-tier2">500</div><div class="lbl">Tier 2 Monitored</div><div class="body">Top-AUM firms, firmographic-only score. No cost.</div></div>
+      <div class="d-connector" aria-hidden="true"></div>
+      <div class="d-step"><div class="n" id="meth-tier1">40</div><div class="lbl">Tier 1 Active</div><div class="body">Named contacts, verified emails, full Claude scoring.</div></div>
+      <div class="d-connector" aria-hidden="true"></div>
+      <div class="d-step"><div class="n" id="meth-ready">338</div><div class="lbl">Ready to Send</div><div class="body">Strong + Good matches with verified email.</div></div>
+    </div>
+  </section>
+
+  <section id="signal-collection">
+    <div class="sec-eyebrow">Step 2 · Signal Collection</div>
+    <h2 class="sec-title">What we look for</h2>
+    <div class="sec-body">Five signal channels, each scored for recency and relevance. The system watches for evidence that a firm is actively transforming — not just capable of it.</div>
+    <div class="sig-grid">
+      <div class="sig-card pain">
+        <div class="eyebrow">Pain</div>
+        <h3 class="t">AlphaSense Frustration</h3>
+        <div class="desc">Pricing complaints, workflow friction, RAG failures on long documents — signals that the incumbent isn't doing the job.</div>
+        <div class="ex">We're paying AlphaSense a fortune and still can't get a clean answer across the full CIM. Spending half my time re-asking the same question.</div>
+      </div>
+      <div class="sig-card eval">
+        <div class="eyebrow">Evaluation</div>
+        <h3 class="t">Piloting & RFPs</h3>
+        <div class="desc">Testing language, vendor comparisons, pilot programs. These firms are in-market now — the window is open.</div>
+        <div class="ex">Kicking off vendor eval for deal-team AI in Q2. Shortlist includes , AlphaSense, Rogo. Compliance review starts next week.</div>
+      </div>
+      <div class="sig-card transform">
+        <div class="eyebrow">Transformation</div>
+        <h3 class="t">AI-First Announcements</h3>
+        <div class="desc">Firm-wide AI mandates, dedicated Head of AI hires, portfolio-wide deployment plans. The buying decision is already made.</div>
+        <div class="ex">Thrilled to announce our portfolio-wide AI rollout — building the deal team of the future with production infrastructure live this quarter.</div>
+      </div>
+      <div class="sig-card competitor">
+        <div class="eyebrow">Competitor</div>
+        <h3 class="t">Displacement Openings</h3>
+        <div class="desc">Dissatisfaction with AlphaSense, Bloomberg, or Rogo. Price, depth, or workflow — each is a distinct sales story.</div>
+        <div class="ex">Rogo is fine for quick Q&amp;A but breaks on multi-doc synthesis. We need something that actually reads the full data room.</div>
+      </div>
+      <div class="sig-card" style="border-left-color:var(--amber)">
+        <div class="eyebrow">Earnings</div>
+        <h3 class="t">Transcript Intelligence</h3>
+        <div class="desc">Verbatim CEO/CFO quotes from quarterly earnings calls — on-the-record, timestamped, and linked to the full transcript. The highest-confidence signal type.</div>
+        <div class="ex">We hired Rodney Zemmel, who ran AI at McKinsey, to help with this. — Jonathan Gray, Blackstone Q4 2025 Earnings Call</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="sourcing">
+    <div class="sec-eyebrow">Integrity</div>
+    <h2 class="sec-title">Every claim has a source</h2>
+    <div class="sec-body">Account briefs cite their sources inline. Each field in the MEDDIC brief traces back to a specific signal, data point, or verified proof point — never invented.</div>
+    <div class="card">
+      <table class="labels">
+        <thead><tr><th>Source Type</th><th>How It Appears</th></tr></thead>
+        <tbody>
+          <tr><td class="name">Earnings transcript</td><td>Speaker name, context (prepared remarks / Q&amp;A), verbatim quote, transcript link</td></tr>
+          <tr><td class="name">Press / LinkedIn</td><td>Publication, date, clickable URL</td></tr>
+          <tr><td class="name">Verified proof point</td><td>Tagged citation — e.g. (src:  case study) with traceable origin</td></tr>
+          <tr><td class="name">Firm data</td><td>SEC filing, AUM, firm type — always labeled (firm data: ...)</td></tr>
+          <tr><td class="name">Inference</td><td>Explicitly marked: "no direct signal — inference only"</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="meddic">
+    <div class="sec-eyebrow">Scoring Philosophy</div>
+    <h2 class="sec-title">MEDDIC as the scoring backbone</h2>
+    <div class="sec-body">Every contact is scored against MEDDIC criteria. The four weighted dimensions below are not arbitrary — each one maps to a MEDDIC letter, so a composite score doubles as a read on deal qualification.</div>
+    <div class="card" style="margin-top:14px">
+      <table class="labels">
+        <thead><tr><th>Dimension</th><th>MEDDIC Mapping</th></tr></thead>
+        <tbody>
+          <tr><td class="name">ICP Fit</td><td>Metrics + Economic Buyer — is this firm the kind of account where  has proven ROI, and is the contact senior enough to influence a budgeted decision?</td></tr>
+          <tr><td class="name">AI Readiness</td><td>Identified Pain + Decision Criteria — does the firm have the workflow pain and an active evaluation framework, not just stated AI ambition?</td></tr>
+          <tr><td class="name">Reachability</td><td>Champion access — verified email to a named person plausibly positioned to convene the buying committee. A prerequisite for the rest of MEDDIC, not the Champion qualification itself.</td></tr>
+          <tr><td class="name">Signal Freshness</td><td>Decision Process timing — recency of in-market behavior. Old signals decay; recent ones indicate the purchase window is open now.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="scoring-formula">
+    <div class="sec-eyebrow">Step 3 · Scoring</div>
+    <h2 class="sec-title">How we score each contact</h2>
+    <div class="sec-body">A weighted composite across four dimensions. Every dimension is scored 0-100 by Claude given the firm, contact, and signal context.</div>
+    <div class="formula">Score = <b>0.30</b>·ICP + <b>0.25</b>·AI + <b>0.25</b>·Reach + <b>0.20</b>·Fresh</div>
+    <div class="dim-grid">
+      <div class="dim-card"><span class="wt">30%</span><div class="t">ICP Fit</div>
+        <div class="desc">Firm type, AUM tier, workflow fit. Tier 1 megafunds score highest.</div></div>
+      <div class="dim-card"><span class="wt">25%</span><div class="t">AI Readiness</div>
+        <div class="desc">Buying stage, AI hiring, published AI strategy. Evidence the firm is moving.</div></div>
+      <div class="dim-card"><span class="wt">25%</span><div class="t">Reachability</div>
+        <div class="desc">Verified email, named decision-maker, title match. No generic inboxes.</div></div>
+      <div class="dim-card"><span class="wt">20%</span><div class="t">Signal Freshness</div>
+        <div class="desc">Days since most recent signal. Last 30 days score strongly; older decays.</div></div>
+    </div>
+  </section>
+
+  <section id="skill-router">
+    <div class="sec-eyebrow">Step 4 · Skill Router</div>
+    <h2 class="sec-title">How the AI adapts per firm</h2>
+    <div class="sec-body">Before scoring, a deterministic router selects which skill sections to load into Claude's prompt. A PE firm sees different scoring rules than an investment bank; a firm with known objections sees compliance-weighted language.</div>
+    <div class="card">
+      <div class="router">
+        <div class="k">Firm Type →</div>
+        <div class="v"><span class="pill">icp_pe</span><span class="pill">icp_ib</span><span class="pill">icp_credit</span><span class="pill">icp_hf</span></div>
+        <div class="k">Competitor Flag →</div>
+        <div class="v"><span class="pill">displacement_alphasense</span><span class="pill">displacement_rogo</span><span class="pill">displacement_bloomberg</span><span class="pill">displacement_stack_ai</span><span class="pill">displacement_budget</span></div>
+        <div class="k">Buying Stage →</div>
+        <div class="v"><span class="pill">language_deploying</span><span class="pill">language_evaluating</span><span class="pill">language_exploring</span></div>
+        <div class="k">Signal Types →</div>
+        <div class="v"><span class="pill">signals_press</span><span class="pill">signals_hiring</span><span class="pill">signals_content_intent</span></div>
+      </div>
+      <div class="router-note">Claude only sees the sections relevant to each firm — keeping prompts precise and scoring consistent across hundreds of runs.</div>
+    </div>
+  </section>
+
+  <section id="score-labels">
+    <div class="sec-eyebrow">Step 5 · Labels</div>
+    <h2 class="sec-title">Score thresholds</h2>
+    <div class="sec-body">The composite score maps to a decision bucket. Only Strong and Good matches move to the review queue.</div>
+    <div class="card"><table class="labels">
+      <thead><tr><th>Score</th><th>Label</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td><span class="score-pill strong">75+</span></td><td class="name">Strong Match</td><td class="action">Approve for outreach</td></tr>
+        <tr><td><span class="score-pill good">55-74</span></td><td class="name">Good Match</td><td class="action">Review and enrich</td></tr>
+        <tr><td><span class="score-pill mod">35-54</span></td><td class="name">Moderate</td><td class="action">Collect more signals first</td></tr>
+        <tr><td><span class="score-pill weak">&lt;35</span></td><td class="name">Weak</td><td class="action">Deprioritize this cycle</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="economics">
+    <div class="sec-eyebrow">Unit Economics</div>
+    <h2 class="sec-title">What this costs to run</h2>
+    <div class="sec-body">Every scored contact, brief, and first-line draft routes through Claude. Hunter verifies emails. The whole pipeline is metered — costs are tracked per call and amortized over the ready-to-send queue.</div>
+    <div class="dim-grid">
+      <div class="dim-card"><div class="t">Total Cost</div>
+        <div class="desc" style="font-family:var(--font-display);font-size:28px;color:var(--text);line-height:1.1;margin-top:6px">$<span id="econ-total">—</span></div>
+        <div class="desc" style="margin-top:6px">Full pipeline run — all Claude + Hunter calls.</div></div>
+      <div class="dim-card"><div class="t">Cost Per Lead</div>
+        <div class="desc" style="font-family:var(--font-display);font-size:28px;color:var(--text);line-height:1.1;margin-top:6px">$<span id="econ-cpl">—</span></div>
+        <div class="desc" style="margin-top:6px">Amortized across the ready-to-send queue.</div></div>
+      <div class="dim-card"><div class="t">Claude Calls</div>
+        <div class="desc" style="font-family:var(--font-display);font-size:28px;color:var(--text);line-height:1.1;margin-top:6px"><span id="econ-sonnet">—</span></div>
+        <div class="desc" style="margin-top:6px">Sonnet scoring passes across the Tier 1 universe.</div></div>
+      <div class="dim-card"><div class="t">Hunter Calls</div>
+        <div class="desc" style="font-family:var(--font-display);font-size:28px;color:var(--text);line-height:1.1;margin-top:6px"><span id="econ-hunter">—</span></div>
+        <div class="desc" style="margin-top:6px">Verified-email lookups — only on promoted contacts.</div></div>
+    </div>
+    <div class="router-note" style="margin-top:24px">At this cost structure, a single closed Tier 1 deal repays every pipeline run the system will ever make.</div>
+  </section>
+
+  <hr style="border:none;border-top:1px solid var(--border);margin:40px 0">
+
+  <!-- ═══ THE PITCH ═══ -->
+
+  <section id="pitch-thesis" style="padding:48px 0 32px">
+    <div class="sec-eyebrow" style="color:var(--blue)">THE THESIS</div>
+    <h2 style="font-family:var(--font-display);font-size:clamp(28px,4vw,48px);line-height:1.15;margin:16px 0 0;font-weight:600">
+      Institutional sales is won on <span style="color:var(--blue)">depth</span><span style="color:var(--text-3)">, not cadence.</span>
+    </h2>
+  </section>
+
+  <section id="pitch-buyer" style="padding:40px 0">
+    <div class="sec-eyebrow" style="color:var(--blue)">THE BUYER</div>
+    <h2 class="sec-title">This ICP rewards precision.</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:28px">
+      <div class="card" style="padding:28px">
+        <div style="font-family:var(--font-display);font-size:32px;color:var(--blue);margin-bottom:12px">1</div>
+        <h3 style="font-size:16px;font-weight:600;margin:0 0 12px;line-height:1.35">Senior buyers forward what's good. And what's bad.</h3>
+        <ul style="margin:0;padding-left:18px;color:var(--text-2);font-size:14px;line-height:1.65">
+          <li>These buyers talk to each other constantly. Peer networks are dense.</li>
+          <li>A great email gets passed around their peer group. A bad one does too.</li>
+          <li>The cost of getting it wrong is higher than anywhere else.</li>
+        </ul>
+      </div>
+      <div class="card" style="padding:28px">
+        <div style="font-family:var(--font-display);font-size:32px;color:var(--blue);margin-bottom:12px">2</div>
+        <h3 style="font-size:16px;font-weight:600;margin:0 0 12px;line-height:1.35">Evaluations happen around specific moments.</h3>
+        <ul style="margin:0;padding-left:18px;color:var(--text-2);font-size:14px;line-height:1.65">
+          <li>Nobody on this list is evaluating vendors continuously.</li>
+          <li>The buying signals that matter are discrete events — a new hire, a new mandate, a competitive deadline.</li>
+          <li>You catch those moments by paying attention before they happen.</li>
+        </ul>
+      </div>
+      <div class="card" style="padding:28px">
+        <div style="font-family:var(--font-display);font-size:32px;color:var(--blue);margin-bottom:12px">3</div>
+        <h3 style="font-size:16px;font-weight:600;margin:0 0 12px;line-height:1.35">The buyer has seen every pitch.</h3>
+        <ul style="margin:0;padding-left:18px;color:var(--text-2);font-size:14px;line-height:1.65">
+          <li>Every firm in this ICP is being pitched by dozens of AI companies right now.</li>
+          <li>Standing out isn't about being louder. It's about being the one that obviously did the work.</li>
+          <li>The goal is to make every first touch sound built for them — because it was.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="pitch-roadmap" style="padding:40px 0 60px">
+    <div class="sec-eyebrow" style="color:var(--blue)">THE ROADMAP</div>
+    <h2 class="sec-title" style="max-width:720px">Your CRM shows what reps own. This shows what's happening inside it — this week.</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px;margin-top:32px">
+      <div>
+        <div style="border-top:3px solid var(--blue);padding-top:16px;margin-bottom:20px">
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;color:var(--blue)">Distribution</div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:2px">how reps see the signals</div>
+        </div>
+        <div class="card" style="padding:16px;margin-bottom:12px"><h4 style="font-size:14px;font-weight:600;margin:0 0 6px">Morning brief in the rep's Slack</h4><p style="margin:0;font-size:13px;color:var(--text-2);line-height:1.5">The three things in your territory that moved overnight. Start here.</p></div>
+        <div class="card" style="padding:16px;margin-bottom:12px"><h4 style="font-size:14px;font-weight:600;margin:0 0 6px">Ask the system anything about your book</h4><p style="margin:0;font-size:13px;color:var(--text-2);line-height:1.5">"Which of my accounts moved this week?" Real questions against the rep's own accounts and signals.</p></div>
+        <div class="card" style="padding:16px"><h4 style="font-size:14px;font-weight:600;margin:0 0 6px">Ambient alerts on named accounts</h4><p style="margin:0;font-size:13px;color:var(--text-2);line-height:1.5">A new hire, tweet, funding round, or earnings mention fires a DM to the rep who owns the account.</p></div>
+      </div>
+      <div>
+        <div style="border-top:3px solid var(--teal);padding-top:16px;margin-bottom:20px">
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;color:var(--teal)">Action</div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:2px">signal becomes outreach</div>
+        </div>
+        <div class="card" style="padding:16px;margin-bottom:12px"><h4 style="font-size:14px;font-weight:600;margin:0 0 6px">Push to Outreach on approve</h4><p style="margin:0;font-size:13px;color:var(--text-2);line-height:1.5">One click sends the contact into the rep's sequence with the signal-derived first line already written.</p></div>
+        <div class="card" style="padding:16px;margin-bottom:12px"><h4 style="font-size:14px;font-weight:600;margin:0 0 6px">Trigger-based handoffs</h4><p style="margin:0;font-size:13px;color:var(--text-2);line-height:1.5">A churn signal routes to CSM. A product signal routes to AE. Signals become tasks across the GTM org.</p></div>
+        <div class="card" style="padding:16px"><h4 style="font-size:14px;font-weight:600;margin:0 0 6px">Reply feedback loop</h4><p style="margin:0;font-size:13px;color:var(--text-2);line-height:1.5">Open, reply, and meeting rates feed back into scoring. The system learns which signals actually produce pipeline.</p></div>
+      </div>
+      <div>
+        <div style="border-top:3px solid var(--green);padding-top:16px;margin-bottom:20px">
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;color:var(--green)">Intelligence</div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:2px">system gets smarter</div>
+        </div>
+        <div class="card" style="padding:16px;margin-bottom:12px"><h4 style="font-size:14px;font-weight:600;margin:0 0 6px">Earnings transcript mining</h4><p style="margin:0;font-size:13px;color:var(--text-2);line-height:1.5">Every public PE firm's quarterly call. When a COO says "AI spend" on the record, that sentence becomes the first line.</p></div>
+        <div class="card" style="padding:16px;margin-bottom:12px"><h4 style="font-size:14px;font-weight:600;margin:0 0 6px">Product signals into Salesforce</h4><p style="margin:0;font-size:13px;color:var(--text-2);line-height:1.5">Usage, engagement, intent — written into the CRM as structured data. Every other agent at  can act on it.</p></div>
+        <div class="card" style="padding:16px"><h4 style="font-size:14px;font-weight:600;margin:0 0 6px">A second brain with full territory context</h4><p style="margin:0;font-size:13px;color:var(--text-2);line-height:1.5">Each rep's book, buyers, and signals — accessible in Claude, Slack, Gmail. Via MCP.</p></div>
+        <div class="card" style="padding:16px;margin-top:12px;background:rgba(70,91,255,0.04);border-color:rgba(70,91,255,0.18)"><h4 style="font-size:14px;font-weight:600;margin:0 0 6px"><span style="font-size:10px;letter-spacing:0.08em;color:var(--blue);margin-right:6px;vertical-align:1px">★</span>Matrix as the research layer</h4><p style="margin:0;font-size:13px;color:var(--text-2);line-height:1.5">'s own product processes the exact document universe this system needs — earnings transcripts, 10-Ks, LP letters, portfolio press. Dogfood Matrix internally to generate pre-call account briefs for every AE, refreshed weekly. No other AI company can do GTM this way.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <div class="sec-eyebrow">Live system</div>
+    <h2 class="sec-title">See it in action</h2>
+    <p class="cta-body">The full pipeline is live — <b id="cta-tier1">—</b> firms, <b id="cta-contacts">—</b> contacts, <b id="cta-ready">—</b> ready for outreach.</p>
+    <a href="index.html" class="btn-primary">Open the queue →</a>
+  </section>
+
+</main>
+
+<footer id="footer">Loading…</footer>
+
+<script>
+(() => {
+  const esc = s => String(s==null?'':s);
+  const setNum = (id, v) => {
+    if (v == null || Number.isNaN(v)) return;
+    const e = document.getElementById(id);
+    if (e) e.textContent = Number(v).toLocaleString();
+  };
+  async function load(){
+    let generated_at = null, contactCount = null;
+    // Primary source: analytics_data.json for discovery funnel numbers
+    try{
+      const r = await fetch('analytics_data.json', {cache:'no-store'});
+      if (r.ok){
+        const d = await r.json();
+        const f = d.funnel || {};
+        setNum('meth-icp',   f.icp_qualified);
+        setNum('meth-tier2', f.tier2_monitored);
+        setNum('meth-tier1', f.tier1_active);
+        setNum('meth-ready', f.ready);
+        setNum('m-icp-qualified', f.icp_qualified);
+        setNum('m-sec-indexed',   f.sec_indexed);
+        setNum('m-tier2',         f.tier2_monitored);
+        setNum('m-tier1',         f.tier1_active);
+        setNum('m-tier1-sub',     f.tier1_active);
+        setNum('m-tier1-title',   f.tier1_active);
+        setNum('m-icp-title',     f.icp_qualified);
+        const h = d.hero || {};
+        const setText = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.textContent = v; };
+        if (h.total_cost_usd != null) setText('econ-total',  Number(h.total_cost_usd).toFixed(2));
+        if (h.cost_per_lead  != null) setText('econ-cpl',    Number(h.cost_per_lead).toFixed(3));
+        if (h.sonnet_calls   != null) setNum ('econ-sonnet', h.sonnet_calls);
+        if (h.hunter_calls   != null) setNum ('econ-hunter', h.hunter_calls);
+        generated_at = d.generated_at || generated_at;
+      }
+    } catch(err){
+      // Fallback to committed static numbers so the page never shows dashes
+      // if analytics_data.json is missing (e.g., fresh checkout, no pipeline run).
+      const fb = {
+        'm-sec-indexed':'16,639','m-icp-qualified':'7,115','m-icp-title':'7,115',
+        'm-tier2':'500','m-tier1':'40','m-tier1-sub':'40','m-tier1-title':'40',
+        'meth-icp':'7,115','meth-tier2':'500','meth-tier1':'40','meth-ready':'339',
+      };
+      for (const [id, v] of Object.entries(fb)){
+        const el = document.getElementById(id); if (el) el.textContent = v;
+      }
+    }
+    // Secondary: contacts_data.json for the footer contact count
+    try{
+      const r2 = await fetch('contacts_data.json', {cache:'no-store'});
+      if (r2.ok){
+        const data = await r2.json();
+        contactCount = (data.contacts || []).length;
+        generated_at = data.generated_at || generated_at;
+      }
+    } catch(err){ /* ignore */ }
+    const ts = generated_at ? new Date(generated_at).toLocaleString() : '—';
+    const foot = document.getElementById('footer');
+    if (foot) foot.textContent = contactCount != null
+      ? `Generated ${ts} · ${contactCount} Contacts`
+      : `Generated ${ts}`;
+  }
+  load();
+
+  // Side-nav scrollspy — highlights the currently-visible section.
+  (() => {
+    const links = document.querySelectorAll('.side-nav a[href^="#"]');
+    if (!links.length || !('IntersectionObserver' in window)) return;
+    const map = new Map();
+    links.forEach(a => { const el = document.getElementById(a.getAttribute('href').slice(1)); if (el) map.set(el, a); });
+    const io = new IntersectionObserver((entries) => {
+      const visible = entries.filter(e => e.isIntersecting).sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (!visible) return;
+      links.forEach(a => a.classList.remove('active'));
+      const link = map.get(visible.target);
+      if (link) link.classList.add('active');
+    }, {rootMargin:'-30% 0px -55% 0px', threshold:0});
+    map.forEach((_, sec) => io.observe(sec));
+  })();
+})();
+
+  // Hydrate CTA numbers from contacts_data.json
+  (async () => {
+    try {
+      const r = await fetch('contacts_data.json', {cache:'no-store'});
+      if (!r.ok) return;
+      const d = await r.json();
+      const s = d.stats || {};
+      const setNum = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v != null ? v : '—'; };
+      setNum('cta-tier1', s.tier1_firms ?? s.total_firms ?? '—');
+      setNum('cta-contacts', (d.contacts || []).filter(c => (c.tier || 1) === 1).length || s.total_contacts);
+      // ready = tier1 contacts with score ≥ 55 and verified email
+      const ready = (d.contacts || []).filter(c => (c.tier || 1) === 1 && (c.score||0) >= 55 && c.email_verified && c.email).length;
+      setNum('cta-ready', ready);
+    } catch(e) { /* silent */ }
+  })();
+
+</script>
+</body>
+</html>
