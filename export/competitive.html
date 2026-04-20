@@ -699,7 +699,15 @@
       <p class="meth-body">Today, competitive intelligence at most enterprise teams is reactive. A rep hears a competitor mentioned on a Gong call and learns that their deal is at risk after the fact. This system inverts that &mdash; it watches public surfaces where competitors telegraph what they're building, synthesizes the signal, and routes it to the reps who need to know before the call happens. The thesis tested here is simple: public signals, read consistently and scored correctly, predict deal risk earlier than reactive feedback alone. This page documents what we monitor, how we route signal, and whether the hypothesis holds.</p>
     </section>
 
-    <!-- Section 2: Signal Surfaces -->
+    <!-- Section 2: The Bigger Picture -->
+    <section class="meth-section">
+      <h2 class="meth-section-header">What this is a piece of</h2>
+      <p class="meth-subheader"><em>The competitive intelligence tool is one surface. The thesis is bigger.</em></p>
+      <p class="meth-body">Every rep in institutional sales lives with the same problem: they own a book of 20-80 accounts, each with deep context &mdash; buyer history, competitive dynamics, product usage, deal stage, recent signals &mdash; and no single system holds all of it in one place. CRM has some. Gong has some. Slack has some. The rep's head holds the rest, fragmented across conversations and pulled up from memory on the call.</p>
+      <p class="meth-body">The end state being built toward is a GTM second brain per rep: full territory context &mdash; buyers, signals, competitive intel, deal history, product usage &mdash; available wherever the rep already works, through MCP. Every rep walks into every call with the intelligence of their best day, not their average day. Competitive intelligence is one layer of that brain. The three-layer architecture &mdash; Distribution, Action, Intelligence &mdash; documented below is how that brain reaches the rep. This page documents the first working layer.</p>
+    </section>
+
+    <!-- Section 3: Signal Surfaces -->
     <section class="meth-section">
       <h2 class="meth-section-header">Signal surfaces</h2>
       <p class="meth-subheader"><em>Every signal traces back to a specific public document.</em></p>
@@ -719,7 +727,7 @@
       </table>
     </section>
 
-    <!-- Section 3: What We Don't Catch -->
+    <!-- Section 4: What We Don't Catch -->
     <section class="meth-section">
       <h2 class="meth-section-header">What this system doesn't see</h2>
       <p class="meth-subheader"><em>No serious competitive intelligence is omniscient.</em></p>
@@ -734,7 +742,7 @@
       </ul>
     </section>
 
-    <!-- Section 4: System Design -->
+    <!-- Section 5: System Design -->
     <section class="meth-section">
       <h2 class="meth-section-header">System design</h2>
       <p class="meth-subheader">How every rep would get rich competitive intel they can't ignore</p>
@@ -777,19 +785,42 @@
       <p class="meth-body" style="margin-top:28px">The point isn't to send reps more alerts. It's to send them the three things they can't afford to miss &mdash; routed to the territory they actually own.</p>
     </section>
 
-    <!-- Section 5: Scaling Without Noise -->
+    <!-- Section 6: Context at Scale -->
     <section class="meth-section">
-      <h2 class="meth-section-header">Scaling without noise</h2>
-      <p class="meth-subheader"><em>Why 15 competitors don't drown the reps.</em></p>
-      <p class="meth-disclaimer"><em>All three mechanisms below are design choices, not yet implemented. The first pass of 5 competitors ships without territory filtering because we're one rep (me) testing the hypothesis &mdash; scaling the filtering layer is week 2+.</em></p>
+      <h2 class="meth-section-header">Context at scale</h2>
+      <p class="meth-subheader"><em>Why the second brain doesn't collapse under its own weight.</em></p>
+      <p class="meth-body">A naive version of this system blows up immediately. If every rep's Claude instance holds the full company's signal library, the token cost is prohibitive and the relevance drops to zero. The architecture has to be rep-scoped, not company-scoped.</p>
+      <p class="meth-body" style="margin-bottom:12px"><strong>Three design principles:</strong></p>
       <ul class="meth-bullets">
-        <li><strong>Relevance scoring per rep.</strong> Every signal gets a high/medium/low rating against 's positioning, and is further filtered by which accounts in the rep's territory it could affect. A rep working BlackRock doesn't see Rogo sell-side IB signals. A rep working Jefferies doesn't see Keye PE-diligence signals.</li>
-        <li><strong>Signal consolidation.</strong> If AlphaSense publishes five blog posts in a week, the system doesn't fire five alerts. It fires one consolidated update summarizing the pattern.</li>
-        <li><strong>Rep-level context in Claude.</strong> Every signal is processed with the rep's book as context &mdash; the system knows which accounts matter to this rep and scores accordingly. Claude doesn't reason about &ldquo;is this important&rdquo; in the abstract; it reasons about &ldquo;is this important to this rep's territory this week.&rdquo;</li>
+        <li><strong>Territory is the primary filter.</strong> Context loaded into Claude for any given rep is scoped to the accounts in their book, plus a small buffer of expansion targets. A rep working 25 BlackRock and asset-manager accounts doesn't get loaded with 300 PE accounts &mdash; those signals exist but don't enter their context. Same pipeline, different slice per rep.</li>
+        <li><strong>Hierarchical memory, not flat memory.</strong> Every account has a tiered memory: (1) always-on facts &mdash; buyer names, deal stage, last touched, competitive context; (2) recent-on facts &mdash; signals and activities from the last 14 days; (3) archive &mdash; older context, retrieved only when the rep asks for it or a specific signal pattern triggers it. Claude gets tier 1 + 2 by default, tier 3 on demand. This is the difference between a system that costs $5/rep/month and one that costs $500.</li>
+        <li><strong>MCP as the retrieval layer, not the context layer.</strong> Rather than loading everything into context, expose it as MCP servers &mdash; one per domain (CRM, competitive intel, product telemetry, Gong summaries). Claude pulls what it needs, when it needs it, through tool calls. The rep's context stays lean; the memory stays rich. This is how you get a second brain without a trillion-token context window.</li>
       </ul>
+      <p class="meth-disclaimer"><em>None of this is live today. The current system runs one rep (me) with tier-1 context only. Tier 2 and 3 memory, territory-scoped loading, and MCP retrieval are the Day 60 work.</em></p>
     </section>
 
-    <!-- Section 6: The Hypothesis -->
+    <!-- Section 7: 30-60-90 Roadmap -->
+    <section class="meth-section">
+      <h2 class="meth-section-header">30-60-90 roadmap</h2>
+      <p class="meth-subheader"><em>This is the plan I'd execute against if I came in for Day 1.</em></p>
+      <div class="meth-cards">
+        <div class="meth-card">
+          <h3 class="meth-card-title">Day 30 &mdash; Signal engine live, one AE pod.</h3>
+          <p class="meth-body" style="margin-bottom:0">The competitive intelligence tool you're looking at now, running against 15 competitors, plus the core GTM signal engine extended to 's ICP. Three AEs opted in. Daily Slack brief per rep, filtered to their territory. Instrumented from Day 1 &mdash; approval rates, open rates, response rates logged every day. No other layers shipped.</p>
+        </div>
+        <div class="meth-card">
+          <h3 class="meth-card-title">Day 60 &mdash; Action layer + memory architecture.</h3>
+          <p class="meth-body" style="margin-bottom:0">CRM writeback (signals become structured Salesforce fields). Outreach push on approve. Gong pairing (reactive + proactive signals combined). Tier 2 memory (recent activity, last 14 days) layered into every rep's context. First version of MCP retrieval exposed for one domain (competitive intel). Pod expanded to 8 AEs.</p>
+        </div>
+        <div class="meth-card">
+          <h3 class="meth-card-title">Day 90 &mdash; Second brain, early form.</h3>
+          <p class="meth-body" style="margin-bottom:0">MCP retrieval across three domains (competitive intel, CRM/deal context, product telemetry). Every AE in pilot cohort has a Claude interface that answers &ldquo;what's happening in my book this week?&rdquo; with full rep-scoped context. Tier 3 archive memory queryable on demand. First outcome data: 90-day close-rate comparison on contested deals, AE-by-AE.</p>
+        </div>
+      </div>
+      <p class="meth-disclaimer" style="margin-top:24px"><em>Day 90 is not &ldquo;finished GTM second brain for all of .&rdquo; It's the working prototype, validated with data, that tells  whether to invest in scaling it to the full GTM org. The goal is to answer the empirical question, not to ship the final product.</em></p>
+    </section>
+
+    <!-- Section 8: The Hypothesis -->
     <section class="meth-section">
       <h2 class="meth-section-header">Does this actually work?</h2>
       <p class="meth-subheader"><em>The whole system is an empirical question. Here's how we'd answer it.</em></p>
@@ -803,31 +834,17 @@
       <p class="meth-body">The system isn't the answer. It's the infrastructure to run the experiment.</p>
     </section>
 
-    <!-- Section 7: Status -->
+    <!-- Section 9: Status -->
     <section class="meth-section">
       <h2 class="meth-section-header">Status</h2>
-      <p class="meth-subheader"><em>What's live, what's next.</em></p>
-      <div class="meth-status-grid">
-        <div class="meth-status-col">
-          <h4 class="meth-status-heading">Live as of Apr 20, 2026:</h4>
-          <ul class="meth-bullets">
-            <li>6 tier-1 competitor briefs generated, sourced, and refreshable</li>
-            <li>Historical trajectories for each competitor</li>
-            <li>Live Signals pipeline running; daily schedule configured</li>
-            <li>Sitemap + jobs + press monitoring implemented; daily cron active on VPS</li>
-          </ul>
-        </div>
-        <div class="meth-status-col">
-          <h4 class="meth-status-heading">Next 90 days:</h4>
-          <ul class="meth-bullets">
-            <li>Expand to 10 more competitors (tier 2 and 3)</li>
-            <li>Slack routing layer &mdash; alerts to reps based on territory</li>
-            <li>Gong integration for pairing proactive signal with reactive mentions</li>
-            <li>Salesforce writeback so every competitive signal becomes a structured field other agents can act on</li>
-            <li>Deal-outcome feedback loop to score signal quality empirically</li>
-          </ul>
-        </div>
-      </div>
+      <p class="meth-subheader"><em>What's live today.</em></p>
+      <h4 class="meth-status-heading">Live as of Apr 20, 2026:</h4>
+      <ul class="meth-bullets">
+        <li>6 tier-1 competitor briefs generated, sourced, and refreshable</li>
+        <li>Historical trajectories for each competitor</li>
+        <li>Live Signals pipeline running; daily schedule configured</li>
+        <li>Sitemap + jobs + press monitoring implemented; daily cron active on VPS</li>
+      </ul>
     </section>
 
     <!-- Footer -->
