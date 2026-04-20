@@ -711,7 +711,7 @@
     <section class="meth-section">
       <h2 class="meth-section-header">Signal surfaces</h2>
       <p class="meth-subheader"><em>Every signal traces back to a specific public document.</em></p>
-      <p class="meth-body">The system monitors six classes of public signal across 6 tier-1 competitors. Each surface catches a different kind of competitive move. No single source is sufficient &mdash; the leverage comes from combining them.</p>
+      <p class="meth-body">The system monitors six classes of public signal across 6 tier-1 competitors (expanding to 15). Each surface catches a different kind of competitive move. No single source is sufficient &mdash; the leverage comes from combining them.</p>
       <table class="meth-table">
         <thead>
           <tr><th>Surface</th><th>What it catches</th><th>Example from this run</th></tr>
@@ -758,6 +758,7 @@
             <li>Morning brief in the rep's Slack when a tier-1 competitor ships or announces &mdash; filtered to only the accounts in that rep's territory that are likely affected</li>
             <li>CRM-synced email summary weekly &mdash; competitive delta for every open opportunity</li>
             <li>Ambient alerts for deal-risk signals &mdash; when a competitor signal pairs with a Gong mention on the same account, the system fires a direct DM</li>
+            <li><strong>Distribution doesn't stop at the rep.</strong> Same signal pipeline, different audiences &mdash; reps get territory-filtered alerts, managers get team digest, leadership gets aggregate patterns, product gets competitor-move clustering. Single-rep distribution is single-point-of-failure by design; multi-audience distribution is how organizational memory forms.</li>
           </ul>
         </div>
         <!-- Action -->
@@ -806,15 +807,18 @@
       <div class="meth-cards">
         <div class="meth-card">
           <h3 class="meth-card-title">Day 30 &mdash; Signal engine live, one AE pod.</h3>
-          <p class="meth-body" style="margin-bottom:0">The competitive intelligence tool you're looking at now, running against 15 competitors, plus the core GTM signal engine extended to 's ICP. Three AEs opted in. Daily Slack brief per rep, filtered to their territory. Instrumented from Day 1 &mdash; approval rates, open rates, response rates logged every day. No other layers shipped.</p>
+          <p class="meth-body">The competitive intelligence tool you're looking at now, expanded from 5 to 15 competitors, plus the core GTM signal engine extended to 's ICP. Three AEs opted in to a daily territory-filtered Slack brief. Instrumented from Day 1 &mdash; approval rates, open rates, response rates logged every day.</p>
+          <p class="meth-disclaimer" style="margin-bottom:0"><em>Not yet: manager/leadership distribution, CRM writeback, any autonomy.</em></p>
         </div>
         <div class="meth-card">
           <h3 class="meth-card-title">Day 60 &mdash; Action layer + memory architecture.</h3>
-          <p class="meth-body" style="margin-bottom:0">CRM writeback (signals become structured Salesforce fields). Outreach push on approve. Gong pairing (reactive + proactive signals combined). Tier 2 memory (recent activity, last 14 days) layered into every rep's context. First version of MCP retrieval exposed for one domain (competitive intel). Pod expanded to 8 AEs.</p>
+          <p class="meth-body">Signals route beyond the rep: team digest to managers, aggregate pattern report to leadership. CRM writeback lands &mdash; every signal becomes a structured Salesforce field other agents can read. Outreach push on approve. Gong pairing (reactive + proactive signals combined on the same account). Memory architecture: hierarchical tiering so context stays lean and rich. Pod expanded to 8 AEs.</p>
+          <p class="meth-disclaimer" style="margin-bottom:0"><em>Not yet: MCP retrieval, autonomous CSM actions, product telemetry integration.</em></p>
         </div>
         <div class="meth-card">
           <h3 class="meth-card-title">Day 90 &mdash; Second brain, early form.</h3>
-          <p class="meth-body" style="margin-bottom:0">MCP retrieval across three domains (competitive intel, CRM/deal context, product telemetry). Every AE in pilot cohort has a Claude interface that answers &ldquo;what's happening in my book this week?&rdquo; with full rep-scoped context. Tier 3 archive memory queryable on demand. First outcome data: 90-day close-rate comparison on contested deals, AE-by-AE.</p>
+          <p class="meth-body">MCP retrieval across three domains (competitive intel, CRM/deal context, product telemetry). Every AE in pilot cohort has a Claude interface that answers &ldquo;what's happening in my book this week?&rdquo; with full rep-scoped context. Tier 3 archive memory queryable on demand. CSM playbook autonomy for structural signals (DAU drop, seat activation stall). First outcome data: 90-day close-rate comparison on contested deals, AE-by-AE.</p>
+          <p class="meth-disclaimer" style="margin-bottom:0"><em>Not yet: full GTM rollout, fully autonomous outbound (and by design &mdash; outbound stays human-in-the-loop).</em></p>
         </div>
       </div>
       <p class="meth-disclaimer" style="margin-top:24px"><em>Day 90 is not &ldquo;finished GTM second brain for all of .&rdquo; It's the working prototype, validated with data, that tells  whether to invest in scaling it to the full GTM org. The goal is to answer the empirical question, not to ship the final product.</em></p>
@@ -831,6 +835,7 @@
         <li><strong>Compare.</strong> Over a 90-day window, compare close rate and cycle time between two cohorts: deals where reps received + engaged with a signal, and deals where they didn't.</li>
         <li><strong>Iterate.</strong> If signals that predicted outcomes scored low in the relevance model, retrain. If signals that scored high produced no lift, retrain. Every closed deal is a labeled training example.</li>
       </ol>
+      <p class="meth-body">Some effects compound without being directly measurable. Reps who see competitive intelligence every morning know their market better than reps who don't &mdash; and that shows up in pitch quality, pricing conversations, and the willingness to push back in contested deals. You can't A/B test the education of a sales team over six months, but you can measure whether the instrumented team closes harder deals at higher ACVs. The empirical question is narrow. The compounding effects are broader.</p>
       <p class="meth-body">The system isn't the answer. It's the infrastructure to run the experiment.</p>
     </section>
 
@@ -840,7 +845,7 @@
       <p class="meth-subheader"><em>What's live today.</em></p>
       <h4 class="meth-status-heading">Live as of Apr 20, 2026:</h4>
       <ul class="meth-bullets">
-        <li>6 tier-1 competitor briefs generated, sourced, and refreshable</li>
+        <li>5 tier-1 competitor briefs generated, sourced, and refreshable</li>
         <li>Historical trajectories for each competitor</li>
         <li>Live Signals pipeline running; daily schedule configured</li>
         <li>Sitemap + jobs + press monitoring implemented; daily cron active on VPS</li>
@@ -848,7 +853,7 @@
     </section>
 
     <!-- Footer -->
-    <p class="meth-footer-note">Last pipeline run: Apr 20, 2026 &middot; 6 competitors tracked</p>
+    <p class="meth-footer-note">Last pipeline run: Apr 20, 2026 &middot; 5 competitors tracked</p>
 
   </div>
 </div>
