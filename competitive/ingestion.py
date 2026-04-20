@@ -162,7 +162,7 @@ def classify_page_type(url: str) -> str:
 
 _domain_last_fetch: dict[str, float] = {}
 _domain_lock = threading.Lock()
-_RATE_LIMIT_SECONDS = 1.0  # 1 request per second per domain
+_RATE_LIMIT_SECONDS = 0.35  # ~3 requests per second per domain
 
 _USER_AGENT = "CIBot/1.0"
 
