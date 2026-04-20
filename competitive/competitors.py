@@ -36,7 +36,7 @@ _TIMEOUT = 10  # seconds
 
 # Tier-1: immediate targets, highest competitive relevance to .
 COMPETITORS_V1: list[tuple] = [
-    ("alphasense", "AlphaSense", "https://www.alphasense.com", 1, "Incumbent, acquired Tegus 2024"),
+    ("alphasense", "AlphaSense", "https://www.alpha-sense.com", 1, "Incumbent, acquired Tegus 2024"),
     ("rogo", "Rogo", "https://rogo.ai", 1, "Dominant in sell-side IB, $75M Series C"),
     ("f2", "F2.ai", "https://f2.ai", 1, "Deterministic spreadsheet computation, explicit  challenger"),
     ("blueflame", "Blueflame AI", "https://blueflame.ai", 1, "Acquired by Datasite, embedded in VDR"),

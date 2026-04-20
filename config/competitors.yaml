@@ -1,11 +1,11 @@
 competitors:
   - slug: alphasense
     name: "AlphaSense"
-    domain: alphasense.com
-    sitemap_url: https://www.alphasense.com/sitemap.xml
+    domain: alpha-sense.com
+    sitemap_url: https://www.alpha-sense.com/sitemap.xml
     jobs_url: https://boards.greenhouse.io/alphasense
     jobs_source: greenhouse
-    dns_root: alphasense.com
+    dns_root: alpha-sense.com
     github_orgs: ["AlphaSense-Engineering"]
     exa_queries:
       - "AlphaSense product launch"
