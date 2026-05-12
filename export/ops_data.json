@@ -1,0 +1,218 @@
+{
+  "generated_at": "2026-05-12T18:58:00+00:00",
+  "stats": {
+    "total_contacts": 569,
+    "verified": 497,
+    "need_email": 72,
+    "signal_gaps": 14,
+    "ready": 339,
+    "strong_match": 27,
+    "avg_score": 64.2,
+    "avg_icp_fit": 71.5,
+    "avg_ai_readiness": 58.0,
+    "queue_pending": 142,
+    "with_first_line": 341,
+    "with_brief": 484,
+    "sec_indexed": 16639,
+    "sec_icp": 7115,
+    "total_aum": 15200000000000,
+    "tier1_firms": 40,
+    "tier2_firms": 500,
+    "tier3_firms": 0,
+    "total_signals": 542,
+    "latest_signal": "2026-05-11",
+    "email_sources": {
+      "exa_team_page": { "n": 198, "verified": 180 },
+      "team_page_direct": { "n": 142, "verified": 132 },
+      "hunter": { "n": 140, "verified": 140 },
+      "pattern": { "n": 41, "verified": 0 },
+      "linkedin": { "n": 34, "verified": 31 },
+      "manual": { "n": 14, "verified": 14 },
+      "none": { "n": 0, "verified": 0 }
+    }
+  },
+  "health": {
+    "db_path": "data/meddic.db",
+    "db_size_kb": 8412.0,
+    "row_counts": {
+      "firms": 540,
+      "contacts": 569,
+      "signals": 542,
+      "scores": 569,
+      "outreach_queue": 387,
+      "review_decisions": 365,
+      "scoring_decisions": 569,
+      "sec_universe": 16639
+    }
+  },
+  "api_keys": [
+    { "name": "ANTHROPIC_API_KEY", "set": true, "length": 108, "preview": "sk-ant-…d41f" },
+    { "name": "HUNTER_API_KEY", "set": true, "length": 40, "preview": "a7c2…9e0b" },
+    { "name": "TWITTER_API_KEY", "set": true, "length": 48, "preview": "f19a…2c7d" },
+    { "name": "APIFY_API_TOKEN", "set": true, "length": 40, "preview": "apify_api_…81f3" },
+    { "name": "EXA_API_KEY", "set": true, "length": 36, "preview": "exa_…6b2a" },
+    { "name": "API_KEY", "set": true, "length": 24, "preview": "med…7q4z" }
+  ],
+  "enrichment": {
+    "contacts": 569,
+    "verified": 497,
+    "hit_rate_pct": 87.3,
+    "by_source": [
+      { "source": "exa_team_page", "n": 198 },
+      { "source": "team_page_direct", "n": 142 },
+      { "source": "hunter", "n": 140 },
+      { "source": "pattern", "n": 41 },
+      { "source": "linkedin", "n": 34 },
+      { "source": "manual", "n": 14 }
+    ]
+  },
+  "recent_scores": [
+    { "id": 569, "scored_at": "2026-05-12T18:41:09+00:00", "firm": "Apollo Global Management", "contact": "Priya Nair", "score": 84.0, "label": "strong_match", "action": "Approve for outreach", "signal_freshness": 88.0 },
+    { "id": 568, "scored_at": "2026-05-12T18:41:09+00:00", "firm": "Blackstone", "contact": "Marcus Webb", "score": 83.0, "label": "strong_match", "action": "Approve for outreach", "signal_freshness": 79.0 },
+    { "id": 567, "scored_at": "2026-05-12T18:41:08+00:00", "firm": "KKR", "contact": "Daniel Roth", "score": 82.0, "label": "strong_match", "action": "Approve for outreach", "signal_freshness": 92.0 },
+    { "id": 566, "scored_at": "2026-05-12T18:41:08+00:00", "firm": "Vista Equity Partners", "contact": "Sarah Lindqvist", "score": 81.0, "label": "strong_match", "action": "Approve for outreach", "signal_freshness": 70.0 },
+    { "id": 565, "scored_at": "2026-05-12T18:41:07+00:00", "firm": "Carlyle Group", "contact": "Anand Krishnan", "score": 80.0, "label": "strong_match", "action": "Approve for outreach", "signal_freshness": 64.0 },
+    { "id": 564, "scored_at": "2026-05-12T18:41:07+00:00", "firm": "Brookfield Asset Management", "contact": "Helena Vogt", "score": 79.0, "label": "strong_match", "action": "Approve for outreach", "signal_freshness": 55.0 },
+    { "id": 563, "scored_at": "2026-05-12T18:41:06+00:00", "firm": "Ares Management", "contact": "Tobias Becker", "score": 72.0, "label": "good_match", "action": "Review and enrich", "signal_freshness": 55.0 },
+    { "id": 562, "scored_at": "2026-05-12T18:41:06+00:00", "firm": "Warburg Pincus", "contact": "Felix Andersson", "score": 70.0, "label": "good_match", "action": "Review and enrich", "signal_freshness": 40.0 },
+    { "id": 561, "scored_at": "2026-05-12T18:41:05+00:00", "firm": "Evercore", "contact": "Rachel Okonkwo", "score": 68.0, "label": "good_match", "action": "Review and enrich", "signal_freshness": 70.0 },
+    { "id": 560, "scored_at": "2026-05-12T18:41:05+00:00", "firm": "Moelis & Company", "contact": "David Hartmann", "score": 64.0, "label": "good_match", "action": "Review and enrich", "signal_freshness": 25.0 },
+    { "id": 559, "scored_at": "2026-05-12T18:41:04+00:00", "firm": "Houlihan Lokey", "contact": "Nadia Patel", "score": 61.0, "label": "good_match", "action": "Review and enrich", "signal_freshness": 55.0 },
+    { "id": 558, "scored_at": "2026-05-12T18:41:04+00:00", "firm": "PJT Partners", "contact": "Greg Tanaka", "score": 58.0, "label": "good_match", "action": "Review and enrich", "signal_freshness": 40.0 },
+    { "id": 557, "scored_at": "2026-05-12T18:41:03+00:00", "firm": "Oaktree Capital Management", "contact": "Lena Ortiz", "score": 49.0, "label": "moderate", "action": "Collect more signals first", "signal_freshness": 0.0 },
+    { "id": 556, "scored_at": "2026-05-12T18:41:03+00:00", "firm": "Genstar Capital", "contact": "Head of AI & Data Science (TBD)", "score": 44.0, "label": "moderate", "action": "Collect more signals first", "signal_freshness": 0.0 }
+  ],
+  "recent_signals": [
+    { "id": 542, "signal_type": "twitter", "signal_subtype": "pain", "author_name": "ldn_pe_associate", "signal_date": "2026-05-11", "freshness_days": 1, "content": "Six weeks into diligence on a take-private and the data room has 11,000 docs. We are three associates and a printer. There has to be a better way to triage a VDR than ctrl-F.", "created_at": "2026-05-12 18:41:00", "firm": null },
+    { "id": 541, "signal_type": "hiring", "signal_subtype": "transformation", "author_name": null, "signal_date": "2026-05-10", "freshness_days": 2, "content": "Apollo Global Management posted for a Senior ML Engineer, Portfolio Performance — JD calls out building agentic document workflows for post-close value creation. Reports into the Head of AI.", "created_at": "2026-05-12 18:41:00", "firm": "Apollo Global Management" },
+    { "id": 540, "signal_type": "press", "signal_subtype": "transformation", "author_name": "Marcus Webb", "signal_date": "2026-05-08", "freshness_days": 4, "content": "Blackstone CTO on a fintech podcast: 'The bottleneck in alternatives isn't capital, it's how fast a deal team can read. We're investing heavily in tooling that compresses diligence cycles.'", "created_at": "2026-05-12 18:41:00", "firm": "Blackstone" },
+    { "id": 539, "signal_type": "linkedin", "signal_subtype": "evaluation", "author_name": "Daniel Roth", "signal_date": "2026-05-07", "freshness_days": 5, "content": "MD, Data & AI at KKR: 'Spent the week running a bake-off across four AI document platforms. Surprised how much variance there is on reasoning over private deal materials vs. public filings.'", "created_at": "2026-05-12 18:41:00", "firm": "KKR" },
+    { "id": 538, "signal_type": "press", "signal_subtype": "transformation", "author_name": null, "signal_date": "2026-05-06", "freshness_days": 6, "content": "Vista Equity Partners named Sarah Lindqvist Head of AI Strategy & Value Creation; mandate covers diligence automation and a portfolio-wide AI center of excellence.", "created_at": "2026-05-12 18:41:00", "firm": "Vista Equity Partners" },
+    { "id": 537, "signal_type": "twitter", "signal_subtype": "competitor_frustration", "author_name": "bucketshopcap", "signal_date": "2026-05-05", "freshness_days": 7, "content": "Tried getting AlphaSense into the research process, didn't realize it was THAT expensive for what is mostly summarizing public filings. Great for monitoring, not for the actual analysis.", "created_at": "2026-05-12 18:41:00", "firm": null },
+    { "id": 536, "signal_type": "hiring", "signal_subtype": "evaluation", "author_name": null, "signal_date": "2026-05-04", "freshness_days": 8, "content": "Carlyle Group recruiting a Director of AI Strategy & Value Creation — JD names due-diligence workflow automation with LLMs as a core deliverable for the first 12 months.", "created_at": "2026-05-12 18:41:00", "firm": "Carlyle Group" },
+    { "id": 535, "signal_type": "press", "signal_subtype": "transformation", "author_name": "Helena Vogt", "signal_date": "2026-05-02", "freshness_days": 10, "content": "Brookfield Global Head of AI Infrastructure: firm is tracking 800+ internal AI use cases and standing up shared infrastructure for portfolio companies; document intelligence flagged as a top-five priority.", "created_at": "2026-05-12 18:41:00", "firm": "Brookfield Asset Management" },
+    { "id": 534, "signal_type": "twitter", "signal_subtype": "evaluation", "author_name": "BoringBiz_", "signal_date": "2026-05-01", "freshness_days": 11, "content": "The finance AI tool stack in 2026: ChatGPT / Claude / Gemini for quick research, AlphaSense or Rogo for the deep dives into 10-Ks and transcripts, and a growing pile of vertical point tools.", "created_at": "2026-05-12 18:41:00", "firm": null },
+    { "id": 533, "signal_type": "press", "signal_subtype": "evaluation", "author_name": null, "signal_date": "2026-04-29", "freshness_days": 13, "content": "Evercore hosted its inaugural Digital Finance Summit; Director of Research Operations Rachel Okonkwo on a panel about AI-assisted buyer-list generation and deal screening.", "created_at": "2026-05-12 18:41:00", "firm": "Evercore" },
+    { "id": 532, "signal_type": "hiring", "signal_subtype": "evaluation", "author_name": null, "signal_date": "2026-04-27", "freshness_days": 15, "content": "Moelis & Company recruiting for a Thought Leadership & Enablement role tasked with evaluating generative-AI and workflow-automation tools for the advisory practice.", "created_at": "2026-05-12 18:41:00", "firm": "Moelis & Company" },
+    { "id": 531, "signal_type": "twitter", "signal_subtype": "pain", "author_name": "Brett Caughran", "signal_date": "2026-04-24", "freshness_days": 18, "content": "The three-layer cake of hedge-fund diligence: desktop research, primary research, then the actual insight. Most of the calendar goes to layer one. That layer is the one AI should be eating.", "created_at": "2026-05-12 18:41:00", "firm": null },
+    { "id": 530, "signal_type": "hiring", "signal_subtype": "transformation", "author_name": null, "signal_date": "2026-04-22", "freshness_days": 20, "content": "Warburg Pincus Lead Data Scientist/AI Engineer posting reveals an internal integration layer wiring Rogo and other tools via API; separately evaluating Claude as the platform reasoning layer.", "created_at": "2026-05-12 18:41:00", "firm": "Warburg Pincus" },
+    { "id": 529, "signal_type": "press", "signal_subtype": "transformation", "author_name": null, "signal_date": "2026-04-19", "freshness_days": 23, "content": "General Atlantic confirmed in a vendor case study it is using Claude for portfolio diligence — specifically performance-metric extraction and valuation analysis across deal documents.", "created_at": "2026-05-12 18:41:00", "firm": "General Atlantic" }
+  ],
+  "parse_errors": [],
+  "pipeline_cadence": [
+    { "day": "2026-04-29", "n": 18, "avg_score": 61.4 },
+    { "day": "2026-04-30", "n": 24, "avg_score": 63.0 },
+    { "day": "2026-05-01", "n": 31, "avg_score": 64.8 },
+    { "day": "2026-05-02", "n": 12, "avg_score": 59.7 },
+    { "day": "2026-05-03", "n": 0, "avg_score": null },
+    { "day": "2026-05-04", "n": 22, "avg_score": 62.1 },
+    { "day": "2026-05-05", "n": 27, "avg_score": 65.3 },
+    { "day": "2026-05-06", "n": 19, "avg_score": 60.9 },
+    { "day": "2026-05-07", "n": 34, "avg_score": 66.0 },
+    { "day": "2026-05-08", "n": 41, "avg_score": 64.4 },
+    { "day": "2026-05-09", "n": 16, "avg_score": 58.8 },
+    { "day": "2026-05-10", "n": 23, "avg_score": 63.7 },
+    { "day": "2026-05-11", "n": 29, "avg_score": 65.1 },
+    { "day": "2026-05-12", "n": 14, "avg_score": 67.2 }
+  ],
+  "fallthrough": {
+    "below_threshold": 182,
+    "no_email": 48,
+    "no_signal": 14,
+    "exploring": 160
+  },
+  "source_health": {
+    "days": 14,
+    "sources": [
+      {
+        "signal_type": "press",
+        "series": [1, 0, 2, 1, 0, 1, 2, 1, 0, 2, 1, 0, 2, 1],
+        "days": ["2026-04-29", "2026-04-30", "2026-05-01", "2026-05-02", "2026-05-03", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-09", "2026-05-10", "2026-05-11", "2026-05-12"],
+        "total": 14,
+        "ever_total": 214,
+        "last_active": "2026-05-12",
+        "status": "active",
+        "status_label": "Active · collecting"
+      },
+      {
+        "signal_type": "hiring",
+        "series": [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
+        "days": ["2026-04-29", "2026-04-30", "2026-05-01", "2026-05-02", "2026-05-03", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-09", "2026-05-10", "2026-05-11", "2026-05-12"],
+        "total": 11,
+        "ever_total": 168,
+        "last_active": "2026-05-12",
+        "status": "active",
+        "status_label": "Active · collecting"
+      },
+      {
+        "signal_type": "twitter",
+        "series": [2, 1, 2, 1, 2, 2, 3, 1, 1, 2, 1, 1, 1, 1],
+        "days": ["2026-04-29", "2026-04-30", "2026-05-01", "2026-05-02", "2026-05-03", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-09", "2026-05-10", "2026-05-11", "2026-05-12"],
+        "total": 21,
+        "ever_total": 112,
+        "last_active": "2026-05-12",
+        "status": "active",
+        "status_label": "Active · collecting"
+      },
+      {
+        "signal_type": "linkedin",
+        "series": [1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1],
+        "days": ["2026-04-29", "2026-04-30", "2026-05-01", "2026-05-02", "2026-05-03", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-09", "2026-05-10", "2026-05-11", "2026-05-12"],
+        "total": 9,
+        "ever_total": 48,
+        "last_active": "2026-05-11",
+        "status": "active",
+        "status_label": "Active · collecting"
+      }
+    ]
+  },
+  "signal_quality": {
+    "sources": [
+      { "signal_type": "press", "total_signals": 214, "firms_touched": 33, "avg_score": 67.8, "avg_freshness_days": 96.0 },
+      { "signal_type": "hiring", "total_signals": 168, "firms_touched": 29, "avg_score": 65.2, "avg_freshness_days": 71.0 },
+      { "signal_type": "twitter", "total_signals": 112, "firms_touched": 18, "avg_score": 61.5, "avg_freshness_days": 41.0 },
+      { "signal_type": "linkedin", "total_signals": 48, "firms_touched": 14, "avg_score": 60.0, "avg_freshness_days": 33.0 }
+    ],
+    "top_signals": [
+      { "id": 540, "signal_type": "press", "signal_subtype": "transformation", "content": "Blackstone CTO on a fintech podcast: the bottleneck in alternatives isn't capital, it's how fast a deal team can read — investing heavily in tooling that compresses diligence cycles.", "signal_date": "2026-05-08", "source_url": "https://example-podcast.fm/episodes/blackstone-cto", "firm": "Blackstone", "contact_score": 83.0 },
+      { "id": 541, "signal_type": "hiring", "signal_subtype": "transformation", "content": "Apollo Global Management posted for a Senior ML Engineer, Portfolio Performance — building agentic document workflows for post-close value creation, reporting to the Head of AI.", "signal_date": "2026-05-10", "source_url": "https://jobs.example.com/apollo/ml-engineer-portfolio", "firm": "Apollo Global Management", "contact_score": 84.0 },
+      { "id": 539, "signal_type": "linkedin", "signal_subtype": "evaluation", "content": "MD, Data & AI at KKR ran a bake-off across four AI document platforms — noting wide variance on reasoning over private deal materials vs. public filings.", "signal_date": "2026-05-07", "source_url": "https://www.linkedin.com/feed/", "firm": "KKR", "contact_score": 82.0 },
+      { "id": 538, "signal_type": "press", "signal_subtype": "transformation", "content": "Vista Equity Partners named a Head of AI Strategy & Value Creation; mandate covers diligence automation and a portfolio-wide AI center of excellence.", "signal_date": "2026-05-06", "source_url": "https://www.businesswire.com/news/vista-ai-strategy", "firm": "Vista Equity Partners", "contact_score": 81.0 },
+      { "id": 535, "signal_type": "press", "signal_subtype": "transformation", "content": "Brookfield Global Head of AI Infrastructure: firm tracking 800+ internal AI use cases; document intelligence is a top-five priority for shared portfolio infrastructure.", "signal_date": "2026-05-02", "source_url": "https://www.brookfield.com/news/ai-infrastructure", "firm": "Brookfield Asset Management", "contact_score": 79.0 },
+      { "id": 536, "signal_type": "hiring", "signal_subtype": "evaluation", "content": "Carlyle Group recruiting a Director of AI Strategy & Value Creation — due-diligence workflow automation with LLMs named as a core 12-month deliverable.", "signal_date": "2026-05-04", "source_url": "https://jobs.example.com/carlyle/director-ai-strategy", "firm": "Carlyle Group", "contact_score": 80.0 },
+      { "id": 530, "signal_type": "hiring", "signal_subtype": "transformation", "content": "Warburg Pincus Lead Data Scientist/AI Engineer posting reveals an internal integration layer wiring AI document tools via API; evaluating Claude as the reasoning layer.", "signal_date": "2026-04-22", "source_url": "https://jobs.example.com/warburg/lead-data-scientist", "firm": "Warburg Pincus", "contact_score": 70.0 },
+      { "id": 529, "signal_type": "press", "signal_subtype": "transformation", "content": "General Atlantic confirmed in a vendor case study it uses Claude for portfolio diligence — performance-metric extraction and valuation analysis across deal documents.", "signal_date": "2026-04-19", "source_url": "https://www.anthropic.com/customers", "firm": "General Atlantic", "contact_score": 77.0 }
+    ],
+    "interpretation": {
+      "findings": [
+        "Press is the highest-yield source — avg contact score 67.8 across 33 firms, and the only source attached to the bulk of strong matches.",
+        "Hiring signals are close behind (65.2 avg) and run fresher (71-day median) — JD language is a reliable proxy for buying stage.",
+        "Twitter/X surfaces real pain but converts the lowest (61.5 avg); it works best as a wedge for cold ICP outreach, not as a primary qualifier."
+      ],
+      "optimizations": [
+        "Press scores well but averages 96 days old — narrowing the Exa recency window from 9 months to 6 would lift the freshness dimension on ~140 contacts.",
+        "Twitter conversion (53.9%) is dragged down by no-name handles; routing handle-only signals to the firm rather than a contact would clean up attribution.",
+        "LinkedIn is the freshest source (33-day median) but the thinnest (48 signals) — wiring the Apify company-page collector to all 40 tier-1 firms is the highest-leverage coverage gain."
+      ]
+    }
+  },
+  "firm_velocity": {
+    "days": 14,
+    "firms": [
+      { "firm": "Apollo Global Management", "stage": "deploying", "series": [0, 1, 0, 1, 0, 0, 1, 0, 2, 0, 1, 0, 1, 1], "total": 9 },
+      { "firm": "Blackstone", "stage": "evaluating", "series": [1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1], "total": 8 },
+      { "firm": "KKR", "stage": "deploying", "series": [0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1], "total": 7 },
+      { "firm": "Vista Equity Partners", "stage": "evaluating", "series": [0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0], "total": 6 },
+      { "firm": "Carlyle Group", "stage": "deploying", "series": [0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1], "total": 6 },
+      { "firm": "Brookfield Asset Management", "stage": "evaluating", "series": [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0], "total": 5 }
+    ]
+  },
+  "signal_to_reach": {
+    "firms_measured": 33,
+    "tier1_firms": 40,
+    "coverage_pct": 82.5,
+    "median_days": 6.0,
+    "p90_days": 19.0,
+    "avg_days": 9.2
+  }
+}

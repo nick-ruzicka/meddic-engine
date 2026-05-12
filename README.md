@@ -112,9 +112,51 @@ Score = 0.30 × ICP Fit  +  0.25 × AI Readiness  +  0.25 × Reachability  +  0.
 
 **Thresholds**: 75+ Strong Match (approve) · 55–74 Good Match (review) · 35–54 Moderate (enrich) · <35 Weak (deprioritize).
 
+![The score, as a rep sees it on the contact card](docs/scoring-card.png)
+
+No black-box numbers: every score expands inline on the contact card into its four weighted sub-scores, so a rep sees *why* it's an 82 — strong ICP fit, decent AI readiness, a verified contact, a slightly stale signal — not just that it is.
+
 ### Skill Router
 
 Before each scoring call a deterministic router picks the prompt sections that apply to *this* account and nothing else. A PE firm loads `icp_pe`; a Rogo customer loads `displacement_rogo`; a firm flagged `evaluating` loads `language_evaluating`. Claude only sees the sections relevant to each account — ICP type, competitor context, buying stage, signal types. This is a sales playbook encoded as a prompt routing system.
+
+## Inside the dashboard
+
+The dashboard isn't a demo skin over a CSV — it's the operating surface for the pipeline. Static HTML, custom CSS, vanilla JS; one JSON file per page; loads instantly on the $5/month box. Every number on it traces back to a row in the SQLite database.
+
+### Pipeline ops — what the engine did, in plain sight
+
+![Pipeline cadence](docs/ops-cadence.png)
+
+Every run is auditable: signals collected, contacts enriched (with the Hunter hit rate), scoring runs today, parse errors — plus a live feed of the last ten scores and the last ten signals ingested. Nothing is a black box.
+
+![Enrichment topology](docs/ops-topology.png)
+
+Where every tier-1 contact's email actually came from — Exa team-page extraction, direct scrape, Hunter verification, pattern-guess fallback, LinkedIn, manual — and a live readout of what's sitting in the database right now. The whole pipeline is one file you can `sqlite3` into.
+
+![Signal quality](docs/signal-quality.png)
+
+Which sources are pulling their weight. Press signals score highest and attach to the bulk of strong matches; hiring signals run fresher; Twitter surfaces real pain but converts lower — so the page recommends using it as a cold-outreach wedge, not a primary qualifier. The engine has opinions about its own inputs, with the next optimization spelled out.
+
+### Analytics — the whole funnel, end to end
+
+![Ready for outreach](docs/analytics-hero.png)
+
+16,639 SEC-registered investment advisers in; 339 outreach-ready contacts out — each one with an explainable score, at a fully loaded cost of $0.026 per contact.
+
+![Pipeline topology](docs/analytics-funnel.png)
+
+The funnel as a shape: SEC universe → ICP filter → tier-2 watchlist → tier-1 active → contacts scored → ready for outreach. The four-dimension score signature on the right shows which lever is weakest (signal freshness, every time), and the conversion-gap callout names the two things to fix to widen the bottom of the funnel.
+
+![Pipeline breakdown](docs/analytics-breakdown.png)
+
+Score distribution, buying-stage mix, average score by firm type, and the assets under management represented in the active pipeline — $15.2T, roughly a fifth of the US institutional AI-buying market.
+
+### Methodology — every step, documented in the product
+
+![Scoring methodology](docs/scoring-methodology.png)
+
+The methodology page walks the whole pipeline — sources, attribution, the MEDDIC mapping, the scoring model — right inside the app, not in a separate doc that drifts. Shown here: the scoring step, with the four weights and what each dimension actually measures.
 
 ## Stack
 

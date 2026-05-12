@@ -5,17 +5,6 @@ data/*.db-wal
 data/sec_adv/cache/
 data/sec_adv/*.csv
 data/sec_adv/suggestions.jsonl
-export/contacts_data.json
-export/analytics_data.json
-export/ops_data.json
-# Dashboard (static HTML/CSS + generated JSON) — ship screenshots in docs/ instead
-export/competitive_data.json
-export/competitive.html
-export/methodology.html
-export/index.html
-export/analytics.html
-export/ops.html
-export/shared.css
 logs/
 __pycache__/
 *.pyc
