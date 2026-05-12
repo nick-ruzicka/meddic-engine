@@ -32,7 +32,7 @@ def _signal_to_dict(s: ClassifiedSignal) -> dict:
         "source": s.source,
         "predictive_score": s.predictive_score,
         "lead_time_estimate": s.lead_time_estimate,
-        "tom_takeaway": s.tom_takeaway,
+        "sales_takeaway": s.sales_takeaway,
         "raw_url": s.raw_url,
         "payload": s.payload,
         "observed_at": s.observed_at.isoformat() if hasattr(s.observed_at, "isoformat") else str(s.observed_at),

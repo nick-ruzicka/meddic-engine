@@ -37,7 +37,7 @@ def _classified(
         category=category,
         predictive_score=predictive_score,
         lead_time_estimate=lead_time,
-        tom_takeaway=takeaway,
+        sales_takeaway=takeaway,
     )
 
 

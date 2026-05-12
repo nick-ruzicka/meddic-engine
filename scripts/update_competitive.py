@@ -96,7 +96,7 @@ def _get_v2_signals(conn) -> list[dict]:
             "category": r["category"],
             "predictive_score": r["predictive_score"],
             "lead_time_estimate": r["lead_time_estimate"],
-            "tom_takeaway": r["tom_takeaway"],
+            "sales_takeaway": r["sales_takeaway"],
         })
     return v2_signals
 

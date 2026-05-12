@@ -1,4 +1,4 @@
-# Build Progress —  Competitive Signal Engine v2
+# Build Progress — Competitive Signal Engine v2
 
 ## Terminal 1 — Sitemap
 - [ ] Baseline capture for all 6 competitors
@@ -44,4 +44,4 @@
 - [ ] Classifier produces valid ClassifiedSignals for synthetic input
 - [ ] Dry-run digest renders correctly
 - [ ] Live run against real competitor data
-- [ ] First Monday digest reviewed by user before sending to Tom
+- [ ] First Monday digest reviewed by the user before it goes out

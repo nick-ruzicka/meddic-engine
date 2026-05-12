@@ -170,12 +170,12 @@ class TestClassifierE2E:
         for s in actionable:
             assert s.lead_time_estimate != "", f"{s.competitor} {s.category} missing lead_time"
 
-    def test_tom_takeaways_not_empty(self):
+    def test_sales_takeaways_not_empty(self):
         classified = classify(SYNTHETIC_SIGNALS)
         actionable = [s for s in classified if s.category != "noise"]
         for s in actionable:
-            assert s.tom_takeaway != "", f"{s.competitor} {s.category} missing tom_takeaway"
-            assert len(s.tom_takeaway) > 20, f"Takeaway too short: {s.tom_takeaway}"
+            assert s.sales_takeaway != "", f"{s.competitor} {s.category} missing sales_takeaway"
+            assert len(s.sales_takeaway) > 20, f"Takeaway too short: {s.sales_takeaway}"
 
 
 class TestDigestE2E:

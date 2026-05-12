@@ -978,7 +978,7 @@ MODEL = os.getenv("COMPETITIVE_MODEL", "claude-sonnet-4-6")
 MAX_TOKENS = 2000
 TEMPERATURE = 0
 
-BRIEF_SYSTEM = """You are a senior competitive intelligence analyst at , an enterprise AI platform for institutional finance (PE, IB, asset management, credit funds). 's flagship Matrix processes unstructured documents (CIMs, VDRs, 10-Ks, earnings transcripts, IC memos) with multi-agent reasoning and strong data sovereignty (private cloud, SOC2 Type II, zero data retention). Major customers: KKR, Blackstone, Carlyle, Centerview, BlackRock.
+BRIEF_SYSTEM = """You are a senior competitive intelligence analyst supporting the GTM team for an enterprise AI platform. In this configuration the platform sells AI-driven document analysis into institutional finance (private equity, investment banks, asset management, credit funds) — due diligence, VDR/CIM analysis, IC memos, portfolio monitoring. The platform's own positioning, customers, and differentiators are whatever the scoring skill file (config/skills/scoring/icp_scoring.md) documents; do not assume specific customer names or claims not present there or in the source material below.
 
 Produce a structured competitive brief on {competitor_name} from the source material below. Respond as JSON with this exact schema:
 
@@ -988,8 +988,8 @@ Produce a structured competitive brief on {competitor_name} from the source mate
   "target_icp": "Who they sell to (specific segments)",
   "pricing_signals": "Any public signal on pricing, packaging, or contract size",
   "key_differentiation": "The one thing they say makes them different",
-  "weakness_vs_": "Where  likely still wins (cite specific capability gap)",
-  "strength_vs_": "Where they may be ahead of  (cite specific capability)",
+  "weakness_vs_platform": "Where the platform likely still wins (cite specific capability gap)",
+  "strength_vs_platform": "Where they may be ahead of the platform (cite specific capability)",
   "recent_moves": ["3-5 bullet points of their most recent public activity, newest first"],
   "threat_level": "high | medium | low",
   "threat_reasoning": "One sentence on why threat is rated that way"
@@ -2038,7 +2038,7 @@ The full HTML is ~800 lines. Key patterns to follow from `index.html`:
 <body>
 <header>
   <div class="brand">
-    <span class="name"></span>
+    <span class="name">MEDDIC</span>
     <span class="sub">Signal Engine</span>
     <span class="eyebrow">Competitive Intelligence</span>
   </div>
@@ -2130,7 +2130,7 @@ The full HTML is ~800 lines. Key patterns to follow from `index.html`:
     document.getElementById('stat-threat').textContent = s.high_threat;
     document.getElementById('stat-updated').textContent = ago(data.generated_at);
     document.getElementById('subline').textContent =
-      `${s.total_competitors} companies actively competing for 's buyer. Briefs refreshed weekly. Signals detected daily.`;
+      `${s.total_competitors} companies actively competing for the platform's buyer. Briefs refreshed weekly. Signals detected daily.`;
   }
 
   // ── Briefs ──

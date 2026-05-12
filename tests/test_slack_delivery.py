@@ -40,7 +40,7 @@ def _classified(
         category=category,
         predictive_score=predictive_score,
         lead_time_estimate=lead_time,
-        tom_takeaway=takeaway,
+        sales_takeaway=takeaway,
     )
 
 
@@ -239,7 +239,7 @@ class TestFormatAlertBlocksIncludesScore:
         assert "rogo" in all_text
 
     def test_takeaway_in_section(self):
-        """The tom_takeaway appears (bolded) in the section text."""
+        """The sales_takeaway appears (bolded) in the section text."""
         signal = _classified(takeaway="Rogo is preparing a credit analyst product.")
         blocks = format_alert_blocks(signal)
         sections = [b for b in blocks if b["type"] == "section"]

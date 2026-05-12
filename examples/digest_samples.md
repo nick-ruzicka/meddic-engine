@@ -1,6 +1,6 @@
 # Digest Quality Bar — Example Outputs
 
-These are hand-written examples of what the Monday digest should look like when the pipeline detects real signals. When tomorrow's real digest comes out, compare to these for format, tone, and specificity. If the real output doesn't match this quality bar, iterate before sending to Tom.
+These are hand-written examples of what the Monday digest should look like when the pipeline detects real signals. When tomorrow's real digest comes out, compare to these for format, tone, and specificity. If the real output doesn't match this quality bar, iterate before sending to the GTM lead.
 
 ---
 
@@ -18,7 +18,7 @@ HARVEY AI                                            [HIGH THREAT]
            Lead time: 60-90 days
            → Harvey is hiring PMM for financial services specifically.
              This is not a legal-market hire — they're building a GTM
-             team to sell into 's buyer. Expect a finance-vertical
+             team to sell into the platform's buyer. Expect a finance-vertical
              product launch or campaign in Q3 2026. Brief your AEs:
              Harvey is coming for finance, not just legal.
            Source: greenhouse.io/harvey (posted Apr 15)
@@ -33,7 +33,7 @@ blog post about PE trends). Full log: /logs/signals_2026-04-14.json
 **Why this is good:**
 - Headline is the job title — specific, not "Harvey posted a job"
 - Lead time is concrete: 60-90 days
-- Takeaway tells Tom exactly what to DO: brief AEs, Harvey is expanding into finance
+- Takeaway tells the GTM lead exactly what to DO: brief AEs, Harvey is expanding into finance
 - Source is linked
 - Noise is explicitly counted and explained, not silently dropped
 
@@ -104,10 +104,10 @@ timestamp update, Blueflame blog about AI trends). Full log:
 
 **Why this is good:**
 - Multiple signals for the same competitor are grouped and tell a story (Rogo's v2 subdomain + hiring surge = they're building something big)
-- Each takeaway is sales-angle: what does this mean for 's deals, not just "they did X"
-- Confidence scores let Tom calibrate how much to trust each signal
-- Noise count is transparent — Tom knows what was filtered and can check the full log
-- Lead times help Tom prioritize: "immediate" means brief AEs now, "60-90 days" means track but don't panic
+- Each takeaway is sales-angle: what does this mean for the platform's deals, not just "they did X"
+- Confidence scores let the GTM lead calibrate how much to trust each signal
+- Noise count is transparent — the GTM lead knows what was filtered and can check the full log
+- Lead times help the GTM lead prioritize: "immediate" means brief AEs now, "60-90 days" means track but don't panic
 
 ---
 
@@ -118,10 +118,10 @@ timestamp update, Blueflame blog about AI trends). Full log:
    → What page? What changed? So what?
 
 ❌ BAD: "New signal detected for Rogo (medium confidence)"
-   → What signal? What should Tom do about it?
+   → What signal? What should the GTM lead do about it?
 
 ❌ BAD: "Harvey AI: 12 signals detected this week"
-   → Which ones matter? Don't make Tom read 12 items.
+   → Which ones matter? Don't make the GTM lead read 12 items.
 
 ❌ BAD: "F2.ai may be launching a product"
    → Based on what? When? What product? "May be" is useless.
@@ -130,4 +130,4 @@ timestamp update, Blueflame blog about AI trends). Full log:
 Every signal in the digest must answer three questions:
 1. **What happened?** (specific, with source)
 2. **What does it mean for ?** (sales angle, not industry analysis)
-3. **What should Tom do?** (brief AEs, watch for X, prepare rebuttal)
+3. **What should the GTM lead do?** (brief AEs, watch for X, prepare rebuttal)

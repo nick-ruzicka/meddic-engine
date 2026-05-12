@@ -125,7 +125,7 @@ def classify(signals: list[RawSignal]) -> list[ClassifiedSignal]:
         classified = ClassifiedSignal.from_raw(
             signal,
             category=category,
-            tom_takeaway=takeaway,
+            sales_takeaway=takeaway,
             # predictive_score and lead_time_estimate filled by predictive_score.py
             predictive_score=0.0,
             lead_time_estimate="",

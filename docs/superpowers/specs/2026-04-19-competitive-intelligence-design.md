@@ -39,7 +39,7 @@ Standalone Python script. Does not integrate with `main.py`.
 
 ### Database Schema
 
-New tables in existing `data/.db`:
+New tables in existing `data/meddic.db`:
 
 ```sql
 competitors (slug TEXT PRIMARY KEY, name TEXT, url TEXT, tier INTEGER, positioning TEXT, last_ingested TEXT)
@@ -118,7 +118,7 @@ On every run after the first, compare current ingestion to previous snapshot. Fo
 
 - Eyebrow: COMPETITIVE INTELLIGENCE
 - H1 serif: "The competitive perimeter."
-- Subline: "5 companies actively competing for 's buyer. Briefs refreshed weekly. Signals detected daily."
+- Subline: "5 companies actively competing for the platform's buyer. Briefs refreshed weekly. Signals detected daily."
 - Stat row: `5 COMPETITORS` / `{N} SIGNALS THIS WEEK` / `{N} HIGH THREAT` / `{last_updated}`
 
 ### Tab 1: "Briefs" (default)

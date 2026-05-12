@@ -145,7 +145,7 @@ class TestContentSignal:
         signal = _raw(
             "new_url",
             {
-                "url": "https://rogo.ai/blog/rogo-vs--matrix",
+                "url": "https://rogo.ai/blog/rogo-vs-platform",
                 "page_type": "blog",
             },
         )
@@ -157,7 +157,7 @@ class TestContentSignal:
         signal = _raw(
             "new_url",
             {
-                "url": "https://rogo.ai/blog/-alternative",
+                "url": "https://rogo.ai/blog/enterprise-ai-alternative",
                 "page_type": "blog",
             },
         )

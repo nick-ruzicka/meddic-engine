@@ -31,7 +31,7 @@ load_dotenv()
 from database import get_db
 
 HAIKU_MODEL = "claude-haiku-4-5-20251001"
-VOICE_SKILL_PATH = os.path.join(ROOT, "config", "skills", "voice", "outreach_voice_.md")
+VOICE_SKILL_PATH = os.path.join(ROOT, "config", "skills", "voice", "outreach_voice.md")
 SLEEP_SEC = 0.3
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -128,9 +128,9 @@ def build_user_message(row, brief: dict) -> str:
         "{\n"
         '  "subject": "max 8 words, specific not generic, no clickbait, lowercase preferred",\n'
         '  "body": "complete email under 100 words total. Opener references their specific situation. '
-        "1-2 sentences explaining the relevant  workflow for their firm type. "
+        "1-2 sentences explaining the relevant platform workflow for their firm type. "
         "1 sentence CTA - specific ask, not generic (e.g. open to a 15-min call this week? / "
-        'happy to share the Oak Hill case study?)"\n'
+        'happy to share a relevant case study?)"\n'
         "}\n"
         "No em dashes. No 'I wanted to reach out'. No 'revolutionary' or 'game-changing'. "
         "Sound like a practitioner, not a vendor. "

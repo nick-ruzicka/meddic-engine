@@ -61,11 +61,11 @@ PAGE_CONTENT_LIMIT = 3000
 BRIEF_CACHE_DAYS = 7
 TRAJECTORY_CACHE_DAYS = 30
 
-_SYSTEM_CONTEXT = """You are a senior competitive intelligence analyst at , an enterprise AI platform for institutional finance (PE, IB, asset management, credit funds). 's flagship product Matrix processes unstructured documents (CIMs, VDRs, 10-Ks, earnings transcripts, IC memos) with multi-agent reasoning and strong data sovereignty (private cloud, SOC2 Type II, zero data retention). Major customers: KKR, Blackstone, Carlyle, Centerview, BlackRock."""
+_SYSTEM_CONTEXT = """You are a senior competitive intelligence analyst supporting the GTM team for an enterprise AI platform. In this configuration the platform sells AI-driven document analysis into institutional finance (private equity, investment banks, asset management, credit funds) — due diligence, VDR/CIM analysis, IC memos, portfolio monitoring. The platform's own positioning, customers, and differentiators are whatever the scoring skill file (config/skills/scoring/icp_scoring.md) documents; do not assume specific customer names or claims not present there or in the source material provided."""
 
 BRIEF_SYSTEM_PROMPT = f"""{_SYSTEM_CONTEXT}
 
-You produce competitive intelligence briefs for 's GTM team. These briefs are read by sales leaders who need to know: what is this competitor doing RIGHT NOW that affects my deals THIS QUARTER.
+You produce competitive intelligence briefs for the GTM team. These briefs are read by sales leaders who need to know: what is this competitor doing RIGHT NOW that affects my deals THIS QUARTER.
 
 EVERY claim MUST cite a specific source URL from the material provided. No source = don't say it.
 
@@ -73,8 +73,8 @@ Respond with ONLY a JSON object (no markdown wrapping). Schema:
 
 {{
   "right_now": {{
-    "headline": "One sentence: the single most important thing happening with this competitor right now that 's team needs to know",
-    "detail": "2-3 sentences expanding on why this matters to  specifically — which deals it affects, which positioning it challenges, what it means for the next 90 days",
+    "headline": "One sentence: the single most important thing happening with this competitor right now that the team needs to know",
+    "detail": "2-3 sentences expanding on why this matters to the platform specifically — which deals it affects, which positioning it challenges, what it means for the next 90 days",
     "sources": ["url1"]
   }},
   "recent_moves": [
@@ -93,12 +93,12 @@ Respond with ONLY a JSON object (no markdown wrapping). Schema:
     "text": "The one thing they claim makes them different — and whether it's real or marketing",
     "sources": ["url1"]
   }},
-  "strength_vs_": {{
-    "text": "Where they are genuinely ahead of  — be honest, not diplomatic. Cite the specific capability.",
+  "strength_vs_platform": {{
+    "text": "Where they are genuinely ahead of the platform — be honest, not diplomatic. Cite the specific capability.",
     "sources": ["url1"]
   }},
-  "weakness_vs_": {{
-    "text": "Where  wins — cite the specific gap they can't close easily",
+  "weakness_vs_platform": {{
+    "text": "Where the platform wins — cite the specific gap they can't close easily",
     "sources": ["url1"]
   }},
   "pricing_signals": {{
@@ -114,9 +114,9 @@ Respond with ONLY a JSON object (no markdown wrapping). Schema:
 }}
 
 THREAT CALIBRATION — do not be polite:
-- HIGH: They are actively winning or competing for the same deals as . They have real traction (logos, revenue, funding), are targeting the same buyers (PE, IB, credit, asset management), and have a credible product. If they are publishing content directly attacking , that's high. If they raised $50M+, that's high. If they have tier-1 PE/IB logos, that's high.
-- MEDIUM: They are adjacent but not yet directly competing for the same deals. Different primary vertical (e.g. legal-first, sell-side only) but expanding toward 's buyers. Or: early-stage with a credible product but no proven enterprise traction yet.
-- LOW: Niche player, early stage with <$10M raised, no overlap with 's ICP, or cosmetic competitor (similar marketing, no real product depth).
+- HIGH: They are actively winning or competing for the same deals as the platform. They have real traction (logos, revenue, funding), are targeting the same buyers (PE, IB, credit, asset management), and have a credible product. If they are publishing content directly attacking the platform, that's high. If they raised $50M+, that's high. If they have tier-1 PE/IB logos, that's high.
+- MEDIUM: They are adjacent but not yet directly competing for the same deals. Different primary vertical (e.g. legal-first, sell-side only) but expanding toward the platform's buyers. Or: early-stage with a credible product but no proven enterprise traction yet.
+- LOW: Niche player, early stage with <$10M raised, no overlap with the platform's ICP, or cosmetic competitor (similar marketing, no real product depth).
 
 RECENCY BIAS: The "right_now" and "recent_moves" fields are the most important part of this brief. Lead with what happened in the last 30-60 days. If nothing significant happened recently, say so — that itself is a signal.
 
@@ -142,10 +142,10 @@ Your task is to classify a piece of content about a competitor as a competitive 
 Respond with ONLY a JSON object (no markdown wrapping, no explanation). The JSON must have exactly these fields:
 - signal_type: one of: product-launch | customer-win | funding | positioning-shift | hiring | cosmetic | other
 - relevance: one of: high | medium | low
-- summary: string — 1-2 sentence summary of the signal and its competitive implications for 
+- summary: string — 1-2 sentence summary of the signal and its competitive implications for the platform
 
 Relevance definitions:
-- high = direct competitive threat: product launch in 's segment, customer win at a named  customer/prospect (KKR, Blackstone, Carlyle, Centerview, BlackRock, or PE/IB/credit firms), positioning shift that directly attacks 's differentiation
+- high = direct competitive threat: product launch in the platform's segment, customer win at a PE/IB/credit/asset-management firm in the platform's ICP, positioning shift that directly attacks the platform's differentiation
 - medium = indirect pressure: funding round, hiring surge, expansion into adjacent vertical, partnership announcement
 - low = cosmetic: website copy change, blog post about industry trends, testimonial from non-PE/IB/credit customer, navigation/design changes"""
 
@@ -163,7 +163,7 @@ def build_brief_prompt(competitor_name: str, pages: list, news: list) -> str:
     Returns:
         Formatted user message string
     """
-    lines = [f"Analyze {competitor_name} as a competitor to .\n"]
+    lines = [f"Analyze {competitor_name} as a competitor to the platform.\n"]
 
     lines.append("## Website pages\n")
     if pages:
@@ -277,8 +277,8 @@ BRIEF_REQUIRED_FIELDS = {
     "target_icp",
     "pricing_signals",
     "key_differentiation",
-    "weakness_vs_",
-    "strength_vs_",
+    "weakness_vs_platform",
+    "strength_vs_platform",
     "recent_moves",
     "threat_level",
     "threat_reasoning",
@@ -297,8 +297,8 @@ _SOURCED_TEXT_FIELDS = {
     "target_icp",
     "pricing_signals",
     "key_differentiation",
-    "weakness_vs_",
-    "strength_vs_",
+    "weakness_vs_platform",
+    "strength_vs_platform",
 }
 
 

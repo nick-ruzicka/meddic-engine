@@ -30,7 +30,7 @@ class ClassifiedSignal:
                                     # "infrastructure_signal" | "content_signal" | "noise"
     predictive_score: float = 0.0   # 0.0-1.0, higher = more likely to predict a real move
     lead_time_estimate: str = ""    # "immediate" | "2-4 weeks" | "60-90 days"
-    tom_takeaway: str = ""          # one sentence, sales-angle framing
+    sales_takeaway: str = ""          # one sentence, sales-angle framing
 
     @classmethod
     def from_raw(cls, raw: RawSignal, **classification) -> "ClassifiedSignal":

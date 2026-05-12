@@ -1,5 +1,5 @@
 # ROUTER_SKILL.md
-# Architecture documentation for the  signal engine skill routing system.
+# Architecture documentation for the MEDDIC Engine skill routing system.
 # Read this before touching skill_router.py, skill_constants.py, or any skill file.
 # This is the source of truth for how skills are structured and injected.
 
@@ -28,11 +28,11 @@ config/
 ├── skill_router.py                 ← Assembles prompts from section-tagged files
 └── skills/
     ├── scoring/
-    │   └── icp_scoring_.md   ← Section-tagged scoring rules (injected by router)
+    │   └── icp_scoring.md     ← Section-tagged scoring rules (injected by router)
     ├── voice/
-    │   └── outreach_voice_.md ← Section-tagged voice rules (injected by router)
+    │   └── outreach_voice.md  ← Section-tagged voice rules (injected by router)
     └── reference/
-        └── icp_reference_.md ← Full research doc (NEVER injected — human use only)
+        └── icp_reference.md   ← Full research doc (NEVER injected — human use only)
 ```
 
 ---
@@ -114,7 +114,7 @@ If you must rename a section:
 | 6 | `objections_core` | has_objections flag on account |
 
 `build_personalization_prompt(account)` follows the same logic
-but reads from `outreach_voice_.md` instead.
+but reads from `outreach_voice.md` instead.
 
 ---
 
@@ -162,9 +162,9 @@ All tests must pass before any deploy. Add a test case for every new routing rul
 
 ## What NOT To Do
 
-- **Never inject `icp_reference_.md` into an API call.** It's a human
-  reference document, not a scoring prompt. It's 600+ lines and would overwhelm
-  the context window.
+- **Never inject `icp_reference.md` into an API call.** It's a human
+  reference document, not a scoring prompt. It's long-form research and would
+  overwhelm the context window.
 
 - **Never hardcode section names as strings.** Always import from `skill_constants.py`.
   Hardcoded strings break silently when sections are renamed.
@@ -182,9 +182,9 @@ All tests must pass before any deploy. Add a test case for every new routing rul
 
 | File | Sections | Purpose |
 |------|---------|---------|
-| `icp_scoring_.md` | 18 sections | Scoring rules for all firm types and signal combinations |
-| `outreach_voice_.md` | 8 sections | Voice rules and personalization angles |
-| `icp_reference_.md` | N/A (no tags) | Full research doc — human use only |
+| `icp_scoring.md` | 18 sections | Scoring rules for all firm types and signal combinations |
+| `outreach_voice.md` | 10 sections | Voice rules and personalization angles |
+| `icp_reference.md` | N/A (no tags) | Full research doc — human use only |
 
 ---
 

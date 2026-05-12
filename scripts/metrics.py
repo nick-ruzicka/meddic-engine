@@ -150,10 +150,13 @@ def tier_breakdown(conn) -> dict:
 
 
 def sec_universe_stats(conn) -> dict:
-    total = conn.execute("SELECT count(*) FROM sec_universe").fetchone()[0]
-    icp = conn.execute(
-        "SELECT count(*) FROM sec_universe WHERE icp_fit = 1"
-    ).fetchone()[0]
+    try:
+        total = conn.execute("SELECT count(*) FROM sec_universe").fetchone()[0]
+        icp = conn.execute(
+            "SELECT count(*) FROM sec_universe WHERE icp_fit = 1"
+        ).fetchone()[0]
+    except Exception:
+        total = icp = 0
     return {"total": total, "icp_qualified": icp}
 
 

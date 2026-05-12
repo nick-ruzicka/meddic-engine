@@ -1,6 +1,6 @@
 """scoring/contact_scorer.py
 
-Score a (firm, contact, signals) triple against 's ICP using Claude.
+Score a (firm, contact, signals) triple against the configured ICP using Claude.
 
 Public API:
     score_contact(firm, contact, signals, mock_mode=False) -> dict
@@ -501,57 +501,48 @@ def _call_claude(system_prompt: str, user_message: str) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 
 _BRIEF_SYSTEM = (
-    "You are building a one-page account intelligence brief for a  "
-    "sales rep.  sells Matrix, an AI platform that processes entire "
-    "document sets simultaneously for PE firms, investment banks, hedge funds, "
-    "and credit funds. Purpose-built for due diligence, VDR analysis, IC memos, "
-    "portfolio monitoring.\n\n"
+    "You are building a one-page, MEDDIC-framed account intelligence brief for "
+    "an enterprise sales rep. The platform is an AI product sold into complex, "
+    "document-heavy enterprise accounts; in this configuration the target market "
+    "is financial-services firms (private equity, investment banks, hedge funds, "
+    "credit funds) evaluating AI for research, due diligence, and analysis "
+    "workflows. The brief should let the rep qualify the account against MEDDIC: "
+    "identified pain, decision criteria, metrics, economic buyer / champion, and "
+    "decision process.\n\n"
 
-    "VERIFIED PROOF POINTS (cite source tag when using):\n"
-    "- [OAK_HILL] Oak Hill Advisors: 6x ROI. Sonja Renander, MD U.S. Credit, "
-    "direct quote: 'We have seen a 6X+ ROI on our investment with .' "
-    "(src:  case study via marketrealist.com)\n"
-    "- [MARKET_SHARE] 40%+ of largest asset managers by AUM use ; "
-    "$15T+ in global assets under AI-driven decisions "
-    "(src: FinanceFeeds, 2025)\n"
-    "- [PAGES] 1 billion pages processed, up from 47M one year prior "
-    "(src: .com/blog)\n"
-    "- [CUSTOMERS] Confirmed public customers: BlackRock, KKR, Carlyle, "
-    "Centerview Partners, Charlesbank, MetLife, U.S. Air Force "
-    "(src: TechCrunch, FinanceFeeds)\n"
-    "- [EFFICIENCY] IB teams save 30-40h per deal; PE teams save 20-30h per deal; "
-    "credit agreement review time reduced 75% (src: FinanceFeeds)\n"
-    "- [SECURITY] SOC2 Type II certified. Never trains on customer data "
-    "(src: .com/security)\n"
-    "- [ACCURACY] 92% accuracy on benchmarks vs 68% for standard RAG "
-    "(src: FinanceFeeds)\n\n"
-
-    "UNVERIFIED — do NOT claim these:\n"
-    "- Deployment model details (SaaS vs on-prem vs VPC) are not publicly "
-    "documented. Say 'confirm deployment model with ' if asked.\n"
-    "- Any customer NOT in the [CUSTOMERS] list above.\n"
-    "- Any ROI figure other than Oak Hill's 6x.\n\n"
+    "PROOF POINTS:\n"
+    "- The platform's verified proof points (case studies, ROI figures, named "
+    "customers, benchmark numbers, security posture) are configured per "
+    "deployment in config/skills/scoring/icp_scoring.md. Cite ONLY proof points "
+    "that appear there or facts present in the SIGNALS / CONTACT RESEARCH / FIRM "
+    "DATA in the user message.\n"
+    "- Never invent ROI figures, dollar amounts, customer names, deployment "
+    "statistics, or benchmark numbers. If no sourced proof point exists for a "
+    "field, say so.\n\n"
 
     "SOURCING RULES (critical):\n"
-    "- Every claim must be traceable to either (a) a VERIFIED PROOF POINT "
-    "above (cite the [TAG]), (b) the SIGNALS / CONTACT RESEARCH in the user "
+    "- Every claim must be traceable to either (a) a documented proof point from "
+    "the scoring skill file, (b) the SIGNALS / CONTACT RESEARCH in the user "
     "message, or (c) the FIRM DATA provided.\n"
     "- INLINE CITATIONS REQUIRED: every sentence in every field must end with "
     "a parenthetical source, e.g. '(per press signal 2025-10-01: Anthropic "
-    "case study)' or '(firm data: SEC filing)' or '([SECURITY])'. No "
-    "sentence without a citation.\n"
+    "case study)' or '(firm data: SEC filing)'. No sentence without a "
+    "citation.\n"
     "- ANTI-EXTRAPOLATION: only state what the signal text literally says. "
     "Do NOT infer what the firm is 'probably evaluating', 'likely facing', "
     "or 'may be considering' unless the signal explicitly says so. If the "
     "signal says they use Claude Code for dev teams, do NOT say they use "
     "Claude for due diligence. Stick to the exact claim.\n"
-    "- In the 'sources' field, list every [TAG], signal URL, and data source.\n"
+    "- In the 'sources' field, list every proof-point reference, signal URL, "
+    "and data source.\n"
     "- If a field lacks source data, say 'no direct signal — inference only' "
     "rather than presenting inference as fact.\n\n"
 
-    "Compliance is the #1 sales barrier in finance. For objection handling, "
-    "reference [SECURITY] for what IS verified; for deployment specifics, "
-    "recommend confirming with 's team.\n\n"
+    "Compliance and data governance are the #1 sales barrier in regulated "
+    "verticals. For objection handling, reference only what the scoring skill "
+    "file documents as verified; for anything not documented (deployment model, "
+    "data residency specifics), recommend the rep confirm with the platform's "
+    "team rather than asserting details.\n\n"
 
     "Be specific. Be brief. Be actionable. Sound like a practitioner, not a "
     "vendor. Never use em dashes."
@@ -708,21 +699,21 @@ MULTI-THREAD HINT:
 DECISION CRITERIA SEED (use verbatim as the first sentence of decision_criteria): "{dc_seed}"
 
 CRITICAL SOURCING RULES:
-- NEVER reference specific customers, firms, or case studies as  customers/users unless they are explicitly listed in the SIGNALS or CONTACT RESEARCH above.
+- NEVER reference specific customers, firms, or case studies as platform customers/users unless they are explicitly listed in the SIGNALS or CONTACT RESEARCH above.
 - NEVER fabricate ROI figures, dollar amounts, or deployment statistics.
 - NEVER claim specific deployment architecture details (cloud, VPC, data residency) unless provided in the inputs above.
-- For metrics, cite ONLY what you can infer from the signals and firm data provided. If no concrete metrics are available, say "Metrics: contact  team for case studies relevant to [firm type]."
+- For metrics, cite ONLY what you can infer from the signals and firm data provided. If no concrete metrics are available, say "Metrics: no sourced figures for this firm type — recommend asking for relevant case studies."
 - If you don't have sourced data for a field, say so briefly rather than inventing plausible-sounding claims.
 
 You are producing a MEDDIC-framed account brief. Return ONLY valid JSON, no markdown:
 {{
   "identified_pain": "1-2 sentences on the workflow pain this firm is likely feeling. EACH sentence must end with an inline citation: (per [signal_type] signal [date]: [source_url]) or (firm data: [fact]). Only state what the signal literally says. If inferring beyond the signal, prefix with 'no direct signal — inference:' so the reader knows.",
   "decision_criteria": "Start with the seed line above verbatim. Then add ONE sentence of firm-specific color (competitor context, AUM tier, or signal-driven nuance).",
-  "metrics": "Use ONLY the VERIFIED PROOF POINTS from the system prompt (cite [TAG]). Pick the 2-3 most relevant to this firm type. Format: 'Oak Hill 6x ROI [OAK_HILL] | 40% of top AMs by AUM [MARKET_SHARE]'. Never invent figures.",
+  "metrics": "Use ONLY proof points documented in the scoring skill file or facts present in the SIGNALS / FIRM DATA above. Pick the 2-3 most relevant to this firm type and cite each. If no sourced figures exist, say so. Never invent figures.",
   "champion_eb": "ONE sentence identifying this contact as {meddic_role_label} and why they matter. If CONTACT RESEARCH is provided above, reference a SPECIFIC public activity (e.g. 'spoke at [venue] in [month] about [topic]' or 'posted on [date] about [topic]') — do NOT just repeat title+firm. If no research available, reference workflow ownership or political capital.",
-  "objection": "The most likely objection from this specific contact/firm type, plus one sentence on how to address it. You MAY cite [SECURITY] (SOC2 Type II, never trains on data). For deployment model (SaaS/VPC/on-prem), say 'confirm deployment options with ' — do not assert architecture details.",
+  "objection": "The most likely objection from this specific contact/firm type, plus one sentence on how to address it. Reference only security/compliance facts documented in the scoring skill file or present in the inputs. For deployment model (SaaS/VPC/on-prem), say 'confirm deployment options with the platform team' — do not assert architecture details.",
   "thread": "ONE sentence on multi-thread strategy: 'Pair [this role] with [complementary role] at [firm] - [reason].' If solo, say 'Solo-thread viable - find [role] to strengthen.'",
-  "sources": "List ALL sources: (1) proof-point tags [OAK_HILL] etc; (2) signal type + date + URL; (3) firm data facts. Flag any field where you had no direct source and relied on inference."
+  "sources": "List ALL sources: (1) proof-point references from the scoring skill file; (2) signal type + date + URL; (3) firm data facts. Flag any field where you had no direct source and relied on inference."
 }}"""
 
     try:

@@ -2,7 +2,7 @@
 
 Covers: API auth, stats + contacts endpoints, dashboard page renders,
 brief route. These are integration tests — they hit the real DB and
-Flask app; make sure `data/.db` exists and has been seeded.
+Flask app; make sure `data/meddic.db` exists and has been seeded.
 """
 
 import os

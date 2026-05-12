@@ -1,6 +1,6 @@
 """Tests for GitHub activity collector and commit pattern helpers.
 
-Uses temporary SQLite databases so the real data/.db is never touched.
+Uses temporary SQLite databases so the real data/meddic.db is never touched.
 All GitHub API calls are mocked via unittest.mock.patch / pytest monkeypatch.
 """
 

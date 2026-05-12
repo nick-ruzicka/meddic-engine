@@ -127,7 +127,7 @@ def format_digest_blocks(digest: dict) -> list[dict]:
                 )
                 score = sig.get("predictive_score", 0.0)
                 lead_time = sig.get("lead_time_estimate") or "unknown"
-                takeaway = sig.get("tom_takeaway") or ""
+                takeaway = sig.get("sales_takeaway") or ""
                 source_domain = _domain(url) if url and url.startswith("http") else ""
 
                 # Build the signal text
@@ -190,7 +190,7 @@ def format_alert_blocks(signal: ClassifiedSignal) -> list[dict]:
     emoji = _CATEGORY_EMOJI.get(category, ":white_circle:")
     label = _CATEGORY_LABEL.get(category, category.upper())
     competitor = signal.competitor or ""
-    takeaway = signal.tom_takeaway or ""
+    takeaway = signal.sales_takeaway or ""
     score = signal.predictive_score
     lead_time = signal.lead_time_estimate or "unknown"
     raw_url = signal.raw_url or ""

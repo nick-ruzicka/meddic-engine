@@ -1,8 +1,8 @@
 # MEDDIC Engine
 
-I built 's outbound intelligence system as a GTM Engineer take-home. It monitors 16,639 SEC-registered investment advisers, filters to 7,115 ICP-qualified targets, and surfaces the right contacts at the right firms with the right message — scored, enriched, and ready for outreach.
+Outbound intelligence for enterprise sales — monitors 16,639 SEC-registered investment advisers, filters to 7,115 ICP-qualified targets, and surfaces the right contact at the right firm with the right message. Every account brief is MEDDIC-structured: Economic Buyer, Champion, Pain, Decision Process. Built in 6 days as a portfolio exploration of applying MEDDIC qualification at signal scale.
 
-**Live**: http://YOUR_VPS_IP:8080 · **Run locally**: `make run`
+**Run locally**: `make run`
 
 ![Dashboard](docs/dashboard.png)
 
@@ -10,9 +10,18 @@ I built 's outbound intelligence system as a GTM Engineer take-home. It monitors
 
 - Monitors Twitter/X, LinkedIn, financial press, and firm websites for AI transformation signals
 - Scores contacts using a 4-dimension model (ICP Fit / AI Readiness / Reachability / Signal Freshness)
-- Generates account intelligence briefs per contact using the platform's MEDDIC playbook as the intelligence layer
+- Classifies each contact's MEDDIC role (Economic Buyer / Champion / Coach / Influencer / User) and flags firms missing a buyer or champion thread
+- Generates MEDDIC-structured account briefs — Why Now, Likely Objection, Your Angle, Proof Point — so reps read intelligence, not just a score
 - Produces personalized first lines that reference specific signals, not generic AI praise
-- Runs on a $5/month server, new client = new YAML config
+- Runs on a $5/month server. New vertical = new YAML config, no code changes
+
+![Account brief](docs/account-brief.png)
+
+## Why MEDDIC
+
+Enterprise sales teams already qualify with MEDDIC. The framework asks the right questions — but answering them at scale across hundreds of accounts is the hard part. Most rep prep is gut feel: which firm is real, who's the champion, what's the pain. MEDDIC Engine answers those questions empirically — pulling signals from public sources, classifying roles with Claude, and producing structured briefs a rep can act on without an hour of manual research per account.
+
+The framework is the abstraction. Finance is the example use case. The same architecture works for any complex enterprise sale where MEDDIC qualification matters and signal volume is the bottleneck.
 
 ## The Numbers
 
@@ -33,6 +42,8 @@ I built 's outbound intelligence system as a GTM Engineer take-home. It monitors
 | Build time | 6 days |
 
 ## Architecture
+
+![Architecture](docs/architecture.png)
 
 ```mermaid
 flowchart LR
@@ -103,12 +114,7 @@ Score = 0.30 × ICP Fit  +  0.25 × AI Readiness  +  0.25 × Reachability  +  0.
 
 ### Skill Router
 
-Before each scoring call a deterministic router picks the prompt sections that apply to *this* account and nothing else. A PE firm loads `icp_pe`; a Rogo customer loads `displacement_rogo`; a firm flagged `evaluating` loads `language_evaluating`. Claude only sees the sections relevant to each account — ICP type, competitor context, buying stage, signal types. This is 's sales playbook encoded as a prompt routing system.
-
-## Docs
-
-- [`docs/SUBMISSION.pdf`](docs/SUBMISSION.pdf) — final take-home submission
-- [`docs/_signal_engine.pptx`](docs/_signal_engine.pptx) — presentation deck
+Before each scoring call a deterministic router picks the prompt sections that apply to *this* account and nothing else. A PE firm loads `icp_pe`; a Rogo customer loads `displacement_rogo`; a firm flagged `evaluating` loads `language_evaluating`. Claude only sees the sections relevant to each account — ICP type, competitor context, buying stage, signal types. This is a sales playbook encoded as a prompt routing system.
 
 ## Stack
 

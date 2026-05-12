@@ -31,7 +31,7 @@ def _format_signal_block(sig: dict[str, Any]) -> str:
         or sig.get("signal_type", "")
     )
     lead_time = sig.get("lead_time_estimate") or "unknown"
-    takeaway = sig.get("tom_takeaway") or ""
+    takeaway = sig.get("sales_takeaway") or ""
     source_info = sig.get("source", "")
     observed = sig.get("observed_at", "")
     if observed and len(observed) >= 10:
@@ -120,7 +120,7 @@ def format_email(digest: dict) -> str:
     lines.append("---")
     if noise_filtered:
         lines.append(
-            f"{noise_filtered} noise signal{'s' if noise_filtered != 1 else ''} filtered. Full log: data/.db"
+            f"{noise_filtered} noise signal{'s' if noise_filtered != 1 else ''} filtered. Full log: data/meddic.db"
         )
 
     return "\n".join(lines)

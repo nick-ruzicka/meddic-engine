@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-DB_PATH = os.getenv("DB_PATH", "data/.db")
+DB_PATH = os.getenv("DB_PATH", "data/meddic.db")
 
 
 def get_db():

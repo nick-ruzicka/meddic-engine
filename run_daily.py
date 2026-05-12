@@ -81,7 +81,7 @@ def init_signals_table():
             category TEXT,
             predictive_score REAL,
             lead_time_estimate TEXT,
-            tom_takeaway TEXT,
+            sales_takeaway TEXT,
             classified_at TEXT,
             sent_in_digest_at TEXT
         )
@@ -119,14 +119,14 @@ def save_signals(signals):
             INSERT INTO ci_signals
                 (competitor, source, signal_type, payload, observed_at,
                  raw_url, confidence, category, predictive_score,
-                 lead_time_estimate, tom_takeaway, classified_at)
+                 lead_time_estimate, sales_takeaway, classified_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             s.competitor, s.source, s.signal_type,
             json.dumps(s.payload), s.observed_at.isoformat(),
             s.raw_url, s.confidence, s.category,
             s.predictive_score, s.lead_time_estimate,
-            s.tom_takeaway, datetime.now(timezone.utc).isoformat(),
+            s.sales_takeaway, datetime.now(timezone.utc).isoformat(),
         ))
         saved += 1
     conn.commit()
@@ -198,7 +198,7 @@ def get_week_signals():
             category=r["category"],
             predictive_score=r["predictive_score"] or 0.0,
             lead_time_estimate=r["lead_time_estimate"] or "",
-            tom_takeaway=r["tom_takeaway"] or "",
+            sales_takeaway=r["sales_takeaway"] or "",
         ))
     return signals
 
@@ -284,7 +284,7 @@ def main():
         logger.info("[DRY RUN] Would save %d signals", len(classified))
         for s in actionable:
             logger.info("  [%s] %s — %s (score=%.2f, lead=%s)",
-                        s.category, s.competitor, s.tom_takeaway[:80],
+                        s.category, s.competitor, s.sales_takeaway[:80],
                         s.predictive_score, s.lead_time_estimate)
 
     # Real-time alerts for high-score signals

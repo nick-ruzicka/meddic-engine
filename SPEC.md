@@ -1,8 +1,8 @@
-#  Competitive Signal Engine v2 — Specification
+# Competitive Signal Engine v2 — Specification
 
 > **Purpose:** Daily pipeline that surfaces leading indicators of competitor moves — signals that predict product launches, vertical expansion, or strategic shifts BEFORE the blog post goes live.
 
-> **Database:** SQLite (existing `data/.db`). Migrate to Postgres when signal volume exceeds ~10k/day or we add multi-tenant support.
+> **Database:** SQLite (existing `data/meddic.db`). Migrate to Postgres when signal volume exceeds ~10k/day or we add multi-tenant support.
 
 ---
 
@@ -12,7 +12,7 @@ Six competitors monitored. Config in `config/competitors.yaml`.
 
 | Slug | Name | Tier | Why |
 |------|------|------|-----|
-| f2 | F2.ai | 1 | Direct challenger, publishing attack content against  |
+| f2 | F2.ai | 1 | Direct challenger, publishing attack content against the platform |
 | keye | Keye | 1 | PE-specific AI co-pilot, same buyer persona |
 | blueflame | Blueflame AI | 1 | Acquired by Datasite, embedded in VDR workflow |
 | rogo | Rogo | 1 | $165M raised, 25k users, expanding from IB into PE |
@@ -81,7 +81,7 @@ class ClassifiedSignal(RawSignal):
     category: str = ""              # see Classification Taxonomy below
     predictive_score: float = 0.0   # 0.0-1.0
     lead_time_estimate: str = ""    # "immediate" | "2-4 weeks" | "60-90 days"
-    tom_takeaway: str = ""          # one sentence, sales-angle framing
+    sales_takeaway: str = ""          # one sentence, sales-angle framing
 ```
 
 ---
@@ -158,7 +158,7 @@ Each signal type produces a specific payload shape:
 
 ## Database Schema
 
-Single SQLite database (`data/.db`). Each collector owns its baseline table. The shared `ci_signals` table stores all classified signals.
+Single SQLite database (`data/meddic.db`). Each collector owns its baseline table. The shared `ci_signals` table stores all classified signals.
 
 ### Shared signals table (migration 005)
 
@@ -175,7 +175,7 @@ CREATE TABLE IF NOT EXISTS ci_signals (
     category TEXT,
     predictive_score REAL,
     lead_time_estimate TEXT,
-    tom_takeaway TEXT,
+    sales_takeaway TEXT,
     classified_at TEXT,
     sent_in_digest_at TEXT
 );
@@ -216,7 +216,7 @@ Each collector owns its own baseline table for tracking state between runs:
 
 ## Digest Format
 
-Monday digest for Tom. Grouped by competitor, ranked by predictive_score.
+Monday digest for the GTM lead. Grouped by competitor, ranked by predictive_score.
 
 ```
  COMPETITIVE SIGNALS — Week of April 14, 2026
@@ -228,18 +228,18 @@ ROGO [HIGH THREAT]
   [LAUNCH] New /product/portfolio-analytics URL detected in sitemap
            Lead time: 2-4 weeks
            → Rogo is likely about to launch a portfolio analytics
-             product that competes with 's cross-document
+             product that competes with the platform's cross-document
              querying. Watch for blog post.
            Source: sitemap diff (Apr 16)
 
   [HIRING] 3 "Solutions Engineer — Private Credit" roles posted
            Lead time: 60-90 days
            → Rogo is building a private credit sales team. They're
-             coming for 's core vertical.
+             coming for the platform's core vertical.
            Source: ashby.com/rogo (Apr 15)
 
 F2.AI [MEDIUM THREAT]
-  [CONTENT] New comparison blog: "/blog/f2-vs--matrix"
+  [CONTENT] New comparison blog: "/blog/f2-vs-platform"
             Lead time: immediate
             → Direct attack content. Brief your AEs on the
               rebuttal points in the competitive brief.

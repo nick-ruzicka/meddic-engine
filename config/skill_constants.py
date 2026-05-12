@@ -44,9 +44,9 @@ SECTION_ANGLE_HIRING            = "angle_hiring_signal"
 SECTION_ANGLE_ALPHASENSE        = "angle_alphasense_displacement"
 SECTION_ANGLE_COMPLEMENTARY     = "angle_complementary_tool"
 SECTION_ANGLE_COMPLIANCE        = "angle_compliance_lead"
-SKILL_FILE_SCORING  = "config/skills/scoring/icp_scoring_.md"
-SKILL_FILE_VOICE    = "config/skills/voice/outreach_voice_.md"
-SKILL_FILE_REF      = "config/skills/reference/icp_reference_.md"  # never injected
+SKILL_FILE_SCORING  = "config/skills/scoring/icp_scoring.md"
+SKILL_FILE_VOICE    = "config/skills/voice/outreach_voice.md"
+SKILL_FILE_REF      = "config/skills/reference/icp_reference.md"  # never injected
 
 # ── Firm type values — used in account records and routing logic ───────────────
 FIRM_TYPE_PE        = "pe"
