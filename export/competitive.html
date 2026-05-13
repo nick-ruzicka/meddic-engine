@@ -970,7 +970,7 @@ function render(){
 
   // Hero sub
   document.getElementById('hero-sub').textContent=
-    s.total_competitors+' companies actively competing for \'s buyer. Briefs refreshed weekly. Signals detected daily.';
+    s.total_competitors+' companies actively competing for the platform\'s buyer. Briefs refreshed weekly. Signals detected daily.';
 
   // Stats
   document.getElementById('st-competitors').textContent=s.total_competitors||0;
@@ -1278,8 +1278,8 @@ function renderV2SignalCards(sigs){
     html+='<span class="comp-name">'+esc(sig.competitor||'Unknown')+'</span>';
     html+='<span class="time-ago">'+esc(sig.observed_at?ago(sig.observed_at):'')+'</span>';
     html+='</div>';
-    if(sig.tom_takeaway){
-      html+='<div class="takeaway">'+esc(sig.tom_takeaway)+'</div>';
+    if(sig.sales_takeaway){
+      html+='<div class="takeaway">'+esc(sig.sales_takeaway)+'</div>';
     }
     html+='<div class="v2-signal-card-meta">';
     html+='<span class="score-pill '+esc(scorePillClass(score))+'" title="Predictive score">'+esc(scoreStr)+'</span>';

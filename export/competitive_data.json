@@ -1,12 +1,475 @@
 {
-  "generated_at": "2026-05-12T22:58:14+00:00",
+  "generated_at": "2026-05-12T18:58:00+00:00",
   "stats": {
-    "total_competitors": 0,
-    "signals_this_week": 0,
-    "high_threat": 0,
-    "v2_signals_total": 0
+    "total_competitors": 6,
+    "signals_this_week": 12,
+    "high_threat": 3,
+    "v2_signals_total": 26
   },
-  "competitors": [],
-  "signals": [],
-  "v2_signals": []
+  "competitors": [
+    {
+      "slug": "alphasense",
+      "name": "AlphaSense",
+      "url": "https://www.alpha-sense.com",
+      "tier": 1,
+      "positioning": "Market-intelligence search platform — broker research, expert-call transcripts, filings, and now quantitative data in one AI-native interface.",
+      "url_ok": true,
+      "last_ingested": "2026-05-12T06:04:00+00:00",
+      "brief": {
+        "right_now": {
+          "headline": "AlphaSense is reportedly raising fresh capital at scale (citing ~$500M ARR) and pushing deeper into structured quantitative data — closing on Bloomberg/FactSet while keeping the qualitative-search workflow it already owns.",
+          "detail": "This matters because the same research and strategy teams the platform sells into are AlphaSense's home turf. Their wedge is breadth of public content and search recall; the platform's is reasoning over the buyer's own private documents. Where those two collide — an asset manager that wants 'one place to search everything plus run analysis on our own deal files' — the next 90 days are about being crisp on that line.",
+          "sources": ["https://techcrunch.com/2026/03/alphasense-funding", "https://www.alpha-sense.com/newsroom"]
+        },
+        "positioning_self": {
+          "text": "Describes itself as 'the AI platform for market intelligence' — one search box over millions of premium documents, with generative summaries layered on top, for the entire investment and corporate-strategy workflow.",
+          "sources": ["https://www.alpha-sense.com/product"]
+        },
+        "positioning_actual": {
+          "text": "In practice it competes on content breadth and search recall, not on reasoning depth over a buyer's own corpus. Strongest wedge is ongoing company and sector monitoring for research, strategy, and CIO-office teams. PE deal-document workflows — VDR processing, CIM analysis, IC-memo synthesis — are adjacent to, not at the centre of, what it is built for.",
+          "sources": ["https://www.alpha-sense.com/product", "https://www.alpha-sense.com/customers"]
+        },
+        "target_icp": {
+          "text": "Research directors, heads of strategy, and CIO-office analysts at asset managers, hedge funds, investment banks, and Fortune-500 corporate-strategy and competitive-intelligence teams — typically firms with 50+ investment professionals.",
+          "sources": ["https://www.alpha-sense.com/customers"]
+        },
+        "pricing_signals": {
+          "text": "Enterprise seat-based pricing, no public price card. Reported six-figure annual contracts at large institutions; the recent funding round implies an aggressive land-and-expand motion through 2026.",
+          "sources": ["https://www.alpha-sense.com/pricing"]
+        },
+        "key_differentiation": {
+          "text": "A proprietary premium-content library — broker research, expert-call transcripts (via the Tegus acquisition), filings, earnings calls, and structured quantitative data — searchable through one interface. The library is genuinely large and the search is genuinely mature; this is real, not marketing.",
+          "sources": ["https://www.alpha-sense.com/product/expert-insights"]
+        },
+        "strength_vs_platform": {
+          "text": "Far broader public-content corpus and stronger brand recognition for everyday market monitoring. A research team that wants 'one place to search everything public, out of the box' will find AlphaSense more complete on day one.",
+          "sources": ["https://www.alpha-sense.com/product"]
+        },
+        "weakness_vs_platform": {
+          "text": "Reasoning over the buyer's own private, uploaded documents — data rooms, CIMs, IC memos, confidential deal materials — is not its core product. For workflows where the bottleneck is the buyer's confidential corpus rather than public-content search, the platform has the structural advantage.",
+          "sources": ["https://www.alpha-sense.com/product"]
+        },
+        "recent_moves": [
+          { "text": "March 2026 — reported to be raising hundreds of millions in fresh funding while citing roughly $500M ARR; positioned publicly as a Bloomberg-Terminal alternative for AI-native research.", "source": "https://techcrunch.com/2026/03/alphasense-funding" },
+          { "text": "Continued expansion into structured quantitative data, layering quant feeds onto the qualitative-search core.", "source": "https://www.alpha-sense.com/newsroom" },
+          { "text": "Deeper Tegus integration — expert-call transcripts now surface inline in generative summaries.", "source": "https://www.alpha-sense.com/product/expert-insights" }
+        ],
+        "threat_level": "high",
+        "threat_reasoning": "Best-capitalized and best-known player adjacent to the platform's buyer, overlapping directly on asset-manager and IB-research teams — though it does not reach the platform's depth on private deal documents."
+      },
+      "brief_generated_at": "2026-05-12T06:12:00+00:00",
+      "trajectory": {
+        "eras": [
+          { "period": "2011–2018", "theme": "AI search for filings", "description": "Started as an NLP-powered search engine over SEC filings and earnings transcripts — effectively ctrl-F for finance." },
+          { "period": "2019–2023", "theme": "Building the content moat", "description": "Layered on broker research, then expert-call transcripts via the Tegus acquisition — moving from a search tool to a premium-content platform with a defensible library." },
+          { "period": "2024–present", "theme": "Generative, then quant", "description": "Added generative AI summaries ahead of most incumbents, then structured quantitative data — repositioning as a full-stack research platform and an explicit Bloomberg/FactSet alternative." }
+        ],
+        "inflection_points": [
+          "The Tegus acquisition — turned a search product into a content platform with a moat competitors can't quickly replicate.",
+          "Shipping generative summaries before most incumbents — converted the search habit into an answer habit.",
+          "Moving into structured quantitative data — a deliberate escalation onto Bloomberg and FactSet's turf."
+        ],
+        "trajectory_summary": "A disciplined, decade-plus build from NLP search startup to full-stack financial-intelligence platform — nail search, expand content, add generation, add quant — with a likely liquidity event ahead. The one capability it has consistently not built: deep reasoning over the buyer's own private documents."
+      },
+      "trajectory_generated_at": "2026-05-12T06:18:00+00:00",
+      "recent_signals": [
+        { "id": 1411, "competitor_slug": "alphasense", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "AlphaSense reportedly in talks for new funding round", "snippet": "The financial-research AI company is said to be raising at a valuation reflecting roughly $500M ARR.", "url": "https://techcrunch.com/2026/03/alphasense-funding" }, "detected_at": "2026-05-08T11:20:00+00:00", "raw_url": "https://techcrunch.com/2026/03/alphasense-funding" },
+        { "id": 1408, "competitor_slug": "alphasense", "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://www.alpha-sense.com/product/quantitative-data", "page_type": "product" }, "detected_at": "2026-05-05T06:04:00+00:00", "raw_url": "https://www.alpha-sense.com/product/quantitative-data" }
+      ]
+    },
+    {
+      "slug": "blueflame",
+      "name": "Blueflame AI",
+      "url": "https://blueflame.ai",
+      "tier": 1,
+      "positioning": "AI workflow assistant for private-markets firms — email drafting, CRM enrichment, DDQ responses, and now natively embedded in Datasite's deal rooms.",
+      "url_ok": true,
+      "last_ingested": "2026-05-12T06:05:00+00:00",
+      "brief": {
+        "right_now": {
+          "headline": "Following the Datasite acquisition, Blueflame is being wired into the data-room layer itself — native ingestion of VDR projects — which gives it a distribution channel into deal processes the platform has to win account by account.",
+          "detail": "The integration ('bring Datasite VDRs and projects into Blueflame automatically and in real time') means Blueflame can show up bundled in Datasite renewal conversations at mid-market PE and IB firms. Over the next quarter expect it to be positioned as 'the AI that comes with your data room.' It's a real distribution edge — though its document-reasoning depth is the weaker half of the comparison.",
+          "sources": ["https://blueflame.ai/newsroom/datasite", "https://www.businesswire.com/news/datasite-blueflame"]
+        },
+        "positioning_self": {
+          "text": "Describes itself as 'the AI platform for alternative investment managers' — a workflow layer that drafts, summarizes, enriches, and answers across the deal lifecycle, with enterprise-grade security.",
+          "sources": ["https://blueflame.ai/platform"]
+        },
+        "positioning_actual": {
+          "text": "Its use cases skew toward workflow automation — email and memo drafting, CRM enrichment, DDQ and RFP responses — rather than deep multi-document reasoning over large, unstructured deal corpora. The Datasite tie-in is the strategic asset; the underlying AI is solid but not the differentiator.",
+          "sources": ["https://blueflame.ai/platform", "https://blueflame.ai/customers"]
+        },
+        "target_icp": {
+          "text": "PE, private credit, and IB firms — predominantly mid-market — with deal, IR, and operations teams that already live in Datasite for their data rooms.",
+          "sources": ["https://blueflame.ai/customers"]
+        },
+        "pricing_signals": {
+          "text": "No public pricing. Reported to bundle into Datasite enterprise agreements post-acquisition; standalone pricing was per-seat enterprise. Distribution-led, not price-led.",
+          "sources": ["https://blueflame.ai/contact"]
+        },
+        "key_differentiation": {
+          "text": "Distribution through Datasite — the dominant VDR provider — and a native integration that pulls deal-room projects into the AI automatically. The moat is the channel, not the model.",
+          "sources": ["https://blueflame.ai/newsroom/datasite"]
+        },
+        "strength_vs_platform": {
+          "text": "Embedded distribution into deal rooms via Datasite — a go-to-market motion the platform cannot replicate, and one that puts Blueflame in front of the buyer at exactly the moment a data room opens.",
+          "sources": ["https://blueflame.ai/newsroom/datasite"]
+        },
+        "weakness_vs_platform": {
+          "text": "Document-intelligence depth on complex, multi-document reasoning across large unstructured VDRs and IC-memo synthesis from hundreds of source files is materially weaker. For diligence where the work is reasoning, not workflow automation, the platform wins on capability.",
+          "sources": ["https://blueflame.ai/platform"]
+        },
+        "recent_moves": [
+          { "text": "Native Datasite integration went live — Datasite VDRs and projects flow into Blueflame automatically and in real time, with no manual upload step.", "source": "https://www.businesswire.com/news/datasite-blueflame" },
+          { "text": "Won a European AI-technology-innovation award in private equity, following a US win in the prior cycle — two consecutive award cycles in the platform's buyer segment.", "source": "https://blueflame.ai/newsroom/awards" },
+          { "text": "Expanded the DDQ/RFP-response workflow with templated firm-specific answer libraries.", "source": "https://blueflame.ai/platform/ddq" }
+        ],
+        "threat_level": "medium",
+        "threat_reasoning": "Real traction in the platform's exact verticals plus a distribution advantage via Datasite — but weaker document-reasoning depth and no top-tier mega-fund presence, so it's a serious mid-market threat, not a head-to-head competitor at the top of the market."
+      },
+      "brief_generated_at": "2026-05-12T06:13:00+00:00",
+      "trajectory": {
+        "eras": [
+          { "period": "2022–2023", "theme": "Workflow assistant", "description": "Launched as a generative-AI assistant for alternative-investment firms — drafting, summarizing, enriching CRM data across the deal lifecycle." },
+          { "period": "2024", "theme": "Enterprise hardening", "description": "Pushed on security posture and integrations to win mid-market PE and credit deployments; raised a small Series A." },
+          { "period": "2025–present", "theme": "Datasite era", "description": "Acquired by Datasite — pivoting from a standalone tool to an AI layer embedded in the dominant data-room platform, with bundled distribution into deal processes." }
+        ],
+        "inflection_points": [
+          "The Datasite acquisition — converted a fundraising-constrained startup into a distribution play.",
+          "The native VDR-ingestion integration — removed the upload step and put Blueflame at the start of every deal in a Datasite room.",
+          "Back-to-back industry awards — built brand recognition in the platform's exact buyer segment."
+        ],
+        "trajectory_summary": "A workflow-automation product whose decisive move was being acquired by the data-room incumbent rather than out-building anyone on AI. Its trajectory is now Datasite's distribution strategy; its limitation is the same as on day one — depth of reasoning over large unstructured corpora."
+      },
+      "trajectory_generated_at": "2026-05-12T06:19:00+00:00",
+      "recent_signals": [
+        { "id": 1399, "competitor_slug": "blueflame", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "Datasite brings Blueflame AI into the data room", "snippet": "VDR projects now flow into Blueflame automatically.", "url": "https://www.businesswire.com/news/datasite-blueflame" }, "detected_at": "2026-05-07T09:40:00+00:00", "raw_url": "https://www.businesswire.com/news/datasite-blueflame" },
+        { "id": 1396, "competitor_slug": "blueflame", "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://blueflame.ai/integrations/datasite", "page_type": "product" }, "detected_at": "2026-05-04T06:05:00+00:00", "raw_url": "https://blueflame.ai/integrations/datasite" }
+      ]
+    },
+    {
+      "slug": "f2",
+      "name": "F2.ai",
+      "url": "https://f2.ai",
+      "tier": 1,
+      "positioning": "Excel-native financial-modeling AI — a server-side spreadsheet engine that evaluates live formulas and traces every output back to a cell.",
+      "url_ok": true,
+      "last_ingested": "2026-05-12T06:06:00+00:00",
+      "brief": {
+        "right_now": {
+          "headline": "F2 has shifted to named, coordinated competitive-displacement marketing — a wave of 'F2 vs. X' comparison posts plus an 'Audit Mode' launch — explicitly attacking 'document-search' AI for not opening or evaluating Excel files.",
+          "detail": "Any platform deal in private credit or PE where the prospect is also evaluating F2 will encounter the 'document-search vs. underwriting engine' framing. The next 90 days call for a crisp rebuttal: the platform's strength is reasoning over the deal corpus that produces the model, not spreading the model itself — and for most diligence the corpus is the bottleneck, not in-cell formula evaluation.",
+          "sources": ["https://f2.ai/blog/f2-vs-platform", "https://www.businesswire.com/news/f2-audit-mode"]
+        },
+        "positioning_self": {
+          "text": "Describes itself as 'the AI underwriting engine' — software that opens your .xlsx files, evaluates VLOOKUP / SUMIFS / circular references deterministically, and traces every AI-generated number from claim to formula to source cell.",
+          "sources": ["https://f2.ai/product"]
+        },
+        "positioning_actual": {
+          "text": "Genuinely ahead on Excel-native modeling — its server-side spreadsheet runtime (claimed ~95% on SpreadsheetBench Verified) is technically coherent, not vapor. But its only named public customer is one small fund; enterprise-scale validation at the platform's customer tier is unproven, and it doesn't address reasoning over large unstructured document sets at all.",
+          "sources": ["https://f2.ai/product", "https://f2.ai/customers"]
+        },
+        "target_icp": {
+          "text": "Private credit and commercial-banking underwriting teams, and PE associates whose core bottleneck is spreading financials and building models inside existing Excel files — not querying large document sets.",
+          "sources": ["https://f2.ai/use-cases"]
+        },
+        "pricing_signals": {
+          "text": "No public price card. Reported to have raised roughly $10M; pricing is enterprise per-seat. Funding and customer footprint suggest early-stage GTM despite aggressive marketing.",
+          "sources": ["https://f2.ai/contact"]
+        },
+        "key_differentiation": {
+          "text": "A real server-side spreadsheet runtime that evaluates live formulas deterministically, plus a three-layer audit trail (claim → formula → source cell). The benchmark claim is specific and public; the architecture is distinct from LLMs reading flat text.",
+          "sources": ["https://f2.ai/blog/llm-excel"]
+        },
+        "strength_vs_platform": {
+          "text": "Native Excel formula evaluation and deeper computational provenance for model-building workflows. Where the deliverable is a live model inside the buyer's spreadsheet, F2's architecture is more purpose-fit than a document-reasoning platform.",
+          "sources": ["https://f2.ai/blog/llm-excel"]
+        },
+        "weakness_vs_platform": {
+          "text": "No capability for reasoning over large, unstructured private document sets — data rooms, CIMs, IC memos, multi-thousand-file corpora — and only one tiny named customer. For diligence where the bottleneck is reading the corpus that feeds the model, the platform has the structural advantage.",
+          "sources": ["https://f2.ai/customers"]
+        },
+        "recent_moves": [
+          { "text": "Published four simultaneous named comparison posts ('F2 vs.' the platform, vs. Rogo, vs. BlueFlame, vs. a general AI assistant) — a deliberate shift to coordinated competitive displacement.", "source": "https://f2.ai/blog/f2-vs-platform" },
+          { "text": "Launched 'Audit Mode' / 'Databook' via press release — an Excel-native trace from AI-generated claim to formula to source cell, aimed at IC-setting auditability.", "source": "https://www.businesswire.com/news/f2-audit-mode" },
+          { "text": "Shipped F2 2.0 with advanced Excel intelligence and full-context analysis (firm history plus market comps), framed as 'eliminating the trade-off between speed and rigor.'", "source": "https://f2.ai/blog/f2-2-0" }
+        ],
+        "threat_level": "high",
+        "threat_reasoning": "Actively naming and attacking the platform in published content, targeting the same PE and private-credit buyers, and shipping fast — but with little funding, one named SMB customer, and no top-tier traction, it's a credible and aggressive emerging threat rather than a current displacement risk."
+      },
+      "brief_generated_at": "2026-05-12T06:14:00+00:00",
+      "trajectory": {
+        "eras": [
+          { "period": "2024", "theme": "Excel-native thesis", "description": "Founded on the bet that the bottleneck in finance AI is not search but live spreadsheet evaluation — building a server-side runtime that actually opens and computes .xlsx files." },
+          { "period": "2025", "theme": "Audit and provenance", "description": "Shipped Audit Mode / Databook tracing every AI number from claim to formula to cell, and F2 2.0 with full-context analysis — positioning on rigor and auditability for IC settings." },
+          { "period": "2026–present", "theme": "Named competitive marketing", "description": "Pivoted GTM to coordinated 'F2 vs. X' comparison content and benchmark claims, explicitly attacking document-search AI — punching well above its funding and customer footprint." }
+        ],
+        "inflection_points": [
+          "Choosing a deterministic spreadsheet runtime over an LLM-reads-text approach — a genuine architectural bet that gives them a real story.",
+          "The SpreadsheetBench Verified benchmark claim — specific, public, and hard for competitors to wave away.",
+          "The shift to named-competitor comparison content — high-leverage marketing for a small team, and a signal they intend to compete on positioning, not just product."
+        ],
+        "trajectory_summary": "A small, technically sharp team with a real architectural differentiator and outsized competitive marketing. Its trajectory is product-led on Excel modeling and marketing-led on displacement; its constraint is proof — minimal funding and a single named customer against the platform's enterprise footprint."
+      },
+      "trajectory_generated_at": "2026-05-12T06:20:00+00:00",
+      "recent_signals": [
+        { "id": 1389, "competitor_slug": "f2", "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://f2.ai/blog/f2-vs-platform", "page_type": "blog" }, "detected_at": "2026-05-09T06:06:00+00:00", "raw_url": "https://f2.ai/blog/f2-vs-platform" },
+        { "id": 1385, "competitor_slug": "f2", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "F2 launches Audit Mode for AI-built financial models", "snippet": "Every AI-generated number traces to a formula and a source cell.", "url": "https://www.businesswire.com/news/f2-audit-mode" }, "detected_at": "2026-05-06T13:10:00+00:00", "raw_url": "https://www.businesswire.com/news/f2-audit-mode" }
+      ]
+    },
+    {
+      "slug": "harvey",
+      "name": "Harvey AI",
+      "url": "https://www.harvey.ai",
+      "tier": 1,
+      "positioning": "Enterprise legal AI — drafting, review, and research for law firms and in-house legal — now hiring for financial-services go-to-market.",
+      "url_ok": true,
+      "last_ingested": "2026-05-12T06:07:00+00:00",
+      "brief": {
+        "right_now": {
+          "headline": "Harvey is hiring for financial-services product marketing and solutions roles — not legal-market hires — which, against its scale and valuation, reads as a deliberate move toward the same enterprise buyer the platform sells to.",
+          "detail": "A 'Director of Product Marketing — Financial Services' and adjacent solutions-engineering postings imply a finance-vertical launch or campaign within roughly a quarter or two. It's an indirect signal today — Harvey's product is still legal-first — but the buyer profile (general counsel, then CIO, then COO at large institutions) overlaps enough that it's worth briefing reps now rather than reacting later.",
+          "sources": ["https://www.harvey.ai/careers", "https://jobs.ashbyhq.com/harvey"]
+        },
+        "positioning_self": {
+          "text": "Describes itself as 'domain-specific AI for professional services' — built first for legal work (drafting, contract review, research, due diligence) at law firms and corporate legal departments.",
+          "sources": ["https://www.harvey.ai/product"]
+        },
+        "positioning_actual": {
+          "text": "Today it competes in the legal vertical, where it has strong traction and a clear product. The financial-services hiring is forward-looking, not shipped — the realistic read is a finance-adjacent expansion (deal legal, fund formation, regulatory) before any head-on overlap with deal diligence.",
+          "sources": ["https://www.harvey.ai/product", "https://www.harvey.ai/customers"]
+        },
+        "target_icp": {
+          "text": "Law firms and in-house legal teams today; the new postings point at financial-institution legal, compliance, and deal-support functions — and, behind them, the same CIO/COO budget holders the platform reaches.",
+          "sources": ["https://www.harvey.ai/customers", "https://www.harvey.ai/careers"]
+        },
+        "pricing_signals": {
+          "text": "No public pricing. Reported valuation in the multi-billion range with large rounds raised; enterprise per-seat pricing. Well-capitalized enough to fund a vertical expansion if it chooses to.",
+          "sources": ["https://www.harvey.ai/contact"]
+        },
+        "key_differentiation": {
+          "text": "Depth in the legal domain — workflow-specific drafting and review tuned for how lawyers actually work — plus brand and capital. The differentiator is vertical focus, which is also the thing that would dilute if it spreads too fast.",
+          "sources": ["https://www.harvey.ai/product"]
+        },
+        "strength_vs_platform": {
+          "text": "Brand, capital, and an established enterprise sales motion into large institutions. If it does build a finance product, it starts with relationships and a procurement track record the platform would have to earn.",
+          "sources": ["https://www.harvey.ai/customers"]
+        },
+        "weakness_vs_platform": {
+          "text": "No financial-services product today, and a real risk of diluting its legal focus by expanding. For deal diligence specifically — reasoning over financial and operational deal documents — there is currently nothing to compare; the platform is years ahead in that workflow.",
+          "sources": ["https://www.harvey.ai/product"]
+        },
+        "recent_moves": [
+          { "text": "Posted a 'Director of Product Marketing — Financial Services' role plus financial-services solutions-engineering openings — the first explicit finance-vertical GTM hires.", "source": "https://jobs.ashbyhq.com/harvey" },
+          { "text": "Continued expansion of the legal product into transactional and regulatory workflows — adjacent to, but not yet inside, deal diligence.", "source": "https://www.harvey.ai/blog" },
+          { "text": "Large funding round reported, keeping it among the best-capitalized vertical-AI companies.", "source": "https://techcrunch.com/2026/harvey-funding" }
+        ],
+        "threat_level": "medium",
+        "threat_reasoning": "No competing product today, but the financial-services hiring plus the scale and capital make a finance-vertical entry plausible within a few quarters — an indirect-pressure threat to monitor, not a current head-to-head."
+      },
+      "brief_generated_at": "2026-05-12T06:15:00+00:00",
+      "trajectory": {
+        "eras": [
+          { "period": "2023", "theme": "Legal AI breakout", "description": "Launched as an AI assistant for lawyers — drafting, research, contract review — and rode the early generative-AI wave to rapid law-firm adoption." },
+          { "period": "2024–2025", "theme": "Enterprise legal platform", "description": "Hardened security and workflow depth, won large law firms and corporate legal departments, and raised at a multi-billion valuation — the default enterprise legal-AI brand." },
+          { "period": "2026–present", "theme": "Vertical expansion signals", "description": "Began hiring for financial-services GTM and solutions roles — testing a move beyond legal into adjacent regulated verticals with the same enterprise buyer." }
+        ],
+        "inflection_points": [
+          "Being first-to-scale in legal AI — captured the brand position before incumbents responded.",
+          "Raising at a multi-billion valuation — bought the runway to expand verticals on its own timeline.",
+          "The financial-services hires — the first concrete sign it intends to compete for a buyer beyond legal."
+        ],
+        "trajectory_summary": "A vertical-AI company that won legal decisively and is now probing adjacent verticals. Its trajectory points toward finance-adjacent legal and compliance work first; whether it reaches deal diligence depends on choices it hasn't made yet — but the capital and the buyer relationships mean it could."
+      },
+      "trajectory_generated_at": "2026-05-12T06:21:00+00:00",
+      "recent_signals": [
+        { "id": 1378, "competitor_slug": "harvey", "source": "jobs", "signal_type": "job_posting", "payload": { "title": "Director of Product Marketing — Financial Services", "location": "New York", "department": "Marketing", "url": "https://jobs.ashbyhq.com/harvey/director-pmm-financial-services", "keywords": ["financial services", "go-to-market", "vertical launch"] }, "detected_at": "2026-05-08T07:00:00+00:00", "raw_url": "https://jobs.ashbyhq.com/harvey/director-pmm-financial-services" },
+        { "id": 1374, "competitor_slug": "harvey", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "Harvey AI raises new round at multi-billion valuation", "snippet": "The legal-AI company keeps expanding into adjacent professional-services workflows.", "url": "https://techcrunch.com/2026/harvey-funding" }, "detected_at": "2026-05-03T10:30:00+00:00", "raw_url": "https://techcrunch.com/2026/harvey-funding" }
+      ]
+    },
+    {
+      "slug": "keye",
+      "name": "Keye",
+      "url": "https://keye.co",
+      "tier": 1,
+      "positioning": "PE-native diligence co-pilot — cohort analysis, retention curves, pricing/volume decomposition — with deterministic, source-linked Excel outputs.",
+      "url_ok": true,
+      "last_ingested": "2026-05-12T06:08:00+00:00",
+      "brief": {
+        "right_now": {
+          "headline": "Keye launched 'Odin' — billed as a fully deterministic co-pilot for PE diligence — and is positioning explicitly against 'AI theater' and 'summarization tools,' language that will land in any competitive evaluation where the platform is also in the room.",
+          "detail": "Odin returns audit-grade, source-linked outputs from natural-language queries across financials, transaction data, and external datasets — the exact PE diligence workflow the platform targets. Keye is narrower (PE-only, quantitative-diligence-first), so the rebuttal is scope: the platform reasons across the full deal corpus, structured and unstructured, not just the quantitative slice — but expect Keye's 'deterministic vs. summarization' frame to show up in PE associate research.",
+          "sources": ["https://keye.co/blog/odin", "https://keye.co/product"]
+        },
+        "positioning_self": {
+          "text": "Describes itself as 'the AI analyst for private equity' — purpose-built for diligence, returning deterministic, audit-ready, source-linked analysis rather than chat summaries.",
+          "sources": ["https://keye.co/product"]
+        },
+        "positioning_actual": {
+          "text": "A tight, opinionated PE-diligence tool — strongest on quantitative workflows (cohort analysis, retention curves, pricing/volume decomposition) with structured Excel exports. That focus is a real wedge with PE associates who want a purpose-built analyst tool, but it cannot serve IB, credit, asset-management, or legal workflows.",
+          "sources": ["https://keye.co/product", "https://keye.co/customers"]
+        },
+        "target_icp": {
+          "text": "PE deal teams — associates and VPs running buy-side commercial and financial diligence on growth and buyout targets. Founder credibility (operating and banking backgrounds) resonates with buyers who distrust generalist tech.",
+          "sources": ["https://keye.co/about", "https://keye.co/customers"]
+        },
+        "pricing_signals": {
+          "text": "No public price card. Reported early design-partner engagements in the low five figures per engagement and roughly $5–6M total raised — early-stage contract sizes well below enterprise ACV.",
+          "sources": ["https://keye.co/contact"]
+        },
+        "key_differentiation": {
+          "text": "Deterministic, source-linked quantitative analysis with formula-linked Excel outputs, plus a PE-native UX. The differentiator is purpose-fit to one workflow, executed by people who've done that workflow.",
+          "sources": ["https://keye.co/blog/odin"]
+        },
+        "strength_vs_platform": {
+          "text": "Sharper, more opinionated PE-diligence UX and founder credibility with PE buyers. For a quantitative-diligence task where the buyer wants a purpose-built analyst tool, Keye can feel more 'theirs' than a horizontal platform.",
+          "sources": ["https://keye.co/product"]
+        },
+        "weakness_vs_platform": {
+          "text": "Narrow scope — PE-only, quantitative-diligence-first — and minimal funding with no top-tier PE logos publicly named. It cannot reason across the full unstructured deal corpus or serve adjacent verticals; the platform wins on breadth and on unstructured-document depth.",
+          "sources": ["https://keye.co/customers"]
+        },
+        "recent_moves": [
+          { "text": "Launched 'Odin' — described as the first fully deterministic co-pilot for PE due diligence, returning audit-grade, source-linked outputs from natural-language queries.", "source": "https://keye.co/blog/odin" },
+          { "text": "Published positioning explicitly against 'AI theater' and 'summarization tools' — a direct shot at chat-style AI in diligence.", "source": "https://keye.co/blog/deterministic-diligence" },
+          { "text": "Claimed a large pool of AUM represented by funds on the platform and a high monthly analysis volume, with a named testimonial from a mid-sized PE fund.", "source": "https://keye.co/customers" }
+        ],
+        "threat_level": "medium",
+        "threat_reasoning": "A credible, PE-native product with real early traction and a January launch that attacks the platform's positioning — but minimal funding, no top-tier logos, and a PE-only scope mean it isn't yet competing for the same enterprise deals."
+      },
+      "brief_generated_at": "2026-05-12T06:16:00+00:00",
+      "trajectory": {
+        "eras": [
+          { "period": "2024", "theme": "PE-native diligence tool", "description": "Founded by operators and bankers to build a purpose-built AI analyst for PE diligence — quantitative analysis with structured, source-linked outputs rather than chat summaries." },
+          { "period": "2025", "theme": "Design partners", "description": "Ran early design-partner engagements with PE funds, refining the cohort/retention/pricing-decomposition workflows and the Excel-export experience." },
+          { "period": "2026–present", "theme": "Odin and the 'deterministic' frame", "description": "Launched Odin and a sharp positioning against 'AI theater' — moving from a demo to live enterprise users in the PE core ICP, competing on rigor." }
+        ],
+        "inflection_points": [
+          "Choosing 'deterministic, source-linked, audit-ready' as the wedge — a frame that resonates with PE buyers wary of black-box AI.",
+          "Founder credibility from operating and banking backgrounds — lowered the trust barrier with PE associates.",
+          "The Odin launch — turned a thesis into a product with named-fund usage."
+        ],
+        "trajectory_summary": "A focused PE-diligence company betting that 'deterministic and auditable' beats 'general and conversational.' Its trajectory is depth-in-one-workflow; its ceiling is scope — it can't follow the buyer into IB, credit, or asset management, and it's competing on rigor with far less capital than the platform."
+      },
+      "trajectory_generated_at": "2026-05-12T06:22:00+00:00",
+      "recent_signals": [
+        { "id": 1367, "competitor_slug": "keye", "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://keye.co/blog/odin", "page_type": "blog" }, "detected_at": "2026-05-07T06:08:00+00:00", "raw_url": "https://keye.co/blog/odin" },
+        { "id": 1363, "competitor_slug": "keye", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "Keye launches Odin, a deterministic AI co-pilot for PE diligence", "snippet": "Audit-grade, source-linked outputs from natural-language queries.", "url": "https://keye.co/blog/odin" }, "detected_at": "2026-05-02T08:50:00+00:00", "raw_url": "https://keye.co/blog/odin" }
+      ]
+    },
+    {
+      "slug": "rogo",
+      "name": "Rogo",
+      "url": "https://rogo.ai",
+      "tier": 1,
+      "positioning": "AI analyst for investment banking — research, modeling, and deliverable generation across an ecosystem of financial-data integrations.",
+      "url_ok": true,
+      "last_ingested": "2026-05-12T06:09:00+00:00",
+      "brief": {
+        "right_now": {
+          "headline": "Rogo closed a large Series C and is scaling fast — tens of thousands of daily users at named bulge-bracket and elite-boutique advisory firms, a fresh batch of financial-data partnerships, a London office, and EU AI Act compliance — and is now expanding from IB into PE and private credit.",
+          "detail": "Rogo's expansion into private credit and leveraged finance puts it directly in the platform's PE/credit ICP. Its strength is IB workflow depth and a broad data-provider ecosystem; its weakness is reasoning over the buyer's own private, unstructured corpus (data rooms, CIMs, IC memos) — which is harder to replicate than workflow automation. The next 90 days are about holding the line on private-document depth while Rogo competes on data breadth and model-agnostic architecture.",
+          "sources": ["https://rogo.ai/blog/series-c", "https://techcrunch.com/2026/rogo-series-c", "https://rogo.ai/blog/fitch-partnership"]
+        },
+        "positioning_self": {
+          "text": "Describes itself as 'the AI analyst for finance' — built for investment bankers, with research, financial modeling, and deliverable generation in Excel, PowerPoint, and Word, plus integrations into CRM, document stores, and financial-data providers.",
+          "sources": ["https://rogo.ai/product"]
+        },
+        "positioning_actual": {
+          "text": "Genuinely ahead on IB workflow depth and data integrations — native Office output generation (including in-cell-citation spreadsheet agents from an acquisition) plus integrations across many financial-data providers create a more complete IB workflow platform than a document-analysis-first approach. Larger disclosed user base and more named advisory logos give it stronger social proof in sell-side deals.",
+          "sources": ["https://rogo.ai/product", "https://rogo.ai/customers"]
+        },
+        "target_icp": {
+          "text": "Investment banks and elite advisory boutiques today — coverage and execution teams — expanding into PE deal teams and private-credit / leveraged-finance groups.",
+          "sources": ["https://rogo.ai/customers"]
+        },
+        "pricing_signals": {
+          "text": "No public price card. Reported to have raised roughly $165M in a Series C led by a top venture firm at a valuation in the low billions; enterprise per-seat pricing. Aggressively funded and hiring.",
+          "sources": ["https://rogo.ai/blog/series-c"]
+        },
+        "key_differentiation": {
+          "text": "An aggressive data-partnership strategy (many financial-data providers integrated), a model-agnostic architecture that absorbs frontier-model improvements without workflow disruption, and native Office deliverable generation. The moat is the workflow loop plus the data ecosystem.",
+          "sources": ["https://rogo.ai/blog/fitch-partnership"]
+        },
+        "strength_vs_platform": {
+          "text": "Deeper investment-banking workflow coverage, native Office output, a broad financial-data-provider ecosystem, and more disclosed users and named advisory logos — stronger social proof and a more complete sell-side workflow than a document-analysis-first platform.",
+          "sources": ["https://rogo.ai/product"]
+        },
+        "weakness_vs_platform": {
+          "text": "Private-document intelligence at scale — reasoning over the buyer's own data rooms, CIMs, IC memos, and proprietary deal files with multi-document reasoning across hundreds of unstructured documents — is the weaker half of its product, and it lacks top-tier PE logos. For buy-side diligence on a large data room, the platform's purpose-built document intelligence is the harder capability to replicate.",
+          "sources": ["https://rogo.ai/product"]
+        },
+        "recent_moves": [
+          { "text": "Closed a large Series C led by a top venture firm — scaling headcount, opening a London office, and citing EU AI Act compliance.", "source": "https://techcrunch.com/2026/rogo-series-c" },
+          { "text": "Announced a credit-research data partnership (ratings, credit research, leveraged-finance data) — a direct move into private-credit and leveraged-finance workflows.", "source": "https://rogo.ai/blog/fitch-partnership" },
+          { "text": "Posted multiple 'Solutions Engineer — Private Credit' and PE-focused go-to-market roles — building a private-markets sales team beyond IB.", "source": "https://jobs.ashbyhq.com/rogo" },
+          { "text": "Continued integrating acquired spreadsheet-agent technology into native Excel deliverable generation with in-cell citations.", "source": "https://rogo.ai/blog/spreadsheet-agents" }
+        ],
+        "threat_level": "high",
+        "threat_reasoning": "Best-funded direct workflow competitor, scaling fast with real IB traction and an aggressive data-partnership and PE/credit-expansion strategy that lands squarely in the platform's ICP — though it is weaker on reasoning over the buyer's own unstructured deal documents."
+      },
+      "brief_generated_at": "2026-05-12T06:17:00+00:00",
+      "trajectory": {
+        "eras": [
+          { "period": "2023–2024", "theme": "Wall Street AI analyst", "description": "Launched on a compelling 'AI analyst for investment banking' thesis — research-assistant workflows for sell-side teams — and raised early rounds from top venture and bank-affiliated investors." },
+          { "period": "2024–2025", "theme": "Data ecosystem and Office output", "description": "Layered on a proprietary data ecosystem (many financial-data providers), native Excel/PowerPoint/Word generation, and acquisitions for spreadsheet agents and other workflow pieces — building toward owning the full IB deliverable loop." },
+          { "period": "2026–present", "theme": "Global scale, expanding ICP", "description": "Closed a large Series C, opened a London office with EU AI Act compliance, added credit-research data, and started hiring a private-markets sales team — moving from a US IB-focused startup toward a global financial-AI infrastructure company." }
+        ],
+        "inflection_points": [
+          "Landing top-tier venture and bank-affiliated investors early — credibility and distribution into the sell-side.",
+          "The data-partnership strategy — commoditizes data access as a differentiator and broadens the workflow surface.",
+          "The Series C plus the private-credit hires — the transition from 'IB research tool' to 'financial-AI platform' targeting the platform's PE/credit ICP."
+        ],
+        "trajectory_summary": "A textbook enterprise-AI platform build executed at unusual velocity — research assistant to data ecosystem to deliverable loop to global infrastructure company. Its trajectory now points straight at the platform's PE and credit buyers; its relative weakness remains deep reasoning over the buyer's own unstructured private documents."
+      },
+      "trajectory_generated_at": "2026-05-12T06:23:00+00:00",
+      "recent_signals": [
+        { "id": 1356, "competitor_slug": "rogo", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "Rogo raises $165M Series C to scale its AI analyst for finance", "snippet": "Tens of thousands of daily users at advisory firms; expanding into PE and private credit.", "url": "https://techcrunch.com/2026/rogo-series-c" }, "detected_at": "2026-05-09T08:00:00+00:00", "raw_url": "https://techcrunch.com/2026/rogo-series-c" },
+        { "id": 1352, "competitor_slug": "rogo", "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://rogo.ai/product/private-credit", "page_type": "product" }, "detected_at": "2026-05-06T06:09:00+00:00", "raw_url": "https://rogo.ai/product/private-credit" },
+        { "id": 1349, "competitor_slug": "rogo", "source": "jobs", "signal_type": "job_posting", "payload": { "title": "Solutions Engineer — Private Credit", "location": "New York", "department": "Sales", "url": "https://jobs.ashbyhq.com/rogo/solutions-engineer-private-credit", "keywords": ["private credit", "leveraged finance", "pre-sales"] }, "detected_at": "2026-05-04T07:00:00+00:00", "raw_url": "https://jobs.ashbyhq.com/rogo/solutions-engineer-private-credit" }
+      ]
+    }
+  ],
+  "signals": [
+    { "id": 1411, "competitor_slug": "alphasense", "competitor_name": "AlphaSense", "tier": 1, "source": "exa", "signal_type": "trending_mention", "payload": { "title": "AlphaSense reportedly in talks for new funding round" }, "detected_at": "2026-05-08T11:20:00+00:00", "raw_url": "https://techcrunch.com/2026/03/alphasense-funding" },
+    { "id": 1408, "competitor_slug": "alphasense", "competitor_name": "AlphaSense", "tier": 1, "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://www.alpha-sense.com/product/quantitative-data", "page_type": "product" }, "detected_at": "2026-05-05T06:04:00+00:00", "raw_url": "https://www.alpha-sense.com/product/quantitative-data" },
+    { "id": 1399, "competitor_slug": "blueflame", "competitor_name": "Blueflame AI", "tier": 1, "source": "exa", "signal_type": "trending_mention", "payload": { "title": "Datasite brings Blueflame AI into the data room" }, "detected_at": "2026-05-07T09:40:00+00:00", "raw_url": "https://www.businesswire.com/news/datasite-blueflame" },
+    { "id": 1396, "competitor_slug": "blueflame", "competitor_name": "Blueflame AI", "tier": 1, "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://blueflame.ai/integrations/datasite", "page_type": "product" }, "detected_at": "2026-05-04T06:05:00+00:00", "raw_url": "https://blueflame.ai/integrations/datasite" },
+    { "id": 1389, "competitor_slug": "f2", "competitor_name": "F2.ai", "tier": 1, "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://f2.ai/blog/f2-vs-platform", "page_type": "blog" }, "detected_at": "2026-05-09T06:06:00+00:00", "raw_url": "https://f2.ai/blog/f2-vs-platform" },
+    { "id": 1385, "competitor_slug": "f2", "competitor_name": "F2.ai", "tier": 1, "source": "exa", "signal_type": "trending_mention", "payload": { "title": "F2 launches Audit Mode for AI-built financial models" }, "detected_at": "2026-05-06T13:10:00+00:00", "raw_url": "https://www.businesswire.com/news/f2-audit-mode" },
+    { "id": 1378, "competitor_slug": "harvey", "competitor_name": "Harvey AI", "tier": 1, "source": "jobs", "signal_type": "job_posting", "payload": { "title": "Director of Product Marketing — Financial Services" }, "detected_at": "2026-05-08T07:00:00+00:00", "raw_url": "https://jobs.ashbyhq.com/harvey/director-pmm-financial-services" },
+    { "id": 1374, "competitor_slug": "harvey", "competitor_name": "Harvey AI", "tier": 1, "source": "exa", "signal_type": "trending_mention", "payload": { "title": "Harvey AI raises new round at multi-billion valuation" }, "detected_at": "2026-05-03T10:30:00+00:00", "raw_url": "https://techcrunch.com/2026/harvey-funding" },
+    { "id": 1367, "competitor_slug": "keye", "competitor_name": "Keye", "tier": 1, "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://keye.co/blog/odin", "page_type": "blog" }, "detected_at": "2026-05-07T06:08:00+00:00", "raw_url": "https://keye.co/blog/odin" },
+    { "id": 1356, "competitor_slug": "rogo", "competitor_name": "Rogo", "tier": 1, "source": "exa", "signal_type": "trending_mention", "payload": { "title": "Rogo raises $165M Series C to scale its AI analyst for finance" }, "detected_at": "2026-05-09T08:00:00+00:00", "raw_url": "https://techcrunch.com/2026/rogo-series-c" },
+    { "id": 1352, "competitor_slug": "rogo", "competitor_name": "Rogo", "tier": 1, "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://rogo.ai/product/private-credit", "page_type": "product" }, "detected_at": "2026-05-06T06:09:00+00:00", "raw_url": "https://rogo.ai/product/private-credit" },
+    { "id": 1349, "competitor_slug": "rogo", "competitor_name": "Rogo", "tier": 1, "source": "jobs", "signal_type": "job_posting", "payload": { "title": "Solutions Engineer — Private Credit" }, "detected_at": "2026-05-04T07:00:00+00:00", "raw_url": "https://jobs.ashbyhq.com/rogo/solutions-engineer-private-credit" }
+  ],
+  "v2_signals": [
+    { "competitor": "Rogo", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "Rogo raises $165M Series C", "snippet": "Top venture firm leads; tens of thousands of daily users; expanding into PE and private credit." }, "observed_at": "2026-05-09T08:00:00+00:00", "raw_url": "https://techcrunch.com/2026/rogo-series-c", "confidence": 0.95, "category": "infrastructure_signal", "predictive_score": 0.91, "lead_time_estimate": "immediate", "sales_takeaway": "Best-funded direct workflow competitor just got more runway and an explicit PE/credit mandate — brief reps now on the private-document-depth rebuttal." },
+    { "competitor": "Rogo", "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://rogo.ai/product/private-credit", "page_type": "product" }, "observed_at": "2026-05-06T06:09:00+00:00", "raw_url": "https://rogo.ai/product/private-credit", "confidence": 0.9, "category": "launch_signal", "predictive_score": 0.88, "lead_time_estimate": "2-4 weeks", "sales_takeaway": "A private-credit product page appeared before any blog post links to it — Rogo is about to launch into the platform's credit ICP; expect campaign content within weeks." },
+    { "competitor": "Rogo", "source": "jobs", "signal_type": "job_posting", "payload": { "title": "Solutions Engineer — Private Credit", "department": "Sales" }, "observed_at": "2026-05-04T07:00:00+00:00", "raw_url": "https://jobs.ashbyhq.com/rogo/solutions-engineer-private-credit", "confidence": 0.85, "category": "hiring_signal", "predictive_score": 0.76, "lead_time_estimate": "60-90 days", "sales_takeaway": "Rogo is building a private-credit pre-sales team — vertical expansion is funded and staffed; tighten credit-account coverage over the next quarter." },
+    { "competitor": "Rogo", "source": "github", "signal_type": "commit_burst", "payload": { "org": "rogo-ai", "repo": "spreadsheet-agents", "count": 38, "period": "7d" }, "observed_at": "2026-05-05T22:00:00+00:00", "raw_url": "https://github.com/rogo-ai", "confidence": 0.7, "category": "launch_signal", "predictive_score": 0.64, "lead_time_estimate": "2-4 weeks", "sales_takeaway": "Heavy commit activity on the acquired spreadsheet-agent code — native in-cell-citation Excel output is shipping soon; reps in modeling-heavy deals should expect the comparison." },
+    { "competitor": "Rogo", "source": "dns", "signal_type": "new_subdomain", "payload": { "subdomain": "uk.rogo.ai", "record_type": "CNAME" }, "observed_at": "2026-05-07T03:00:00+00:00", "raw_url": "https://uk.rogo.ai", "confidence": 0.65, "category": "infrastructure_signal", "predictive_score": 0.58, "lead_time_estimate": "2-4 weeks", "sales_takeaway": "A UK subdomain went live — the London office is operational; expect EMEA-targeted outreach to advisory and PE accounts." },
+    { "competitor": "AlphaSense", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "AlphaSense reportedly raising at ~$500M ARR", "snippet": "Positioned as a Bloomberg-Terminal alternative for AI-native research." }, "observed_at": "2026-05-08T11:20:00+00:00", "raw_url": "https://techcrunch.com/2026/03/alphasense-funding", "confidence": 0.9, "category": "infrastructure_signal", "predictive_score": 0.83, "lead_time_estimate": "immediate", "sales_takeaway": "The best-known adjacent player is raising aggressively — expect louder presence in asset-manager and IB-research evaluations; lead with private-document reasoning, not search breadth." },
+    { "competitor": "AlphaSense", "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://www.alpha-sense.com/product/quantitative-data", "page_type": "product" }, "observed_at": "2026-05-05T06:04:00+00:00", "raw_url": "https://www.alpha-sense.com/product/quantitative-data", "confidence": 0.85, "category": "launch_signal", "predictive_score": 0.7, "lead_time_estimate": "2-4 weeks", "sales_takeaway": "A quantitative-data product page is live — AlphaSense is escalating onto Bloomberg/FactSet turf; doesn't directly threaten the platform's deal-document use case but worth noting in research-team deals." },
+    { "competitor": "AlphaSense", "source": "jobs", "signal_type": "job_posting", "payload": { "title": "Enterprise AE — Private Markets", "department": "Sales" }, "observed_at": "2026-05-02T07:00:00+00:00", "raw_url": "https://boards.greenhouse.io/alphasense/private-markets-ae", "confidence": 0.8, "category": "hiring_signal", "predictive_score": 0.68, "lead_time_estimate": "60-90 days", "sales_takeaway": "AlphaSense is hiring a private-markets AE — testing a PE/credit GTM motion; monitor whether monitoring-style positioning starts showing up against the platform in PE accounts." },
+    { "competitor": "AlphaSense", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "AlphaSense deepens Tegus integration", "snippet": "Expert-call transcripts now surface inline in generative summaries." }, "observed_at": "2026-04-29T10:00:00+00:00", "raw_url": "https://www.alpha-sense.com/product/expert-insights", "confidence": 0.6, "category": "content_signal", "predictive_score": 0.42, "lead_time_estimate": "immediate", "sales_takeaway": "Incremental content-platform polish — reinforces AlphaSense's monitoring strength, no change to the deal-document competitive picture." },
+    { "competitor": "F2.ai", "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://f2.ai/blog/f2-vs-platform", "page_type": "blog" }, "observed_at": "2026-05-09T06:06:00+00:00", "raw_url": "https://f2.ai/blog/f2-vs-platform", "confidence": 0.95, "category": "content_signal", "predictive_score": 0.87, "lead_time_estimate": "immediate", "sales_takeaway": "F2 published a named comparison post attacking 'document-search' AI — this will surface in prospect research; arm reps with the 'corpus is the bottleneck, not in-cell formulas' rebuttal today." },
+    { "competitor": "F2.ai", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "F2 launches Audit Mode / Databook", "snippet": "Traces every AI-generated number from claim to formula to source cell." }, "observed_at": "2026-05-06T13:10:00+00:00", "raw_url": "https://www.businesswire.com/news/f2-audit-mode", "confidence": 0.85, "category": "launch_signal", "predictive_score": 0.66, "lead_time_estimate": "immediate", "sales_takeaway": "F2 is leaning hard on auditability for IC settings — note it in modeling-heavy private-credit deals, but the platform's edge (reasoning over the deal corpus) is a different axis." },
+    { "competitor": "F2.ai", "source": "sitemap", "signal_type": "content_change", "payload": { "url": "https://f2.ai/pricing", "change": "modified" }, "observed_at": "2026-05-03T06:06:00+00:00", "raw_url": "https://f2.ai/pricing", "confidence": 0.55, "category": "content_signal", "predictive_score": 0.4, "lead_time_estimate": "immediate", "sales_takeaway": "Pricing-page copy changed — possible packaging shift; low priority, but check if a published price card appears (it would be unusual for this segment)." },
+    { "competitor": "F2.ai", "source": "github", "signal_type": "new_repo", "payload": { "org": "f2-ai", "repo": "llmexcel-eval" }, "observed_at": "2026-05-01T18:00:00+00:00", "raw_url": "https://github.com/f2-ai/llmexcel-eval", "confidence": 0.6, "category": "infrastructure_signal", "predictive_score": 0.48, "lead_time_estimate": "2-4 weeks", "sales_takeaway": "A public benchmark-eval repo appeared — F2 is doubling down on the SpreadsheetBench claim; expect more benchmark-led marketing." },
+    { "competitor": "Harvey AI", "source": "jobs", "signal_type": "job_posting", "payload": { "title": "Director of Product Marketing — Financial Services", "department": "Marketing" }, "observed_at": "2026-05-08T07:00:00+00:00", "raw_url": "https://jobs.ashbyhq.com/harvey/director-pmm-financial-services", "confidence": 0.9, "category": "hiring_signal", "predictive_score": 0.74, "lead_time_estimate": "60-90 days", "sales_takeaway": "Harvey is hiring finance-vertical GTM — a finance product or campaign is plausible within a couple of quarters; not a head-to-head threat yet, but flag it for leadership." },
+    { "competitor": "Harvey AI", "source": "jobs", "signal_type": "job_posting", "payload": { "title": "Solutions Engineer — Financial Services", "department": "Sales" }, "observed_at": "2026-05-05T07:00:00+00:00", "raw_url": "https://jobs.ashbyhq.com/harvey/solutions-engineer-financial-services", "confidence": 0.8, "category": "hiring_signal", "predictive_score": 0.62, "lead_time_estimate": "60-90 days", "sales_takeaway": "A second finance-vertical hire — consistent with a deliberate expansion; keep an eye on whether the postings move from 'legal-adjacent finance' to 'deal diligence.'" },
+    { "competitor": "Harvey AI", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "Harvey AI raises new round at a multi-billion valuation", "snippet": "Legal-AI leader keeps expanding into adjacent professional-services workflows." }, "observed_at": "2026-05-03T10:30:00+00:00", "raw_url": "https://techcrunch.com/2026/harvey-funding", "confidence": 0.85, "category": "infrastructure_signal", "predictive_score": 0.55, "lead_time_estimate": "2-4 weeks", "sales_takeaway": "Harvey has the capital to fund a vertical expansion on its own timeline — indirect pressure; revisit if a finance product actually ships." },
+    { "competitor": "Blueflame AI", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "Datasite brings Blueflame AI natively into the data room", "snippet": "VDR projects flow into Blueflame automatically and in real time." }, "observed_at": "2026-05-07T09:40:00+00:00", "raw_url": "https://www.businesswire.com/news/datasite-blueflame", "confidence": 0.9, "category": "launch_signal", "predictive_score": 0.78, "lead_time_estimate": "immediate", "sales_takeaway": "Blueflame now ships embedded in Datasite deal rooms — a distribution edge the platform can't match; in mid-market PE deals expect 'the AI that comes with your data room' framing, and counter on reasoning depth." },
+    { "competitor": "Blueflame AI", "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://blueflame.ai/integrations/datasite", "page_type": "product" }, "observed_at": "2026-05-04T06:05:00+00:00", "raw_url": "https://blueflame.ai/integrations/datasite", "confidence": 0.8, "category": "launch_signal", "predictive_score": 0.6, "lead_time_estimate": "immediate", "sales_takeaway": "Integration page is live — the Datasite tie-in is real and shipping; mid-market PE/IB accounts in Datasite are now Blueflame's installed-base path." },
+    { "competitor": "Blueflame AI", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "Blueflame AI wins European AI-innovation award in private equity", "snippet": "Second consecutive award cycle in the PE segment." }, "observed_at": "2026-04-30T12:00:00+00:00", "raw_url": "https://blueflame.ai/newsroom/awards", "confidence": 0.6, "category": "content_signal", "predictive_score": 0.41, "lead_time_estimate": "immediate", "sales_takeaway": "Brand-building in the platform's exact buyer segment — not a product threat, but contributes to mind-share in mid-market PE." },
+    { "competitor": "Keye", "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://keye.co/blog/odin", "page_type": "blog" }, "observed_at": "2026-05-07T06:08:00+00:00", "raw_url": "https://keye.co/blog/odin", "confidence": 0.85, "category": "launch_signal", "predictive_score": 0.69, "lead_time_estimate": "immediate", "sales_takeaway": "Keye launched 'Odin' with a 'deterministic vs. summarization' frame aimed at PE diligence — expect it in PE-associate research; counter on scope (full deal corpus, not just the quantitative slice)." },
+    { "competitor": "Keye", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "Keye launches Odin, a deterministic AI co-pilot for PE diligence", "snippet": "Audit-grade, source-linked outputs from natural-language queries." }, "observed_at": "2026-05-02T08:50:00+00:00", "raw_url": "https://keye.co/blog/odin", "confidence": 0.75, "category": "content_signal", "predictive_score": 0.55, "lead_time_estimate": "immediate", "sales_takeaway": "Coverage of the Odin launch — reinforces Keye's PE-native positioning; track whether any named PE funds appear as references." },
+    { "competitor": "Keye", "source": "jobs", "signal_type": "job_posting", "payload": { "title": "Forward-Deployed Engineer — Private Equity", "department": "Engineering" }, "observed_at": "2026-04-28T07:00:00+00:00", "raw_url": "https://keye.co/careers/fde-private-equity", "confidence": 0.7, "category": "hiring_signal", "predictive_score": 0.5, "lead_time_estimate": "60-90 days", "sales_takeaway": "Keye is hiring forward-deployed engineers — moving from design partners to white-glove enterprise deployments; expect more named PE fund usage in the next quarter." },
+    { "competitor": "F2.ai", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "F2 publishes four competitor-comparison posts in one day", "snippet": "Named displacement content against multiple finance-AI platforms." }, "observed_at": "2026-05-09T15:00:00+00:00", "raw_url": "https://f2.ai/blog", "confidence": 0.8, "category": "content_signal", "predictive_score": 0.6, "lead_time_estimate": "immediate", "sales_takeaway": "Coordinated comparison-content drop — F2 is committing to compete on positioning; make sure reps have the one-paragraph response ready before the next eval." },
+    { "competitor": "Rogo", "source": "exa", "signal_type": "trending_mention", "payload": { "title": "Rogo announces credit-research data partnership", "snippet": "Ratings, credit research, and leveraged-finance data added to the platform." }, "observed_at": "2026-05-03T09:00:00+00:00", "raw_url": "https://rogo.ai/blog/fitch-partnership", "confidence": 0.85, "category": "infrastructure_signal", "predictive_score": 0.71, "lead_time_estimate": "2-4 weeks", "sales_takeaway": "Rogo is wiring in credit-research data — direct move into private-credit and leveraged-finance workflows; expect credit-fund outreach using the data-breadth angle." },
+    { "competitor": "AlphaSense", "source": "github", "signal_type": "star_spike", "payload": { "org": "AlphaSense-Engineering", "repo": "client-sdk", "count": 120, "period": "7d" }, "observed_at": "2026-05-04T20:00:00+00:00", "raw_url": "https://github.com/AlphaSense-Engineering", "confidence": 0.5, "category": "infrastructure_signal", "predictive_score": 0.35, "lead_time_estimate": "2-4 weeks", "sales_takeaway": "SDK repo got a star spike — possible developer/API push; low priority for the platform's deal-document positioning." },
+    { "competitor": "Harvey AI", "source": "sitemap", "signal_type": "new_url", "payload": { "url": "https://www.harvey.ai/solutions/financial-services", "page_type": "product" }, "observed_at": "2026-05-06T06:07:00+00:00", "raw_url": "https://www.harvey.ai/solutions/financial-services", "confidence": 0.75, "category": "launch_signal", "predictive_score": 0.57, "lead_time_estimate": "2-4 weeks", "sales_takeaway": "A financial-services solutions page appeared — the finance expansion is moving from hiring to product positioning; revisit the threat level if the page describes deal-diligence workflows." }
+  ]
 }
